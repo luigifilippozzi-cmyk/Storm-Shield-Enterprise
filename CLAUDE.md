@@ -54,7 +54,7 @@
 | **Storage** | AWS S3 / Cloudflare R2 | Fotos, documentos, NFs digitalizadas |
 | **Automação** | n8n (self-hosted) | Workflows visuais, integrações externas |
 | **IA/ML** | OpenAI API + modelos custom | OCR, classificação, previsão demanda |
-| **Autenticação** | Auth0 ou Clerk | SSO, MFA, RBAC nativo |
+| **Autenticação** | **Clerk** (@clerk/backend + @clerk/nextjs) | SSO, MFA, Organizations → Tenants |
 | **Infra / IaC** | AWS (ECS/EKS + RDS + ElastiCache) + **Terraform** | Infra as Code, modules por serviço |
 | **CI/CD** | GitHub Actions | Lint, test, build, deploy por ambiente |
 | **Monitoramento** | Datadog ou Grafana + Prometheus | APM, logs, alertas |

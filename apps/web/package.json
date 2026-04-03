@@ -10,6 +10,7 @@
     "test": "echo \"No tests yet\""
   },
   "dependencies": {
+    "@clerk/nextjs": "^7.0.8",
     "@sse/shared-types": "workspace:*",
     "@sse/shared-utils": "workspace:*",
     "@tanstack/react-query": "^5.62.0",

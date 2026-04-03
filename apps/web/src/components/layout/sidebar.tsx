@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const navigation = [
-  { name: 'Dashboard', href: '/', icon: 'H' },
+  { name: 'Dashboard', href: '/dashboard', icon: 'H' },
   { name: 'Customers', href: '/customers', icon: 'C' },
   { name: 'Vehicles', href: '/vehicles', icon: 'V' },
   { name: 'Estimates', href: '/estimates', icon: 'E' },
@@ -23,7 +23,7 @@ export function Sidebar() {
       </div>
       <nav className="space-y-1 p-4">
         {navigation.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
           return (
             <Link
               key={item.name}
