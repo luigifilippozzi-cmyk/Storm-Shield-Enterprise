@@ -1,0 +1,24 @@
+{
+  "name": "storm-shield-enterprise",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ERP SaaS for auto repair businesses (PDR / body shops)",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "test": "turbo test",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\""
+  },
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "prettier": "^3.8.1",
+    "turbo": "^2.9.3",
+    "typescript": "^6.0.2"
+  }
+}

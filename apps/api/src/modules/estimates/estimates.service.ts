@@ -1,0 +1,53 @@
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import { Knex } from 'knex';
+import { KNEX_CONNECTION } from '../../config/database.module';
+import { generateId } from '@sse/shared-utils';
+
+@Injectable()
+export class EstimatesService {
+  constructor(@Inject(KNEX_CONNECTION) private readonly knex: Knex) {}
+
+  async findAll(tenantId: string, _query: any) {
+    return this.knex('estimates').where({ tenant_id: tenantId, deleted_at: null });
+  }
+
+  async create(tenantId: string, data: any) {
+    const [record] = await this.knex('estimates')
+      .insert({ id: generateId(), tenant_id: tenantId, ...data })
+      .returning('*');
+    return record;
+  }
+
+  async findOne(tenantId: string, id: string) {
+    const record = await this.knex('estimates')
+      .where({ id, tenant_id: tenantId, deleted_at: null })
+      .first();
+    if (!record) throw new NotFoundException('Estimate not found');
+    return record;
+  }
+
+  async update(tenantId: string, id: string, data: any) {
+    const [record] = await this.knex('estimates')
+      .where({ id, tenant_id: tenantId })
+      .update({ ...data, updated_at: new Date() })
+      .returning('*');
+    if (!record) throw new NotFoundException('Estimate not found');
+    return record;
+  }
+
+  async updateStatus(tenantId: string, id: string, status: string) {
+    const [record] = await this.knex('estimates')
+      .where({ id, tenant_id: tenantId })
+      .update({ status, updated_at: new Date() })
+      .returning('*');
+    if (!record) throw new NotFoundException('Estimate not found');
+    return record;
+  }
+
+  async remove(tenantId: string, id: string) {
+    await this.knex('estimates')
+      .where({ id, tenant_id: tenantId })
+      .update({ deleted_at: new Date() });
+    return { deleted: true };
+  }
+}

@@ -45,6 +45,9 @@ infra/terraform/*.tfstate
 infra/terraform/*.tfstate.backup
 infra/terraform/*.tfvars
 
+# Confidential / reference docs (not for publishing)
+docs/Leading Practices*
+
 # Misc
 *.tsbuildinfo
 .eslintcache
