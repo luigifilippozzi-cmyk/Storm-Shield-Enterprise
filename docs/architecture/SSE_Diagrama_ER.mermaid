@@ -1,0 +1,1241 @@
+erDiagram
+
+    %% ════════════════════════════════════════════════════════════════
+    %% STORM SHIELD ENTERPRISE - Modelo ER v1.0
+    %% PostgreSQL Multi-Tenant | LGPD/CCPA | Security by Design
+    %% 
+    %% FLUXO: Plataforma → CRM → Seguradoras → Veículos
+    %%        → Orçamentos → Ordens de Serviço → Terceiros
+    %%        → Financeiro → Contabilidade (GL + FAM) → Estoque → Rental → Audit
+    %% ════════════════════════════════════════════════════════════════
+
+    %% ┌─────────────────────────────────────┐
+    %% │  DOMÍNIO 1: PLATAFORMA & IAM        │
+    %% │  Cor: #1e3a8a (Navy) / #dbeafe      │
+    %% └─────────────────────────────────────┘
+
+    tenants ||--o{ users : "possui"
+    tenants ||--o{ tenant_settings : "configura"
+    tenants ||--o{ api_keys : "gera"
+    tenants ||--o{ encryption_keys : "gerencia"
+    tenants ||--o{ data_retention_policies : "define"
+    tenants ||--o{ data_subject_requests : "recebe"
+    users ||--o{ user_sessions : "autentica"
+    users ||--o{ user_role_assignments : "assume"
+    users ||--o{ audit_logs : "gera"
+    users ||--o{ notifications : "recebe"
+    roles ||--o{ role_permissions : "contém"
+    roles ||--o{ user_role_assignments : "atribui"
+
+    tenants {
+        uuid id PK
+        string company_name
+        string trade_name
+        string ein_tax_id_encrypted
+        string address_line1
+        string city
+        string state
+        string zip_code
+        string phone
+        string email
+        string logo_url
+        string stripe_customer_id
+        string stripe_subscription_id
+        enum subscription_plan "free|starter|pro|enterprise"
+        enum subscription_status "active|past_due|canceled|suspended"
+        jsonb settings
+        string schema_name "unique per tenant"
+        string encryption_key_id "ref to KMS"
+        boolean is_active
+        timestamp trial_ends_at
+        timestamp data_processing_agreed_at
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at "soft delete"
+    }
+
+    tenant_settings {
+        uuid id PK
+        uuid tenant_id FK
+        string setting_key
+        text setting_value_encrypted
+        enum category "general|financial|notifications|integrations|security|privacy"
+        boolean is_sensitive
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    api_keys {
+        uuid id PK
+        uuid tenant_id FK
+        string name
+        string key_hash
+        string key_prefix
+        jsonb scopes
+        timestamp expires_at
+        timestamp last_used_at
+        boolean is_active
+        timestamp created_at
+    }
+
+    users {
+        uuid id PK
+        uuid tenant_id FK
+        string full_name
+        string email_encrypted
+        string email_hash "for lookup"
+        string phone_encrypted
+        string phone_hash
+        string avatar_url
+        boolean is_active
+        string auth_provider_id "Auth0/Clerk ID"
+        boolean mfa_enabled
+        string mfa_method
+        int failed_login_attempts
+        timestamp locked_until
+        timestamp password_changed_at
+        timestamp last_login_at
+        string last_login_ip
+        boolean privacy_consent_given
+        timestamp privacy_consent_at
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at "soft delete"
+    }
+
+    roles {
+        uuid id PK
+        uuid tenant_id FK
+        string name
+        string description
+        boolean is_system_role
+        boolean is_active
+        timestamp created_at
+    }
+
+    role_permissions {
+        uuid id PK
+        uuid role_id FK
+        string resource
+        enum action "create|read|update|delete|export|approve"
+        jsonb conditions "row-level security rules"
+        timestamp created_at
+    }
+
+    user_role_assignments {
+        uuid id PK
+        uuid user_id FK
+        uuid role_id FK
+        uuid assigned_by FK
+        timestamp valid_from
+        timestamp valid_until
+        timestamp created_at
+    }
+
+    user_sessions {
+        uuid id PK
+        uuid user_id FK
+        string session_token_hash
+        string ip_address
+        string user_agent
+        string device_fingerprint
+        boolean is_active
+        timestamp expires_at
+        timestamp created_at
+    }
+
+    %% ┌─────────────────────────────────────┐
+    %% │  DOMÍNIO 2: CRM & CLIENTES          │
+    %% │  Cor: #065f46 (Teal) / #ccfbf1      │
+    %% └─────────────────────────────────────┘
+
+    customers ||--o{ vehicles : "possui"
+    customers ||--o{ estimates : "solicita"
+    customers ||--o{ customer_interactions : "registra"
+    customers ||--o{ customer_consent_records : "consente"
+    customers ||--o{ rental_contracts : "aluga"
+
+    customers {
+        uuid id PK
+        uuid tenant_id FK
+        uuid salesperson_id FK
+        string first_name_encrypted
+        string last_name_encrypted
+        string full_name_search_hash "for search"
+        string email_encrypted
+        string email_hash
+        string phone_encrypted
+        string phone_hash
+        string address_line1_encrypted
+        string city
+        string state
+        string zip_code
+        enum status "lead|prospect|customer|inactive"
+        enum source "insurance|referral|walkin|marketing|storm_chase"
+        string insurance_policy_number_encrypted
+        uuid insurance_company_id FK
+        text notes
+        jsonb custom_fields
+        boolean marketing_consent
+        boolean data_processing_consent
+        timestamp consent_given_at
+        timestamp converted_at
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at "soft delete / anonymization"
+    }
+
+    customer_consent_records {
+        uuid id PK
+        uuid customer_id FK
+        enum consent_type "data_processing|marketing|sms|whatsapp|insurance_sharing"
+        boolean consented
+        string consent_version
+        text consent_text_snapshot
+        string collection_method
+        timestamp consented_at
+        timestamp revoked_at
+    }
+
+    customer_interactions {
+        uuid id PK
+        uuid customer_id FK
+        uuid user_id FK
+        enum type "call|email|sms|whatsapp|visit|note"
+        text content_encrypted
+        timestamp created_at
+    }
+
+    %% ┌─────────────────────────────────────┐
+    %% │  DOMÍNIO 3: SEGURADORAS             │
+    %% │  Cor: #92400e (Amber) / #fef3c7     │
+    %% └─────────────────────────────────────┘
+
+    insurance_companies ||--o{ estimates : "aprova"
+    insurance_companies ||--o{ insurance_payments : "paga"
+    insurance_companies ||--o{ insurance_contacts : "possui"
+
+    insurance_companies {
+        uuid id PK
+        uuid tenant_id FK
+        string name
+        string address
+        string adjuster_portal_url
+        boolean is_drp_partner
+        text payment_terms
+        decimal avg_payment_days
+        jsonb required_documents
+        boolean is_active
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    insurance_contacts {
+        uuid id PK
+        uuid insurance_company_id FK
+        string contact_name_encrypted
+        string contact_phone_encrypted
+        string contact_email_encrypted
+        string role
+        boolean is_primary
+        timestamp created_at
+    }
+
+    %% ┌─────────────────────────────────────┐
+    %% │  DOMÍNIO 4: VEÍCULOS                │
+    %% │  Cor: #065f46 (Green) / #d1fae5     │
+    %% └─────────────────────────────────────┘
+
+    vehicles ||--o{ service_orders : "recebe OS"
+    vehicles ||--o{ estimates : "orçamento"
+    vehicles ||--o{ vehicle_photos : "documenta"
+
+    vehicles {
+        uuid id PK
+        uuid tenant_id FK
+        uuid customer_id FK
+        string vin_encrypted
+        string vin_hash
+        string license_plate_encrypted
+        string license_plate_hash
+        string make
+        string model
+        int year
+        string color
+        string trim
+        text damage_description
+        enum damage_type "hail|collision|dent|other"
+        string insurance_claim_number_encrypted
+        string insurance_policy_number_encrypted
+        uuid insurance_company_id FK
+        enum status "registered|estimate_pending|approved|in_repair|completed|delivered"
+        date received_date
+        date estimated_completion
+        date actual_completion
+        date delivered_date
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    vehicle_photos {
+        uuid id PK
+        uuid vehicle_id FK
+        string file_url "S3 encrypted at rest"
+        string file_hash "integrity check"
+        enum photo_type "damage_initial|during_repair|completed|delivery"
+        enum stage "before|during|after"
+        text description
+        jsonb exif_data_stripped "EXIF sanitized"
+        timestamp taken_at
+        timestamp created_at
+    }
+
+    %% ┌─────────────────────────────────────┐
+    %% │  DOMÍNIO 5: ORÇAMENTOS (ESTIMATES)  │
+    %% │  Cor: #5b21b6 (Purple) / #ede9fe    │
+    %% └─────────────────────────────────────┘
+
+    estimates ||--o{ estimate_lines : "contém"
+    estimates ||--o{ estimate_supplements : "suplementa"
+    estimates ||--o{ estimate_documents : "anexa"
+    estimates ||--o{ commissions : "gera comissão"
+    estimates ||--o{ insurance_payments : "vincula pgto"
+
+    estimates {
+        uuid id PK
+        uuid tenant_id FK
+        uuid vehicle_id FK
+        uuid customer_id FK
+        uuid insurance_company_id FK
+        uuid salesperson_id FK
+        string estimate_number "unique per tenant"
+        enum status "draft|submitted|approved|supplement_requested|rejected|completed"
+        decimal total_labor
+        decimal total_parts
+        decimal total_sublet
+        decimal total_paint_materials
+        decimal total_amount
+        decimal deductible_amount
+        decimal insurance_approved_amount
+        decimal sales_tax_amount
+        decimal sales_tax_rate
+        string tax_jurisdiction
+        string insurance_claim_number_encrypted
+        string policy_number_encrypted
+        string policyholder_name_encrypted
+        text policyholder_address_encrypted
+        boolean direct_payment_authorized
+        text insurance_notes
+        date submitted_date
+        date approved_date
+        int version_number
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    estimate_lines {
+        uuid id PK
+        uuid estimate_id FK
+        enum line_type "labor|parts|sublet|paint_materials"
+        string description
+        decimal quantity
+        decimal unit_price
+        decimal total_price
+        string part_number
+        boolean is_oem
+        boolean is_taxable
+        int sort_order
+        timestamp created_at
+    }
+
+    estimate_supplements {
+        uuid id PK
+        uuid estimate_id FK
+        string supplement_number
+        decimal additional_amount
+        text reason
+        enum status "draft|submitted|approved|rejected"
+        date submitted_date
+        date approved_date
+        timestamp created_at
+    }
+
+    estimate_documents {
+        uuid id PK
+        uuid estimate_id FK
+        string file_url
+        string file_name
+        string file_hash
+        enum doc_type "insurance_form|authorization|supplement|photo|other"
+        long file_size_bytes
+        timestamp created_at
+    }
+
+    %% ┌─────────────────────────────────────┐
+    %% │  DOMÍNIO 6: ORDENS DE SERVIÇO       │
+    %% │  Cor: #1e40af (Blue) / #e0e7ff      │
+    %% └─────────────────────────────────────┘
+
+    service_orders ||--o{ so_tasks : "tarefas"
+    service_orders ||--o{ so_parts_used : "peças"
+    service_orders ||--o{ so_external_services : "terceiriza"
+    service_orders ||--o{ so_status_history : "histórico"
+
+    service_orders {
+        uuid id PK
+        uuid tenant_id FK
+        uuid vehicle_id FK
+        uuid estimate_id FK
+        string so_number "unique per tenant"
+        enum status "queued|disassembly|pdr|paint|assembly|qc|ready|delivered"
+        uuid assigned_manager_id FK
+        date start_date
+        date target_completion
+        date actual_completion
+        decimal total_cost
+        decimal total_revenue
+        decimal profit_margin
+        text internal_notes_encrypted
+        int priority
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    so_tasks {
+        uuid id PK
+        uuid service_order_id FK
+        uuid assigned_to_user_id FK
+        uuid assigned_to_contractor_id FK
+        string task_name
+        enum task_type "disassembly|pdr|paint|bodywork|assembly|qc|detail|other"
+        enum status "pending|in_progress|completed|blocked"
+        decimal estimated_hours
+        decimal actual_hours
+        decimal labor_cost
+        text notes
+        timestamp started_at
+        timestamp completed_at
+        timestamp created_at
+    }
+
+    so_parts_used {
+        uuid id PK
+        uuid service_order_id FK
+        uuid inventory_item_id FK
+        string description
+        decimal quantity
+        decimal unit_cost
+        decimal total_cost
+        enum source "stock|on_demand|external"
+        string supplier_name
+        string invoice_number
+        string invoice_photo_url
+        timestamp created_at
+    }
+
+    so_external_services {
+        uuid id PK
+        uuid service_order_id FK
+        uuid contractor_id FK
+        enum service_type "windshield|door_molding|glass|towing|detail|other"
+        string description
+        decimal cost
+        string invoice_number
+        string invoice_photo_url
+        enum status "ordered|in_progress|completed|invoiced|paid"
+        timestamp created_at
+    }
+
+    so_status_history {
+        uuid id PK
+        uuid service_order_id FK
+        uuid changed_by_user_id FK
+        enum old_status "queued|disassembly|pdr|paint|assembly|qc|ready|delivered"
+        enum new_status "queued|disassembly|pdr|paint|assembly|qc|ready|delivered"
+        text notes
+        timestamp created_at
+    }
+
+    %% ┌─────────────────────────────────────┐
+    %% │  DOMÍNIO 7: TERCEIROS / CONTRACTORS  │
+    %% │  Cor: #991b1b (Red) / #fee2e2       │
+    %% └─────────────────────────────────────┘
+
+    contractors ||--o{ contractor_payments : "recebe pgto"
+    contractors ||--o{ so_tasks : "executa"
+    contractors ||--o{ so_external_services : "presta"
+    contractors ||--o{ contractor_1099s : "declara IR"
+
+    contractors {
+        uuid id PK
+        uuid tenant_id FK
+        string full_name_encrypted
+        string business_name
+        string phone_encrypted
+        string phone_hash
+        string email_encrypted
+        enum specialty "pdr|disassembly|paint|glass|detail|general"
+        enum payment_model "per_hour|per_vehicle|per_service|fixed"
+        decimal default_rate
+        string tax_id_encrypted "SSN or EIN"
+        string tax_id_hash
+        boolean w9_on_file
+        string w9_document_url
+        decimal ytd_payments
+        decimal avg_rating
+        int total_jobs
+        boolean is_active
+        text notes
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
+    }
+
+    contractor_payments {
+        uuid id PK
+        uuid contractor_id FK
+        uuid service_order_id FK
+        uuid so_task_id FK
+        decimal amount
+        enum payment_method "check|cash|ach|zelle|venmo"
+        string reference_number
+        date payment_date
+        text description
+        boolean included_in_1099
+        timestamp created_at
+    }
+
+    contractor_1099s {
+        uuid id PK
+        uuid tenant_id FK
+        uuid contractor_id FK
+        int tax_year
+        decimal total_paid
+        boolean form_generated
+        boolean form_sent
+        date sent_date
+        string document_url
+        timestamp created_at
+    }
+
+    %% ┌─────────────────────────────────────┐
+    %% │  DOMÍNIO 8: FINANCEIRO               │
+    %% │  Cor: #6b21a8 (Violet) / #f3e8ff    │
+    %% └─────────────────────────────────────┘
+
+    financial_transactions ||--o{ transaction_attachments : "anexa"
+    financial_transactions ||--o{ transaction_reconciliations : "reconcilia"
+    users ||--o{ commissions : "recebe"
+    bank_accounts ||--o{ bank_transactions : "registra"
+
+    financial_transactions {
+        uuid id PK
+        uuid tenant_id FK
+        uuid service_order_id FK
+        uuid vehicle_id FK
+        uuid customer_id FK
+        uuid contractor_id FK
+        enum type "income|expense"
+        enum category "insurance_payment|customer_payment|parts|labor|sublet|supplies|rent|utilities|marketing|commission|rental_income|other"
+        decimal amount
+        enum payment_method "check|cash|ach|credit_card|zelle|venmo|other"
+        string reference_number
+        string check_number
+        text description
+        string payer_payee_encrypted
+        date transaction_date
+        date posted_date
+        boolean is_reconciled
+        uuid bank_transaction_id
+        string ocr_raw_data_encrypted
+        enum ocr_status "pending|processed|verified|failed"
+        string invoice_photo_url
+        enum source "manual|ocr|whatsapp|sms|bank_sync|auto"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    transaction_attachments {
+        uuid id PK
+        uuid transaction_id FK
+        string file_url
+        string file_name
+        string file_hash
+        enum file_type "invoice|receipt|check|bank_statement|other"
+        timestamp created_at
+    }
+
+    transaction_reconciliations {
+        uuid id PK
+        uuid financial_transaction_id FK
+        uuid bank_transaction_id FK
+        decimal matched_amount
+        enum match_type "auto|manual|partial"
+        decimal confidence_score
+        uuid reconciled_by FK
+        timestamp reconciled_at
+    }
+
+    insurance_payments {
+        uuid id PK
+        uuid tenant_id FK
+        uuid estimate_id FK
+        uuid insurance_company_id FK
+        uuid financial_transaction_id FK
+        decimal expected_amount
+        decimal received_amount
+        enum payment_method "check_mail|check_to_customer|ach|wire"
+        enum status "pending|in_transit|received|deposited|discrepancy|lost"
+        string check_number
+        string tracking_number
+        string tracking_carrier "USPS|UPS|FedEx"
+        string tracking_url
+        date expected_date
+        date received_date
+        date deposited_date
+        boolean sent_to_customer_home
+        boolean customer_confirmed_receipt
+        int reminder_count "alertas enviados"
+        timestamp last_reminder_at
+        text notes
+        int days_outstanding
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    commissions {
+        uuid id PK
+        uuid tenant_id FK
+        uuid salesperson_id FK
+        uuid estimate_id FK
+        uuid vehicle_id FK
+        uuid financial_transaction_id FK
+        enum commission_model "fixed_plus_variable|variable_only|tiered"
+        decimal base_amount
+        decimal variable_percentage
+        decimal calculated_amount
+        decimal paid_amount
+        enum status "pending|calculated|approved|paid"
+        date period_start
+        date period_end
+        date paid_date
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    bank_accounts {
+        uuid id PK
+        uuid tenant_id FK
+        string account_name
+        string institution_name
+        string plaid_access_token_encrypted
+        string plaid_item_id
+        string plaid_account_id
+        string account_mask
+        enum account_type "checking|savings"
+        decimal current_balance
+        timestamp last_synced_at
+        boolean is_active
+        timestamp created_at
+    }
+
+    bank_transactions {
+        uuid id PK
+        uuid bank_account_id FK
+        string plaid_transaction_id
+        decimal amount
+        string name
+        string merchant_name
+        date transaction_date
+        enum category "income|expense|transfer"
+        string plaid_category
+        boolean is_reconciled
+        uuid matched_transaction_id FK
+        timestamp created_at
+    }
+
+    tax_records {
+        uuid id PK
+        uuid tenant_id FK
+        enum tax_type "sales_tax|use_tax"
+        string jurisdiction
+        decimal tax_rate
+        decimal taxable_amount
+        decimal tax_collected
+        decimal tax_remitted
+        date period_start
+        date period_end
+        enum filing_status "calculated|filed|paid"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    %% ┌─────────────────────────────────────┐
+    %% │  DOMÍNIO 9: CONTABILIDADE (GL)       │
+    %% │  Cor: #4338ca (Indigo) / #e0e7ff    │
+    %% │  Chart of Accounts padrão US/MO     │
+    %% │  1000-1999 Assets                    │
+    %% │  2000-2999 Liabilities               │
+    %% │  3000-3999 Equity                    │
+    %% │  4000-4999 Revenue                   │
+    %% │  5000-9999 Expenses                  │
+    %% └─────────────────────────────────────┘
+
+    chart_of_accounts ||--o{ journal_entry_lines : "debita/credita"
+    chart_of_accounts ||--o{ chart_of_accounts : "subconta"
+    journal_entries ||--o{ journal_entry_lines : "contém"
+    fiscal_periods ||--o{ journal_entries : "período"
+    fiscal_periods ||--o{ period_closings : "fechamento"
+
+    chart_of_accounts {
+        uuid id PK
+        uuid tenant_id FK
+        uuid parent_account_id FK "hierarquia"
+        string account_code "1010, 2010, 4010..."
+        string account_name
+        enum account_type "asset|liability|equity|revenue|expense"
+        enum account_class "current|non_current|operating|non_operating"
+        enum normal_balance "debit|credit"
+        boolean is_header "grupo pai, não recebe lançamentos"
+        boolean is_bank_account "vínculo com bank_accounts"
+        boolean is_tax_account "vínculo com tax_records"
+        boolean is_active
+        decimal current_balance
+        int level "profundidade na hierarquia"
+        int sort_order
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    journal_entries {
+        uuid id PK
+        uuid tenant_id FK
+        uuid fiscal_period_id FK
+        uuid created_by FK
+        uuid approved_by FK
+        string entry_number "unique per tenant"
+        date entry_date
+        enum entry_type "standard|adjusting|closing|reversing|opening"
+        enum source "manual|auto_invoice|auto_payment|auto_depreciation|auto_payroll|system"
+        uuid source_id "FK para financial_transactions, insurance_payments, etc"
+        string source_entity "financial_transactions|insurance_payments|contractor_payments|commissions"
+        text description
+        decimal total_debit
+        decimal total_credit
+        enum status "draft|posted|voided"
+        boolean is_reversing
+        uuid reversed_by "ref para journal_entries"
+        date reversal_date
+        timestamp posted_at
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    journal_entry_lines {
+        uuid id PK
+        uuid journal_entry_id FK
+        uuid account_id FK "ref chart_of_accounts"
+        int line_number
+        string description
+        decimal debit_amount
+        decimal credit_amount
+        uuid cost_center_id FK
+        uuid vehicle_id FK "P&L por veículo"
+        uuid service_order_id FK "custo por OS"
+        uuid customer_id FK "receita por cliente"
+        timestamp created_at
+    }
+
+    fiscal_periods {
+        uuid id PK
+        uuid tenant_id FK
+        string period_name "Jan 2026, Feb 2026..."
+        date start_date
+        date end_date
+        enum status "open|closing|closed|locked"
+        int fiscal_year
+        int fiscal_month
+        boolean is_adjustment_period "13o período para ajustes"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    period_closings {
+        uuid id PK
+        uuid tenant_id FK
+        uuid fiscal_period_id FK
+        uuid closed_by FK
+        timestamp closed_at
+        decimal total_revenue "soma 4000-4999"
+        decimal total_expenses "soma 5000-9999"
+        decimal net_income "revenue - expenses"
+        decimal total_assets "soma 1000-1999"
+        decimal total_liabilities "soma 2000-2999"
+        decimal total_equity "soma 3000-3999"
+        uuid closing_journal_entry_id FK "lançamento de encerramento"
+        text notes
+        timestamp created_at
+    }
+
+    cost_centers {
+        uuid id PK
+        uuid tenant_id FK
+        string code "unique per tenant"
+        string name
+        enum type "department|project|vehicle|location"
+        boolean is_active
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    %% ┌─────────────────────────────────────┐
+    %% │  DOMÍNIO 10: ESTOQUE & MARKETING     │
+    %% │  Cor: #713f12 (Brown) / #fef9c3     │
+    %% └─────────────────────────────────────┘
+
+    inventory_items ||--o{ inventory_movements : "movimenta"
+    inventory_items ||--o{ purchase_orders : "solicita PO"
+    marketing_campaigns ||--o{ marketing_expenses : "gera"
+
+    inventory_items {
+        uuid id PK
+        uuid tenant_id FK
+        string sku
+        string name
+        string description
+        enum category "paint|primer|sandpaper|filler|tape|clear_coat|supplies|other"
+        string unit_of_measure
+        decimal current_quantity
+        decimal minimum_quantity
+        decimal unit_cost
+        string preferred_supplier
+        string supplier_part_number
+        boolean is_active
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    inventory_movements {
+        uuid id PK
+        uuid inventory_item_id FK
+        uuid service_order_id FK
+        uuid user_id FK
+        enum movement_type "purchase|consumption|adjustment|return"
+        decimal quantity
+        decimal unit_cost
+        string reference_number
+        string invoice_photo_url
+        text notes
+        timestamp created_at
+    }
+
+    purchase_orders {
+        uuid id PK
+        uuid tenant_id FK
+        uuid inventory_item_id FK
+        uuid requested_by FK
+        uuid approved_by FK
+        string po_number
+        string supplier_name
+        decimal quantity
+        decimal unit_cost
+        decimal total_cost
+        enum status "draft|pending_approval|approved|ordered|received|canceled"
+        date order_date
+        date expected_delivery
+        date received_date
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    marketing_campaigns {
+        uuid id PK
+        uuid tenant_id FK
+        string name
+        enum type "storm_chase|digital|flyer|referral|radio|other"
+        decimal budget
+        decimal spent
+        date start_date
+        date end_date
+        int leads_generated
+        int conversions
+        boolean is_active
+        timestamp created_at
+    }
+
+    marketing_expenses {
+        uuid id PK
+        uuid campaign_id FK
+        uuid financial_transaction_id FK
+        decimal amount
+        string description
+        date expense_date
+        timestamp created_at
+    }
+
+    %% ┌─────────────────────────────────────────────┐
+    %% │  DOMÍNIO 9.5: EXPORTAÇÃO CONTÁBIL          │
+    %% │  QuickBooks / Xero Integration              │
+    %% └─────────────────────────────────────────────┘
+
+    external_exports ||--o{ external_account_mappings : "mapeia"
+
+    external_exports {
+        uuid id PK
+        uuid tenant_id FK
+        uuid fiscal_period_id FK
+        enum export_type "quickbooks|xero|csv|custom"
+        enum status "pending|in_progress|completed|failed"
+        int total_transactions
+        int total_journal_entries
+        string file_url
+        enum file_format "qbo|iif|csv|json"
+        uuid exported_by FK
+        timestamp exported_at
+    }
+
+    external_account_mappings {
+        uuid id PK
+        uuid tenant_id FK
+        uuid account_id FK
+        enum external_system "quickbooks|xero"
+        string external_account_id
+        string external_account_name
+        boolean is_active
+    }
+
+    %% ┌─────────────────────────────────────────────┐
+    %% │  DOMÍNIO 10: CONTABILIDADE (ACCOUNTING)    │
+    %% │  Cor: #065f46 (Emerald) / #d1fae5          │
+    %% │  Double-Entry Bookkeeping | US GAAP          │
+    %% │  P&L + Balance Sheet em tempo real           │
+    %% │  Fixed Asset Management (FAM)                │
+    %% └─────────────────────────────────────────────┘
+
+    chart_of_accounts ||--o{ journal_entry_lines : "debita/credita"
+    chart_of_accounts ||--o{ account_balances : "consolida"
+    chart_of_accounts ||--o{ chart_of_accounts : "pai/filho"
+    journal_entries ||--o{ journal_entry_lines : "contém"
+    fiscal_periods ||--o{ account_balances : "período"
+    fiscal_periods ||--o{ journal_entries : "registra em"
+    financial_transactions ||--o{ journal_entries : "gera lançamento"
+
+    %% Fixed Asset Management (FAM) relationships
+    asset_categories ||--o{ fixed_assets : "categoriza"
+    asset_categories }o--|| chart_of_accounts : "conta ativo"
+    fixed_assets ||--o{ depreciation_schedules : "agenda"
+    fixed_assets ||--o{ depreciation_entries : "deprecia"
+    fixed_assets ||--o{ asset_disposals : "descarta"
+    depreciation_entries }o--|| journal_entries : "gera lançamento"
+    asset_disposals }o--|| journal_entries : "gera lançamento"
+
+    chart_of_accounts {
+        uuid id PK
+        uuid tenant_id FK
+        uuid parent_account_id FK "hierarquia"
+        string account_code UK "1010, 2300, 5010..."
+        string account_name
+        enum account_type "asset|liability|equity|revenue|expense"
+        enum account_subtype "current_asset|fixed_asset|current_liability|long_term_liability|retained_earnings|operating_revenue|cogs|operating_expense|other_expense"
+        enum normal_balance "debit|credit"
+        int level "1=grupo, 2=subgrupo, 3=conta, 4=subconta"
+        boolean is_header "true=conta sintética"
+        boolean is_system_account "protege contas obrigatórias"
+        boolean accepts_entries "false p/ contas sintéticas"
+        string tax_code "referência IRS"
+        string description
+        boolean is_active
+        int sort_order
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    journal_entries {
+        uuid id PK
+        uuid tenant_id FK
+        uuid fiscal_period_id FK
+        uuid source_transaction_id FK "ref financial_transactions"
+        string entry_number UK "JE-2026-000001"
+        date entry_date
+        enum entry_type "standard|adjusting|closing|reversing|opening"
+        enum source "manual|auto_transaction|auto_payroll|auto_depreciation|auto_closing"
+        string description
+        decimal total_debit
+        decimal total_credit
+        boolean is_balanced "CHECK total_debit = total_credit"
+        enum status "draft|posted|reversed"
+        uuid posted_by FK
+        timestamp posted_at
+        uuid reversed_by_entry_id FK "ref self p/ reversão"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    journal_entry_lines {
+        uuid id PK
+        uuid journal_entry_id FK
+        uuid account_id FK "ref chart_of_accounts"
+        decimal debit_amount "0 se crédito"
+        decimal credit_amount "0 se débito"
+        string memo
+        uuid cost_center_id FK "veículo, OS, departamento"
+        string cost_center_type "vehicle|service_order|department|campaign"
+        int line_number
+        timestamp created_at
+    }
+
+    fiscal_periods {
+        uuid id PK
+        uuid tenant_id FK
+        string period_name "Jan/2026, Q1/2026, FY2026"
+        enum period_type "month|quarter|year"
+        date start_date
+        date end_date
+        enum status "open|closing|closed|locked"
+        uuid closed_by FK
+        timestamp closed_at
+        timestamp created_at
+    }
+
+    account_balances {
+        uuid id PK
+        uuid tenant_id FK
+        uuid account_id FK "ref chart_of_accounts"
+        uuid fiscal_period_id FK
+        decimal opening_balance_debit
+        decimal opening_balance_credit
+        decimal period_debit
+        decimal period_credit
+        decimal closing_balance_debit
+        decimal closing_balance_credit
+        decimal ytd_debit
+        decimal ytd_credit
+        timestamp last_calculated_at
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    asset_categories {
+        uuid id PK
+        uuid tenant_id FK
+        string category_name "Machinery, Vehicles, IT Equipment..."
+        string description
+        uuid asset_account_id FK "conta 1500 Fixed Assets"
+        uuid depreciation_account_id FK "conta 1590 Accumulated Depreciation"
+        uuid expense_account_id FK "conta 5800 Depreciation Expense"
+        uuid gain_loss_account_id FK "conta 9100 Gain/Loss on Asset Disposal"
+        enum default_depreciation_method "straight_line|macrs|declining_balance|sum_of_years|units_of_production"
+        int default_useful_life_months "ex: 60 meses"
+        decimal default_salvage_pct "ex: 10.00 = 10%"
+        boolean is_active
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    fixed_assets {
+        uuid id PK
+        uuid tenant_id FK
+        uuid category_id FK "ref asset_categories"
+        string asset_tag UK "FA-2026-000001"
+        string asset_name "Spray Booth, PDR Light Kit..."
+        string description
+        string serial_number
+        enum status "proposal|active|fully_depreciated|disposed|transferred"
+        date acquisition_date
+        decimal acquisition_cost "custo original capitalizado"
+        decimal salvage_value "valor residual estimado"
+        uuid purchase_transaction_id FK "ref financial_transactions"
+        uuid vendor_id FK "ref fornecedor"
+        string location "Bay 1, Office, Warehouse..."
+        enum depreciation_method "straight_line|macrs|declining_balance|sum_of_years|units_of_production"
+        int useful_life_months
+        date depreciation_start_date
+        decimal accumulated_depreciation "cache calculado"
+        decimal net_book_value "cache: cost - accum_depr"
+        date last_depreciation_date
+        uuid responsible_user_id FK
+        jsonb custom_fields
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at "soft delete"
+    }
+
+    depreciation_schedules {
+        uuid id PK
+        uuid fixed_asset_id FK
+        int period_number "1, 2, 3..."
+        date period_start
+        date period_end
+        decimal depreciation_amount "valor calculado para o período"
+        decimal accumulated_amount "acumulado até este período"
+        decimal remaining_value "valor residual restante"
+        enum status "scheduled|posted|skipped"
+        uuid journal_entry_id FK "lançamento gerado"
+        timestamp created_at
+    }
+
+    depreciation_entries {
+        uuid id PK
+        uuid tenant_id FK
+        uuid fixed_asset_id FK
+        uuid fiscal_period_id FK
+        date entry_date
+        decimal depreciation_amount
+        decimal accumulated_depreciation "total acumulado após este entry"
+        decimal net_book_value "NBV após depreciação"
+        uuid journal_entry_id FK "D:5800 Depreciation / C:1590 Accum Depr"
+        enum entry_type "regular|adjustment|revaluation|catch_up"
+        string notes
+        uuid created_by FK
+        timestamp created_at
+    }
+
+    asset_disposals {
+        uuid id PK
+        uuid tenant_id FK
+        uuid fixed_asset_id FK
+        enum disposal_type "sale|write_off|transfer|donation"
+        date disposal_date
+        decimal disposal_proceeds "valor recebido (0 se write_off)"
+        decimal net_book_value_at_disposal "NBV na data do descarte"
+        decimal gain_loss "proceeds - NBV"
+        uuid buyer_customer_id FK "NULL se write_off"
+        uuid journal_entry_id FK "lançamento do descarte"
+        string reason
+        string notes
+        uuid approved_by FK
+        timestamp approved_at
+        uuid created_by FK
+        timestamp created_at
+    }
+
+    %% ┌─────────────────────────────────────┐
+    %% │  DOMÍNIO 11: RENTAL DE VEÍCULOS     │
+    %% │  Cor: #155e75 (Cyan) / #cffafe      │
+    %% └─────────────────────────────────────┘
+
+    rental_vehicles ||--o{ rental_contracts : "aluga"
+    rental_vehicles ||--o{ rental_maintenance : "manutenção"
+
+    rental_vehicles {
+        uuid id PK
+        uuid tenant_id FK
+        string vin_encrypted
+        string license_plate_encrypted
+        string make
+        string model
+        int year
+        string color
+        decimal daily_rate
+        decimal weekly_rate
+        decimal monthly_rate
+        enum status "available|rented|maintenance|retired"
+        int current_mileage
+        date next_maintenance_date
+        decimal total_revenue
+        decimal total_maintenance_cost
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    rental_contracts {
+        uuid id PK
+        uuid rental_vehicle_id FK
+        uuid customer_id FK
+        string contract_number
+        date start_date
+        date end_date
+        decimal daily_rate
+        decimal total_amount
+        decimal deposit_amount
+        enum status "active|completed|canceled"
+        enum billing_frequency "daily|weekly|monthly"
+        text terms_encrypted
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    rental_maintenance {
+        uuid id PK
+        uuid rental_vehicle_id FK
+        enum maintenance_type "oil_change|tires|brakes|inspection|repair|other"
+        string description
+        decimal cost
+        int mileage_at_service
+        date service_date
+        string service_provider
+        timestamp created_at
+    }
+
+    %% ┌─────────────────────────────────────┐
+    %% │  DOMÍNIO 12: AUDIT & COMPLIANCE      │
+    %% │  Cor: #334155 (Slate) / #f1f5f9     │
+    %% └─────────────────────────────────────┘
+
+    audit_logs {
+        uuid id PK
+        uuid tenant_id FK
+        uuid user_id FK
+        string entity_type
+        uuid entity_id
+        enum action "create|read|update|delete|login|logout|export|bulk_export|data_access|consent_change"
+        jsonb old_values_encrypted
+        jsonb new_values_encrypted
+        jsonb pii_fields_accessed
+        string ip_address
+        string user_agent
+        string request_id
+        timestamp created_at
+    }
+
+    notifications {
+        uuid id PK
+        uuid tenant_id FK
+        uuid user_id FK
+        enum channel "push|sms|whatsapp|email|in_app"
+        string title
+        text message
+        string action_url
+        boolean is_read
+        timestamp read_at
+        timestamp expires_at
+        timestamp created_at
+    }
+
+    data_subject_requests {
+        uuid id PK
+        uuid tenant_id FK
+        string requester_email_hash
+        enum request_type "access|rectification|deletion|portability|restrict_processing"
+        enum status "received|in_progress|completed|denied"
+        text request_details
+        text response_details
+        uuid processed_by FK
+        timestamp requested_at
+        timestamp due_date
+        timestamp completed_at
+        timestamp created_at
+    }
+
+    encryption_keys {
+        uuid id PK
+        uuid tenant_id FK
+        string key_alias
+        enum key_type "master|data|field"
+        enum status "active|rotating|retired"
+        string kms_key_arn
+        int key_version
+        timestamp rotated_at
+        timestamp expires_at
+        timestamp created_at
+    }
+
+    data_retention_policies {
+        uuid id PK
+        uuid tenant_id FK
+        string entity_type
+        int retention_days
+        enum action_after_expiry "anonymize|delete|archive"
+        boolean is_active
+        timestamp created_at
+    }

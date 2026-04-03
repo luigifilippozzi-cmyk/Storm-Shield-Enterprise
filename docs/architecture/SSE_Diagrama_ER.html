@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Storm Shield Enterprise — Diagrama ER</title>
+    <style>
+        :root {
+            --bg: #f5f7fa;
+            --header-bg: #1a2332;
+            --header-accent: #3b82f6;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --card-bg: #ffffff;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); }
+
+        /* HEADER */
+        .header {
+            background: var(--header-bg);
+            color: #f1f5f9;
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .header h1 { font-size: 20px; font-weight: 700; letter-spacing: 0.5px; color: #ffffff; }
+        .header .subtitle { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+        .header-right { text-align: right; }
+        .header-right .version { font-size: 13px; font-weight: 600; color: #e2e8f0; }
+
+        /* TOOLBAR */
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            padding: 10px 32px;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+            position: sticky; top: 56px; z-index: 99;
+        }
+        .toolbar button {
+            padding: 6px 14px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            color: var(--text);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.15s;
+        }
+        .toolbar button:hover { background: #f1f5f9; border-color: #94a3b8; }
+        .toolbar .sep { width: 1px; height: 24px; background: var(--border); margin: 0 4px; }
+        .toolbar .zoom-label { font-size: 11px; color: var(--text-muted); margin-left: auto; }
+
+        /* LEGEND */
+        .legend-bar {
+            display: flex;
+            gap: 6px;
+            padding: 8px 32px;
+            background: #f8fafc;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .legend-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        .legend-chip:hover { transform: translateY(-1px); box-shadow: 0 2px 6px rgba(0,0,0,0.12); }
+        .legend-chip.dimmed { opacity: 0.35; transform: none; box-shadow: none; }
+        .legend-chip .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+        .legend-label { font-size: 11px; color: var(--text-muted); margin-right: 6px; font-weight: 500; }
+
+        /* DIAGRAM */
+        #diagram-container {
+            width: 100%;
+            overflow: auto;
+            padding: 24px;
+            min-height: calc(100vh - 180px);
+            display: flex;
+            justify-content: center;
+            background: var(--bg);
+        }
+        #diagram-container svg { transition: transform 0.15s ease; }
+
+        /* FOOTER */
+        .footer {
+            padding: 10px 32px;
+            background: var(--header-bg);
+            color: #64748b;
+            font-size: 11px;
+            text-align: center;
+        }
+
+        /* DOMAIN COLORS — high contrast: dark text on pastel bg */
+        /* These get applied via JS post-render */
+
+        @media print {
+            .header, .toolbar, .legend-bar, .footer { display: none; }
+            #diagram-container { padding: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>STORM SHIELD ENTERPRISE</h1>
+            <div class="subtitle">Diagrama Entidade-Relacionamento — ERP Auto Repair — Missouri, EUA</div>
+        </div>
+        <div class="header-right">
+            <div class="version">Arquitetura de Banco de Dados v1.0</div>
+            <div class="subtitle">Multi-Tenant | LGPD/CCPA | Security by Design</div>
+        </div>
+    </div>
+
+    <div class="toolbar">
+        <button onclick="zoomIn()" title="Zoom In">＋ Zoom</button>
+        <button onclick="zoomOut()" title="Zoom Out">－ Zoom</button>
+        <button onclick="resetZoom()">100%</button>
+        <button onclick="fitToScreen()">Ajustar</button>
+        <div class="sep"></div>
+        <button onclick="toggleFullscreen()">Fullscreen</button>
+        <button onclick="downloadSVG()">SVG</button>
+        <button onclick="downloadPNG()">PNG</button>
+        <span class="zoom-label" id="zoom-info">Zoom: 100% · Ctrl+Scroll para zoom</span>
+    </div>
+
+    <div class="legend-bar">
+        <span class="legend-label">DOMÍNIOS:</span>
+        <span class="legend-chip" data-domain="platform" onclick="toggleDomain(this)">
+            <span class="dot" style="background:#1e3a8a"></span>Plataforma & IAM
+        </span>
+        <span class="legend-chip" data-domain="crm" onclick="toggleDomain(this)">
+            <span class="dot" style="background:#065f46"></span>CRM & Clientes
+        </span>
+        <span class="legend-chip" data-domain="insurance" onclick="toggleDomain(this)">
+            <span class="dot" style="background:#92400e"></span>Seguradoras
+        </span>
+        <span class="legend-chip" data-domain="vehicles" onclick="toggleDomain(this)">
+            <span class="dot" style="background:#065f46"></span>Veículos
+        </span>
+        <span class="legend-chip" data-domain="estimates" onclick="toggleDomain(this)">
+            <span class="dot" style="background:#5b21b6"></span>Orçamentos
+        </span>
+        <span class="legend-chip" data-domain="service" onclick="toggleDomain(this)">
+            <span class="dot" style="background:#1e40af"></span>Ordens de Serviço
+        </span>
+        <span class="legend-chip" data-domain="contractors" onclick="toggleDomain(this)">
+            <span class="dot" style="background:#991b1b"></span>Terceiros
+        </span>
+        <span class="legend-chip" data-domain="financial" onclick="toggleDomain(this)">
+            <span class="dot" style="background:#6b21a8"></span>Financeiro
+        </span>
+        <span class="legend-chip" data-domain="accounting" onclick="toggleDomain(this)">
+            <span class="dot" style="background:#4338ca"></span>Contabilidade (GL + FAM)
+        </span>
+        <span class="legend-chip" data-domain="inventory" onclick="toggleDomain(this)">
+            <span class="dot" style="background:#713f12"></span>Estoque & Marketing
+        </span>
+        <span class="legend-chip" data-domain="rental" onclick="toggleDomain(this)">
+            <span class="dot" style="background:#155e75"></span>Rental
+        </span>
+        <span class="legend-chip" data-domain="audit" onclick="toggleDomain(this)">
+            <span class="dot" style="background:#334155"></span>Audit & Compliance
+        </span>
+    </div>
+
+    <div id="diagram-container">
+        <pre class="mermaid" id="mermaid-diagram">
+erDiagram
+
+    %% ════════════════════════════════════════════════════════════════
+    %% FLUXO REORGANIZADO POR CADEIA DE VALOR DO NEGÓCIO
+    %% Plataforma → CRM → Seguradoras → Veículos → Orçamentos
+    %% → Ordens de Serviço → Terceiros → Financeiro → Contabilidade → Audit
+    %% ════════════════════════════════════════════════════════════════
+
+    %% ─── PLATAFORMA & IAM ───
+    tenants ||--o{ users : "possui"
+    tenants ||--o{ tenant_settings : "configura"
+    tenants ||--o{ api_keys : "gera"
+    tenants ||--o{ encryption_keys : "gerencia"
+    tenants ||--o{ data_retention_policies : "define"
+    tenants ||--o{ data_subject_requests : "recebe"
+    users ||--o{ user_sessions : "autentica"
+    users ||--o{ user_role_assignments : "assume"
+    users ||--o{ audit_logs : "gera"
+    users ||--o{ notifications : "recebe"
+    roles ||--o{ role_permissions : "contém"
+    roles ||--o{ user_role_assignments : "atribui"
+
+    tenants {
+        uuid id PK
+        string company_name
+        string ein_encrypted
+        string schema_name UK
+        enum subscription_plan
+        enum status
+        jsonb settings
+    }
+    users {
+        uuid id PK
+        uuid tenant_id FK
+        string email_encrypted
+        string email_hash UK
+        boolean mfa_enabled
+        enum status
+        timestamp last_login_at
+    }
+    roles {
+        uuid id PK
+        string name
+        boolean is_system_role
+    }
+    role_permissions {
+        uuid id PK
+        uuid role_id FK
+        string resource
+        enum action
+    }
+    user_role_assignments {
+        uuid id PK
+        uuid user_id FK
+        uuid role_id FK
+    }
+    user_sessions {
+        uuid id PK
+        uuid user_id FK
+        string session_token_hash
+        string ip_address
+        timestamp expires_at
+    }
+    tenant_settings {
+        uuid id PK
+        uuid tenant_id FK
+        string setting_key
+        text setting_value_encrypted
+        enum category
+    }
+    api_keys {
+        uuid id PK
+        uuid tenant_id FK
+        string name
+        string key_hash
+        jsonb scopes
+        timestamp expires_at
+    }
+
+    %% ─── CRM & CLIENTES ───
+    customers ||--o{ vehicles : "possui"
+    customers ||--o{ estimates : "solicita"
+    customers ||--o{ customer_interactions : "registra"
+    customers ||--o{ customer_consent_records : "consente"
+    customers ||--o{ rental_contracts : "aluga"
+
+    customers {
+        uuid id PK
+        uuid tenant_id FK
+        uuid salesperson_id FK
+        string name_encrypted
+        string email_encrypted
+        string phone_encrypted
+        enum status
+        enum source
+        boolean marketing_consent
+    }
+    customer_consent_records {
+        uuid id PK
+        uuid customer_id FK
+        enum consent_type
+        boolean consented
+        timestamp consented_at
+    }
+    customer_interactions {
+        uuid id PK
+        uuid customer_id FK
+        uuid user_id FK
+        enum type
+        text content_encrypted
+    }
+
+    %% ─── SEGURADORAS ───
+    insurance_companies ||--o{ estimates : "aprova"
+    insurance_companies ||--o{ insurance_payments : "paga"
+    insurance_companies ||--o{ insurance_contacts : "possui"
+
+    insurance_companies {
+        uuid id PK
+        uuid tenant_id FK
+        string name
+        boolean is_drp_partner
+        decimal avg_payment_days
+        enum preferred_payment
+    }
+    insurance_contacts {
+        uuid id PK
+        uuid insurance_company_id FK
+        string contact_name_encrypted
+        string role
+        boolean is_primary
+    }
+
+    %% ─── VEÍCULOS ───
+    vehicles ||--o{ service_orders : "recebe OS"
+    vehicles ||--o{ estimates : "orçamento"
+    vehicles ||--o{ vehicle_photos : "documenta"
+
+    vehicles {
+        uuid id PK
+        uuid customer_id FK
+        string vin_encrypted
+        string license_plate_encrypted
+        string make
+        string model
+        int year
+        enum damage_type
+        enum status
+    }
+    vehicle_photos {
+        uuid id PK
+        uuid vehicle_id FK
+        string file_url
+        enum stage
+    }
+
+    %% ─── ORÇAMENTOS (ESTIMATES) ───
+    estimates ||--o{ estimate_lines : "contém"
+    estimates ||--o{ estimate_supplements : "suplementa"
+    estimates ||--o{ estimate_documents : "anexa"
+    estimates ||--o{ commissions : "gera comissão"
+    estimates ||--o{ insurance_payments : "vincula pgto"
+
+    estimates {
+        uuid id PK
+        uuid tenant_id FK
+        uuid vehicle_id FK
+        uuid customer_id FK
+        uuid insurance_company_id FK
+        uuid salesperson_id FK
+        string estimate_number UK
+        enum status
+        decimal total_amount
+        decimal approved_amount
+        decimal sales_tax_amount
+        boolean direct_payment
+    }
+    estimate_lines {
+        uuid id PK
+        uuid estimate_id FK
+        enum line_type
+        decimal quantity
+        decimal unit_price
+        decimal total_price
+    }
+    estimate_supplements {
+        uuid id PK
+        uuid estimate_id FK
+        decimal additional_amount
+        enum status
+    }
+    estimate_documents {
+        uuid id PK
+        uuid estimate_id FK
+        string file_url
+        enum doc_type
+    }
+
+    %% ─── ORDENS DE SERVIÇO ───
+    service_orders ||--o{ so_tasks : "tarefas"
+    service_orders ||--o{ so_parts_used : "peças"
+    service_orders ||--o{ so_external_services : "terceiriza"
+    service_orders ||--o{ so_status_history : "histórico"
+
+    service_orders {
+        uuid id PK
+        uuid vehicle_id FK
+        uuid estimate_id FK
+        string so_number UK
+        enum status
+        decimal total_cost
+        decimal total_revenue
+        decimal profit_margin
+        date target_completion
+    }
+    so_tasks {
+        uuid id PK
+        uuid service_order_id FK
+        uuid assigned_to_user_id FK
+        uuid assigned_to_contractor_id FK
+        enum task_type
+        enum status
+        decimal estimated_hours
+        decimal actual_hours
+    }
+    so_parts_used {
+        uuid id PK
+        uuid service_order_id FK
+        uuid inventory_item_id FK
+        decimal quantity
+        decimal unit_cost
+        enum source
+    }
+    so_external_services {
+        uuid id PK
+        uuid service_order_id FK
+        uuid contractor_id FK
+        enum service_type
+        decimal cost
+        enum status
+    }
+    so_status_history {
+        uuid id PK
+        uuid service_order_id FK
+        enum old_status
+        enum new_status
+    }
+
+    %% ─── TERCEIROS / CONTRACTORS ───
+    contractors ||--o{ contractor_payments : "recebe pgto"
+    contractors ||--o{ so_tasks : "executa"
+    contractors ||--o{ so_external_services : "presta"
+    contractors ||--o{ contractor_1099s : "declara IR"
+
+    contractors {
+        uuid id PK
+        uuid tenant_id FK
+        string name_encrypted
+        string tax_id_encrypted
+        enum specialty
+        enum payment_model
+        decimal default_rate
+        boolean w9_on_file
+        decimal ytd_payments
+    }
+    contractor_payments {
+        uuid id PK
+        uuid contractor_id FK
+        uuid service_order_id FK
+        decimal amount
+        enum payment_method
+        boolean included_in_1099
+    }
+    contractor_1099s {
+        uuid id PK
+        uuid contractor_id FK
+        int tax_year
+        decimal total_paid
+        boolean form_generated
+    }
+
+    %% ─── FINANCEIRO ───
+    financial_transactions ||--o{ transaction_attachments : "anexa"
+    financial_transactions ||--o{ transaction_reconciliations : "reconcilia"
+    users ||--o{ commissions : "recebe"
+    bank_accounts ||--o{ bank_transactions : "registra"
+
+    financial_transactions {
+        uuid id PK
+        uuid tenant_id FK
+        uuid service_order_id FK
+        enum type
+        enum category
+        decimal amount
+        enum payment_method
+        date transaction_date
+        boolean is_reconciled
+        enum source
+    }
+    insurance_payments {
+        uuid id PK
+        uuid estimate_id FK
+        uuid insurance_company_id FK
+        decimal expected_amount
+        decimal received_amount
+        enum payment_method
+        enum status
+        string check_number
+        string tracking_number
+        string tracking_carrier
+        boolean sent_to_customer_home
+        int reminder_count
+    }
+    commissions {
+        uuid id PK
+        uuid salesperson_id FK
+        uuid estimate_id FK
+        enum commission_model
+        decimal calculated_amount
+        enum status
+    }
+    transaction_attachments {
+        uuid id PK
+        uuid transaction_id FK
+        string file_url
+        enum file_type
+    }
+    transaction_reconciliations {
+        uuid id PK
+        uuid financial_transaction_id FK
+        uuid bank_transaction_id FK
+        decimal matched_amount
+        enum match_type
+    }
+    bank_accounts {
+        uuid id PK
+        uuid tenant_id FK
+        string account_number_encrypted
+        string plaid_access_token_encrypted
+        decimal current_balance
+    }
+    bank_transactions {
+        uuid id PK
+        uuid bank_account_id FK
+        decimal amount
+        string merchant_name
+        date transaction_date
+        boolean is_reconciled
+    }
+    tax_records {
+        uuid id PK
+        uuid tenant_id FK
+        enum tax_type
+        string jurisdiction
+        decimal tax_rate
+        decimal tax_collected
+        enum filing_status
+    }
+
+    %% ─── EXPORTAÇÃO CONTÁBIL (QB / XERO) ───
+    external_exports ||--o{ external_account_mappings : "mapeia"
+
+    external_exports {
+        uuid id PK
+        uuid tenant_id FK
+        uuid fiscal_period_id FK
+        enum export_type
+        enum status
+        string file_url
+        enum file_format
+    }
+    external_account_mappings {
+        uuid id PK
+        uuid account_id FK
+        enum external_system
+        string external_account_id
+    }
+
+    %% ─── CONTABILIDADE / GENERAL LEDGER + FAM ───
+    chart_of_accounts ||--o{ journal_entry_lines : "debita/credita"
+    chart_of_accounts ||--o{ account_balances : "consolida"
+    chart_of_accounts ||--o{ chart_of_accounts : "subconta"
+    journal_entries ||--o{ journal_entry_lines : "contém"
+    fiscal_periods ||--o{ account_balances : "período"
+    fiscal_periods ||--o{ journal_entries : "registra em"
+    financial_transactions ||--o{ journal_entries : "gera lançamento"
+    asset_categories ||--o{ fixed_assets : "categoriza"
+    asset_categories }o--|| chart_of_accounts : "conta ativo"
+    fixed_assets ||--o{ depreciation_schedules : "agenda"
+    fixed_assets ||--o{ depreciation_entries : "deprecia"
+    fixed_assets ||--o{ asset_disposals : "descarta"
+    depreciation_entries }o--|| journal_entries : "gera JE"
+    asset_disposals }o--|| journal_entries : "gera JE"
+
+    chart_of_accounts {
+        uuid id PK
+        uuid tenant_id FK
+        uuid parent_account_id FK
+        string account_code UK
+        string account_name
+        enum account_type
+        enum account_subtype
+        enum normal_balance
+        int level
+        boolean is_header
+        boolean is_system_account
+        boolean accepts_entries
+        string tax_code
+    }
+    journal_entries {
+        uuid id PK
+        uuid tenant_id FK
+        uuid fiscal_period_id FK
+        uuid source_transaction_id FK
+        string entry_number UK
+        date entry_date
+        enum entry_type
+        enum source
+        string description
+        decimal total_debit
+        decimal total_credit
+        boolean is_balanced
+        enum status
+    }
+    journal_entry_lines {
+        uuid id PK
+        uuid journal_entry_id FK
+        uuid account_id FK
+        decimal debit_amount
+        decimal credit_amount
+        string memo
+        string cost_center_type
+        uuid cost_center_id FK
+    }
+    fiscal_periods {
+        uuid id PK
+        uuid tenant_id FK
+        string period_name
+        enum period_type
+        date start_date
+        date end_date
+        enum status
+    }
+    account_balances {
+        uuid id PK
+        uuid tenant_id FK
+        uuid account_id FK
+        uuid fiscal_period_id FK
+        decimal opening_balance_debit
+        decimal opening_balance_credit
+        decimal period_debit
+        decimal period_credit
+        decimal closing_balance_debit
+        decimal closing_balance_credit
+    }
+
+    asset_categories {
+        uuid id PK
+        uuid tenant_id FK
+        string category_name
+        uuid asset_account_id FK
+        uuid depreciation_account_id FK
+        uuid expense_account_id FK
+        uuid gain_loss_account_id FK
+        enum default_depreciation_method
+        int default_useful_life_months
+        decimal default_salvage_pct
+    }
+    fixed_assets {
+        uuid id PK
+        uuid tenant_id FK
+        uuid category_id FK
+        string asset_tag UK
+        string asset_name
+        enum status
+        date acquisition_date
+        decimal acquisition_cost
+        decimal salvage_value
+        enum depreciation_method
+        int useful_life_months
+        decimal accumulated_depreciation
+        decimal net_book_value
+        date last_depreciation_date
+    }
+    depreciation_schedules {
+        uuid id PK
+        uuid fixed_asset_id FK
+        int period_number
+        date period_start
+        date period_end
+        decimal depreciation_amount
+        decimal accumulated_amount
+        decimal remaining_value
+        enum status
+        uuid journal_entry_id FK
+    }
+    depreciation_entries {
+        uuid id PK
+        uuid tenant_id FK
+        uuid fixed_asset_id FK
+        uuid fiscal_period_id FK
+        date entry_date
+        decimal depreciation_amount
+        decimal net_book_value
+        uuid journal_entry_id FK
+        enum entry_type
+    }
+    asset_disposals {
+        uuid id PK
+        uuid tenant_id FK
+        uuid fixed_asset_id FK
+        enum disposal_type
+        date disposal_date
+        decimal disposal_proceeds
+        decimal net_book_value_at_disposal
+        decimal gain_loss
+        uuid journal_entry_id FK
+        string reason
+    }
+
+    %% ─── ESTOQUE ───
+    inventory_items ||--o{ inventory_movements : "movimenta"
+    inventory_items ||--o{ purchase_orders : "solicita PO"
+
+    inventory_items {
+        uuid id PK
+        uuid tenant_id FK
+        string sku UK
+        string name
+        enum category
+        decimal current_quantity
+        decimal minimum_quantity
+        decimal unit_cost
+    }
+    inventory_movements {
+        uuid id PK
+        uuid inventory_item_id FK
+        uuid service_order_id FK
+        enum movement_type
+        decimal quantity
+    }
+    purchase_orders {
+        uuid id PK
+        uuid inventory_item_id FK
+        string po_number UK
+        string supplier_name
+        enum status
+        decimal total_cost
+    }
+
+    %% ─── RENTAL ───
+    rental_vehicles ||--o{ rental_contracts : "aluga"
+    rental_vehicles ||--o{ rental_maintenance : "manutenção"
+
+    rental_vehicles {
+        uuid id PK
+        uuid tenant_id FK
+        string vin_encrypted
+        string make
+        string model
+        decimal daily_rate
+        enum status
+    }
+    rental_contracts {
+        uuid id PK
+        uuid rental_vehicle_id FK
+        uuid customer_id FK
+        date start_date
+        date end_date
+        decimal total_amount
+        enum status
+    }
+    rental_maintenance {
+        uuid id PK
+        uuid rental_vehicle_id FK
+        enum maintenance_type
+        decimal cost
+        date service_date
+    }
+
+    %% ─── MARKETING ───
+    marketing_campaigns ||--o{ marketing_expenses : "gera"
+
+    marketing_campaigns {
+        uuid id PK
+        uuid tenant_id FK
+        string name
+        enum type
+        decimal budget
+        int leads_generated
+    }
+    marketing_expenses {
+        uuid id PK
+        uuid campaign_id FK
+        decimal amount
+        date expense_date
+    }
+
+    %% ─── AUDIT & COMPLIANCE ───
+    audit_logs {
+        uuid id PK
+        uuid tenant_id FK
+        uuid user_id FK
+        string entity_type
+        uuid entity_id
+        enum action
+        jsonb old_values_encrypted
+        jsonb new_values_encrypted
+        string ip_address
+        timestamp created_at
+    }
+    notifications {
+        uuid id PK
+        uuid user_id FK
+        enum channel
+        string title
+        boolean is_read
+    }
+    encryption_keys {
+        uuid id PK
+        uuid tenant_id FK
+        string key_alias
+        enum key_type
+        enum status
+        string kms_key_arn
+    }
+    data_retention_policies {
+        uuid id PK
+        uuid tenant_id FK
+        string entity_type
+        int retention_days
+        enum action_after_expiry
+    }
+    data_subject_requests {
+        uuid id PK
+        uuid tenant_id FK
+        enum request_type
+        enum status
+        timestamp requested_at
+    }
+        </pre>
+    </div>
+    <div class="footer">
+        Storm Shield Enterprise &copy; 2026 — Diagrama ER v2.0 — 12 Dom\u00ednios | 60+ Entidades | Contabilidade (GL + FAM) + LGPD/CCPA Compliant
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
+    <script>
+    /* ─── DOMAIN → ENTITY MAPPING ─── */
+    const DOMAINS = {
+        platform: {
+            color: '#1e3a8a', bg: '#dbeafe', border: '#93c5fd', headerText: '#ffffff',
+            entities: ['tenants','users','roles','role_permissions','user_role_assignments','user_sessions','tenant_settings','api_keys']
+        },
+        crm: {
+            color: '#065f46', bg: '#ccfbf1', border: '#5eead4', headerText: '#ffffff',
+            entities: ['customers','customer_consent_records','customer_interactions']
+        },
+        insurance: {
+            color: '#92400e', bg: '#fef3c7', border: '#fcd34d', headerText: '#ffffff',
+            entities: ['insurance_companies','insurance_contacts']
+        },
+        vehicles: {
+            color: '#065f46', bg: '#d1fae5', border: '#6ee7b7', headerText: '#ffffff',
+            entities: ['vehicles','vehicle_photos']
+        },
+        estimates: {
+            color: '#5b21b6', bg: '#ede9fe', border: '#c4b5fd', headerText: '#ffffff',
+            entities: ['estimates','estimate_lines','estimate_supplements','estimate_documents']
+        },
+        service: {
+            color: '#1e40af', bg: '#e0e7ff', border: '#93c5fd', headerText: '#ffffff',
+            entities: ['service_orders','so_tasks','so_parts_used','so_external_services','so_status_history']
+        },
+        contractors: {
+            color: '#991b1b', bg: '#fee2e2', border: '#fca5a5', headerText: '#ffffff',
+            entities: ['contractors','contractor_payments','contractor_1099s']
+        },
+        financial: {
+            color: '#6b21a8', bg: '#f3e8ff', border: '#d8b4fe', headerText: '#ffffff',
+            entities: ['financial_transactions','insurance_payments','commissions','transaction_attachments','transaction_reconciliations','bank_accounts','bank_transactions','tax_records','external_exports','external_account_mappings']
+        },
+        accounting: {
+            color: '#4338ca', bg: '#e0e7ff', border: '#a5b4fc', headerText: '#ffffff',
+            entities: ['chart_of_accounts','journal_entries','journal_entry_lines','fiscal_periods','account_balances','asset_categories','fixed_assets','depreciation_schedules','depreciation_entries','asset_disposals']
+        },
+        inventory: {
+            color: '#713f12', bg: '#fef9c3', border: '#fde047', headerText: '#ffffff',
+            entities: ['inventory_items','inventory_movements','purchase_orders','marketing_campaigns','marketing_expenses']
+        },
+        rental: {
+            color: '#155e75', bg: '#cffafe', border: '#67e8f9', headerText: '#ffffff',
+            entities: ['rental_vehicles','rental_contracts','rental_maintenance']
+        },
+        audit: {
+            color: '#334155', bg: '#f1f5f9', border: '#cbd5e1', headerText: '#ffffff',
+            entities: ['audit_logs','notifications','encryption_keys','data_retention_policies','data_subject_requests']
+        }
+    };
+
+    /* Build reverse map: entity_name → domain_key */
+    const entityDomain = {};
+    for (const [dk, dv] of Object.entries(DOMAINS)) {
+        for (const e of dv.entities) entityDomain[e] = dk;
+    }
+
+    /* ─── MERMAID INIT ─── */
+    mermaid.initialize({
+        startOnLoad: true,
+        theme: 'base',
+        themeVariables: {
+            primaryColor: '#ffffff',
+            primaryTextColor: '#1e293b',
+            primaryBorderColor: '#cbd5e1',
+            lineColor: '#94a3b8',
+            secondaryColor: '#f8fafc',
+            tertiaryColor: '#f1f5f9',
+            fontFamily: '"Segoe UI", system-ui, sans-serif',
+            fontSize: '12px'
+        },
+        er: {
+            layoutDirection: 'TB',
+            minEntityWidth: 180,
+            minEntityHeight: 60,
+            entityPadding: 12,
+            useMaxWidth: false
+        }
+    });
+
+    /* ─── POST-RENDER: COLORIZE ENTITIES ─── */
+    const observer = new MutationObserver(() => {
+        const svg = document.querySelector('#diagram-container svg');
+        if (!svg) return;
+        observer.disconnect();
+        setTimeout(() => colorizeEntities(svg), 300);
+    });
+    observer.observe(document.getElementById('diagram-container'), { childList: true, subtree: true });
+
+    function colorizeEntities(svg) {
+        /* Each entity in Mermaid ER is a <g> with an <text> containing the entity name
+           and a <rect> as background. We find them by text content. */
+        const allGroups = svg.querySelectorAll('g.entityBox, g[id*="entity"]');
+
+        /* Fallback: walk all <text> elements and find entity names */
+        const textEls = svg.querySelectorAll('text');
+        const processed = new Set();
+
+        textEls.forEach(t => {
+            const name = t.textContent.trim().toLowerCase().replace(/\s+/g,'_');
+            const domain = entityDomain[name];
+            if (!domain || processed.has(name)) return;
+            processed.add(name);
+
+            const d = DOMAINS[domain];
+            const parentG = t.closest('g');
+            if (!parentG) return;
+
+            /* Color the entity rect */
+            const rects = parentG.querySelectorAll('rect');
+            rects.forEach(r => {
+                r.setAttribute('fill', d.bg);
+                r.setAttribute('stroke', d.color);
+                r.setAttribute('stroke-width', '2');
+            });
+
+            /* Find the header rect (first rect) and make it the domain color */
+            if (rects.length > 0) {
+                rects[0].setAttribute('fill', d.color);
+                rects[0].setAttribute('stroke', d.color);
+            }
+
+            /* Color all text: entity title = white on dark header, fields = dark on pastel */
+            const texts = parentG.querySelectorAll('text');
+            texts.forEach((tx, i) => {
+                if (i === 0) {
+                    tx.setAttribute('fill', d.headerText || '#ffffff');
+                    tx.style.fontWeight = '700';
+                    tx.style.fontSize = '13px';
+                    tx.style.letterSpacing = '0.3px';
+                } else {
+                    tx.setAttribute('fill', '#1e293b');
+                    tx.style.fontSize = '11px';
+                }
+            });
+
+            /* Store domain as data attr for filtering */
+            parentG.setAttribute('data-domain', domain);
+        });
+
+        /* Also color relationship lines */
+        svg.querySelectorAll('path, line').forEach(p => {
+            if (p.getAttribute('stroke')) {
+                p.setAttribute('stroke', '#94a3b8');
+                p.setAttribute('stroke-width', '1.5');
+            }
+        });
+
+        /* Make markers (arrows) visible */
+        svg.querySelectorAll('marker path').forEach(p => {
+            p.setAttribute('fill', '#94a3b8');
+        });
+    }
+
+    /* ─── DOMAIN FILTER TOGGLE ─── */
+    const dimmedDomains = new Set();
+
+    function toggleDomain(chip) {
+        const domain = chip.dataset.domain;
+        if (dimmedDomains.has(domain)) {
+            dimmedDomains.delete(domain);
+            chip.classList.remove('dimmed');
+        } else {
+            dimmedDomains.add(domain);
+            chip.classList.add('dimmed');
+        }
+        applyDomainFilter();
+    }
+
+    function applyDomainFilter() {
+        const svg = document.querySelector('#diagram-container svg');
+        if (!svg) return;
+        svg.querySelectorAll('g[data-domain]').forEach(g => {
+            const d = g.getAttribute('data-domain');
+            g.style.opacity = dimmedDomains.has(d) ? '0.1' : '1';
+            g.style.transition = 'opacity 0.3s';
+        });
+    }
+
+    /* ─── ZOOM CONTROLS ─── */
+    let currentZoom = 1;
+    const container = document.getElementById('diagram-container');
+
+    container.addEventListener('wheel', function(e) {
+        if (e.ctrlKey) {
+            e.preventDefault();
+            e.deltaY < 0 ? zoomIn() : zoomOut();
+        }
+    }, { passive: false });
+
+    function setZoom(z) {
+        currentZoom = Math.max(0.1, Math.min(4, z));
+        const svg = container.querySelector('svg');
+        if (svg) {
+            svg.style.transform = `scale(${currentZoom})`;
+            svg.style.transformOrigin = 'top center';
+        }
+        document.getElementById('zoom-info').textContent = `Zoom: ${Math.round(currentZoom * 100)}%`;
+    }
+    function zoomIn() { setZoom(currentZoom + 0.15); }
+    function zoomOut() { setZoom(currentZoom - 0.15); }
+    function resetZoom() { setZoom(1); }
+    function fitToScreen() {
+        const svg = container.querySelector('svg');
+        if (svg) {
+            const bbox = svg.getBBox ? svg.getBBox() : { width: svg.scrollWidth };
+            const ratio = container.clientWidth / (bbox.width || svg.scrollWidth || 1200);
+            setZoom(Math.min(ratio * 0.85, 1.5));
+        }
+    }
+    function toggleFullscreen() {
+        if (!document.fullscreenElement) container.requestFullscreen();
+        else document.exitFullscreen();
+    }
+
+    /* ─── DOWNLOAD ─── */
+    function downloadSVG() {
+        const svg = container.querySelector('svg');
+        if (!svg) return;
+        const clone = svg.cloneNode(true);
+        clone.style.transform = '';
+        const blob = new Blob([clone.outerHTML], { type: 'image/svg+xml' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'SSE_Diagrama_ER.svg';
+        a.click();
+        URL.revokeObjectURL(a.href);
+    }
+    function downloadPNG() {
+        const svg = container.querySelector('svg');
+        if (!svg) return;
+        const clone = svg.cloneNode(true);
+        clone.style.transform = '';
+        const svgData = new XMLSerializer().serializeToString(clone);
+        const img = new Image();
+        img.onload = function() {
+            const scale = 2;
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            const ctx = canvas.getContext('2d');
+            ctx.scale(scale, scale);
+            ctx.fillStyle = '#f5f7fa';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0);
+            const a = document.createElement('a');
+            a.href = canvas.toDataURL('image/png');
+            a.download = 'SSE_Diagrama_ER.png';
+            a.click();
+        };
+        img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+    }
+    </script>
+</body>
+</html>
