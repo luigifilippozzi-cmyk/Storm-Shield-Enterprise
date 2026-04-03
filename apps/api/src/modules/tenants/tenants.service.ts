@@ -1,11 +1,11 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { Knex } from 'knex';
-import { KNEX_CONNECTION } from '../../config/database.module';
+import { KNEX_ADMIN_CONNECTION } from '../../config/database.module';
 import { generateId } from '@sse/shared-utils';
 
 @Injectable()
 export class TenantsService {
-  constructor(@Inject(KNEX_CONNECTION) private readonly knex: Knex) {}
+  constructor(@Inject(KNEX_ADMIN_CONNECTION) private readonly knex: Knex) {}
 
   async create(data: any) {
     const id = generateId();

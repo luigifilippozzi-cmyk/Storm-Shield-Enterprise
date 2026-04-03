@@ -1,25 +1,27 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { Knex } from 'knex';
-import { KNEX_CONNECTION } from '../../config/database.module';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { TenantDatabaseService } from '../../config/tenant-database.service';
 import { generateId } from '@sse/shared-utils';
 
 @Injectable()
 export class CustomersService {
-  constructor(@Inject(KNEX_CONNECTION) private readonly knex: Knex) {}
+  constructor(private readonly tenantDb: TenantDatabaseService) {}
 
   async findAll(tenantId: string, _query: any) {
-    return this.knex('customers').where({ tenant_id: tenantId, deleted_at: null });
+    const knex = await this.tenantDb.getConnection();
+    return knex('customers').where({ tenant_id: tenantId, deleted_at: null });
   }
 
   async create(tenantId: string, data: any) {
-    const [record] = await this.knex('customers')
+    const knex = await this.tenantDb.getConnection();
+    const [record] = await knex('customers')
       .insert({ id: generateId(), tenant_id: tenantId, ...data })
       .returning('*');
     return record;
   }
 
   async findOne(tenantId: string, id: string) {
-    const record = await this.knex('customers')
+    const knex = await this.tenantDb.getConnection();
+    const record = await knex('customers')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .first();
     if (!record) throw new NotFoundException('Customer not found');
@@ -27,7 +29,8 @@ export class CustomersService {
   }
 
   async update(tenantId: string, id: string, data: any) {
-    const [record] = await this.knex('customers')
+    const knex = await this.tenantDb.getConnection();
+    const [record] = await knex('customers')
       .where({ id, tenant_id: tenantId })
       .update({ ...data, updated_at: new Date() })
       .returning('*');
@@ -36,7 +39,8 @@ export class CustomersService {
   }
 
   async remove(tenantId: string, id: string) {
-    await this.knex('customers')
+    const knex = await this.tenantDb.getConnection();
+    await knex('customers')
       .where({ id, tenant_id: tenantId })
       .update({ deleted_at: new Date() });
     return { deleted: true };

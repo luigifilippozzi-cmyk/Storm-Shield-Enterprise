@@ -51,3 +51,4 @@ docs/Leading Practices*
 # Misc
 *.tsbuildinfo
 .eslintcache
+.claude/

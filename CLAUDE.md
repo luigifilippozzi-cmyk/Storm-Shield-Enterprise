@@ -22,6 +22,23 @@
 - Target: 500+ tenants simultâneos na fase inicial
 - Billing via Stripe (free → starter → pro → enterprise)
 
+### SaaS Hardening — 3 Camadas de Isolamento
+1. **Schema Isolation**: Cada tenant tem schema PostgreSQL próprio. O `TenantDatabaseService` seta `SET search_path TO "tenant_xxx", public` por request.
+2. **Row Level Security (RLS)**: Policies em todas as tabelas com `tenant_id`. A sessão DB carrega `app.current_tenant_id` via `SET app.current_tenant_id`. Mesmo que código esqueça `WHERE tenant_id`, RLS bloqueia acesso cross-tenant.
+3. **Dual DB Users**: `sse_app` (runtime, sujeito a RLS) e `sse_user` (admin, bypassa RLS para migrations/provisioning).
+
+### Subscription Plan Enforcement
+- **4 planos**: free, starter, pro, enterprise
+- **Feature gating**: `PlanGuard` + `@RequirePlanFeature('module')` bloqueia acesso a módulos fora do plano
+- **Resource limits**: `PlanLimitsInterceptor` verifica contagem de recursos em POST (ex: free = 50 customers)
+- **Limites por plano**:
+  | Resource | Free | Starter | Pro | Enterprise |
+  |---|---|---|---|---|
+  | Customers | 50 | 500 | ∞ | ∞ |
+  | Users | 3 | 10 | 50 | ∞ |
+  | Storage | 500MB | 5GB | 50GB | ∞ |
+  | Modules | 5 básicos | +insurance,reports | +accounting,FAM | Todos |
+
 ---
 
 ## 2. Stack Tecnológico (Definido)
@@ -443,12 +460,19 @@ storm-shield-enterprise/
 
 ### Banco de Dados
 - Todas as queries scoped por `tenant_id` (Row Level Security habilitado)
+- **3 camadas de isolamento**: schema per tenant + RLS policies + dual DB users
+- **TenantDatabaseService**: injetar em services (NÃO usar KNEX_CONNECTION direto para dados de tenant)
+- **KNEX_ADMIN_CONNECTION**: apenas para migrations, provisioning, operações cross-tenant
 - Migrations versionadas e idempotentes
 - Sem `CASCADE DELETE` em tabelas financeiras/contábeis
 - Indexes documentados com justificativa
 - DECIMAL(14,2) para valores monetários (nunca FLOAT)
 
 ### Segurança
+- **Tenant Isolation**: Schema isolation + RLS + session variable `app.current_tenant_id`
+- **Dual DB Users**: `sse_app` (RLS enforced) para runtime, `sse_user` (admin) para migrations
+- **Plan Enforcement**: `PlanGuard` para feature gating, `PlanLimitsInterceptor` para resource limits
+- **Tenant Status Check**: Middleware bloqueia requests de tenants suspended/cancelled
 - AES-256-GCM para campos sensíveis (SSN, EIN, bank accounts)
 - Envelope encryption: DEK por tenant, MEK em AWS KMS
 - Rate limiting por tenant (Kong/API Gateway)
@@ -473,7 +497,18 @@ Os seguintes arquivos de referência estão na pasta `docs/architecture/`:
 | `sql/002_fam_seed_data.sql` | Seed data: contas GL + 6 categorias de ativos |
 | `sql/003_fam_depreciation_functions.sql` | Funções PL/pgSQL: cálculo depreciação, auto-JE, batch, disposal |
 
-**IMPORTANTE:** O arquivo `Leading Practices_Brazil_Financials First_PRM_PT-BR.docx` é documento de REFERÊNCIA Oracle/NetSuite e NÃO deve ser modificado.
+**IMPORTANTE:** O arquivo `Leading Practices_Brazil_Financials First_PRM_PT-BR.docx` é documento de REFERÊNCIA Oracle/NetSuite e NÃO deve ser modificado. Este arquivo é confidencial e está no `.gitignore` — nunca commitá-lo.
+
+### Migrations Ativas (apps/api/src/database/migrations/)
+
+| Migration | Descrição |
+|---|---|
+| `000_create_public_schema.sql` | Tabela `tenants`, `api_keys`, trigger `update_updated_at` |
+| `001_platform_iam.sql` | Users, roles, permissions, sessions, tenant_settings |
+| `002_crm_insurance_vehicles.sql` | Customers, insurance_companies, vehicles, photos |
+| `003_estimates_service_orders.sql` | Estimates, service_orders, tasks, time_entries, parts |
+| `004_financial.sql` | Transactions, insurance_payments, contractors, bank_accounts, audit_logs |
+| `005_row_level_security.sql` | RLS policies em todas as tabelas, role `sse_app`, função `current_tenant_id()` |
 
 ---
 
@@ -556,3 +591,7 @@ docker build -f infra/docker/api.Dockerfile -t sse-api .
 8. **Nunca** commitar secrets (.env, chaves, tokens)
 9. **Sempre** usar Conventional Commits
 10. **Nunca** modificar o documento Leading Practices de referência
+11. **Sempre** usar `TenantDatabaseService` para acesso a dados de tenant (NUNCA injetar `KNEX_CONNECTION` direto em services tenant-scoped)
+12. **Sempre** usar `KNEX_ADMIN_CONNECTION` apenas para migrations, provisioning e operações cross-tenant
+13. **Sempre** adicionar RLS policy ao criar novas tabelas com `tenant_id`
+14. **Sempre** considerar plan enforcement ao adicionar novos módulos (`@RequirePlanFeature` + atualizar `PLAN_FEATURES`)
