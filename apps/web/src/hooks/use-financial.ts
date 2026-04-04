@@ -68,7 +68,7 @@ export function useTransactions(filters: TransactionFilters = {}) {
     queryKey: ['financial', 'transactions', filters],
     queryFn: async () => {
       const { token } = await getHeaders();
-      return api<PaginatedTransactions>(`/financial${qs ? `?${qs}` : ''}`, { token });
+      return api<PaginatedTransactions>(`/financial/transactions${qs ? `?${qs}` : ''}`, { token });
     },
   });
 }
@@ -79,7 +79,7 @@ export function useTransaction(id: string) {
     queryKey: ['financial', 'transactions', id],
     queryFn: async () => {
       const { token } = await getHeaders();
-      return api<FinancialTransaction>(`/financial/${id}`, { token });
+      return api<FinancialTransaction>(`/financial/transactions/${id}`, { token });
     },
     enabled: !!id,
   });
@@ -91,7 +91,7 @@ export function useCreateTransaction() {
   return useMutation({
     mutationFn: async (data: CreateTransactionInput) => {
       const { token } = await getHeaders();
-      return api<FinancialTransaction>('/financial', { method: 'POST', body: JSON.stringify(data), token });
+      return api<FinancialTransaction>('/financial/transactions', { method: 'POST', body: JSON.stringify(data), token });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['financial'] });
@@ -105,7 +105,7 @@ export function useDeleteTransaction() {
   return useMutation({
     mutationFn: async (id: string) => {
       const { token } = await getHeaders();
-      return api<void>(`/financial/${id}`, { method: 'DELETE', token });
+      return api<void>(`/financial/transactions/${id}`, { method: 'DELETE', token });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['financial'] });
