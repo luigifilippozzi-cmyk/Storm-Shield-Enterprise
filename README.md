@@ -31,7 +31,7 @@ Subscription plan enforcement via `PlanGuard` (feature gating) + `PlanLimitsInte
 ```
 storm-shield-enterprise/
 ├── apps/
-│   ├── api/              # NestJS backend (9 domain modules)
+│   ├── api/              # NestJS backend (15 domain modules)
 │   ├── web/              # Next.js frontend
 │   └── mobile/           # React Native (Phase 5)
 ├── packages/
@@ -55,22 +55,24 @@ storm-shield-enterprise/
 - [x] PostgreSQL migrations (000–005): public schema, IAM, CRM, estimates, financial, RLS
 - [x] Seed data: roles/permissions, chart of accounts (US GAAP), asset categories
 - [x] Tenant provisioning CLI script
-- [x] Customer CRUD — full service with pagination, search (ILIKE), filters, sort whitelist
-- [x] Customer DTOs with class-validator + Swagger annotations
-- [x] 9 domain modules scaffolded (tenants, auth, users, customers, insurance, vehicles, estimates, service-orders, financial)
+- [x] 15 domain modules (tenants, auth, users, customers, insurance, vehicles, estimates, service-orders, financial, accounting, fixed-assets, contractors, inventory, rental, notifications)
+- [x] Full DTOs with class-validator + Swagger annotations for all modules
+- [x] Pagination, search (ILIKE), filters, sort whitelist across all CRUD endpoints
+- [x] Status workflow endpoints for estimates and service orders
 
-### Frontend (Next.js)
+### Frontend (Next.js) — 8 Full CRUD Modules
 - [x] App Router with Clerk auth middleware
 - [x] Dashboard layout (sidebar + header)
-- [x] Customer list page — data table with search, type/source filters, sortable columns, pagination
-- [x] Customer create/edit form — full validation, US states, all fields
-- [x] Customer detail page — organized sections with edit/delete actions
-- [x] React Query hooks for all customer CRUD operations
 - [x] Reusable UI components (Button, Input, Select, Label, Textarea, Badge)
-- [ ] Vehicles CRUD
-- [ ] Estimates CRUD
-- [ ] Service Orders CRUD
-- [ ] Financial dashboard
+- [x] React Query hooks for all modules (CRUD + status transitions)
+- [x] **Customers** — list (search, type/source filters, sort, pagination), create/edit forms, detail page
+- [x] **Vehicles** — list (search, sort by year/created, condition badges), create/edit forms, detail page
+- [x] **Estimates** — list (status filter, color-coded badges), create with dynamic line items, detail with status workflow actions
+- [x] **Service Orders** — list (7-status filter), create/edit, detail with status workflow timeline
+- [x] **Financial** — summary cards (real API data), transaction list with inline create, type/category filters
+- [x] **Insurance** — list (DRP filter), create/edit, detail with payment terms
+- [x] **Dashboard** — real-time metrics (customers, open estimates, active SOs, monthly revenue), quick actions
+- [x] **Settings** — Clerk account/org info, system version display
 
 ### Infrastructure
 - [x] Docker Compose (PostgreSQL 16 + Redis 7 + n8n)
