@@ -1,6 +1,12 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Controller, Get, Post, Put, Delete,
+  Body, Param, Query, UseGuards, ParseUUIDPipe,
+} from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CustomersService } from './customers.service';
+import { CreateCustomerDto } from './dto/create-customer.dto';
+import { UpdateCustomerDto } from './dto/update-customer.dto';
+import { QueryCustomerDto } from './dto/query-customer.dto';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { TenantGuard } from '../../common/guards/tenant.guard';
 import { RbacGuard } from '../../common/guards/rbac.guard';
@@ -15,32 +21,53 @@ export class CustomersController {
   constructor(private readonly customersService: CustomersService) {}
 
   @Get()
+  @ApiOperation({ summary: 'List customers with pagination and search' })
+  @ApiResponse({ status: 200, description: 'Paginated customer list' })
   @RequirePermissions('customers:read:list')
-  findAll(@CurrentTenant() tenantId: string, @Query() query: any) {
+  findAll(@CurrentTenant() tenantId: string, @Query() query: QueryCustomerDto) {
     return this.customersService.findAll(tenantId, query);
   }
 
   @Post()
+  @ApiOperation({ summary: 'Create a new customer' })
+  @ApiResponse({ status: 201, description: 'Customer created' })
   @RequirePermissions('customers:write:create')
-  create(@CurrentTenant() tenantId: string, @Body() body: any) {
-    return this.customersService.create(tenantId, body);
+  create(@CurrentTenant() tenantId: string, @Body() dto: CreateCustomerDto) {
+    return this.customersService.create(tenantId, dto);
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Get customer by ID' })
+  @ApiResponse({ status: 200, description: 'Customer found' })
+  @ApiResponse({ status: 404, description: 'Customer not found' })
   @RequirePermissions('customers:read:detail')
-  findOne(@CurrentTenant() tenantId: string, @Param('id') id: string) {
+  findOne(
+    @CurrentTenant() tenantId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
     return this.customersService.findOne(tenantId, id);
   }
 
   @Put(':id')
+  @ApiOperation({ summary: 'Update customer' })
+  @ApiResponse({ status: 200, description: 'Customer updated' })
   @RequirePermissions('customers:write:update')
-  update(@CurrentTenant() tenantId: string, @Param('id') id: string, @Body() body: any) {
-    return this.customersService.update(tenantId, id, body);
+  update(
+    @CurrentTenant() tenantId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateCustomerDto,
+  ) {
+    return this.customersService.update(tenantId, id, dto);
   }
 
   @Delete(':id')
+  @ApiOperation({ summary: 'Soft delete customer' })
+  @ApiResponse({ status: 200, description: 'Customer deleted' })
   @RequirePermissions('customers:write:delete')
-  remove(@CurrentTenant() tenantId: string, @Param('id') id: string) {
+  remove(
+    @CurrentTenant() tenantId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
     return this.customersService.remove(tenantId, id);
   }
 }
