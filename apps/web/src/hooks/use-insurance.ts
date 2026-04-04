@@ -3,22 +3,21 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@clerk/nextjs';
 import { api } from '@/lib/api';
-import type { Vehicle } from '@sse/shared-types';
+import type { InsuranceCompany } from '@sse/shared-types';
 
 // ── Types ──
 
-export interface VehicleFilters {
+export interface InsuranceCompanyFilters {
   search?: string;
-  condition?: string;
-  customer_id?: string;
+  is_drp?: boolean;
   page?: number;
   limit?: number;
   sort_by?: string;
   sort_order?: 'asc' | 'desc';
 }
 
-export interface PaginatedVehicles {
-  data: Vehicle[];
+export interface PaginatedInsuranceCompanies {
+  data: InsuranceCompany[];
   meta: {
     total: number;
     page: number;
@@ -27,24 +26,18 @@ export interface PaginatedVehicles {
   };
 }
 
-export interface CreateVehicleInput {
-  customer_id: string;
-  vin?: string;
-  year: number;
-  make: string;
-  model: string;
-  trim?: string;
-  color?: string;
-  mileage?: number;
-  condition?: string;
-  license_plate?: string;
-  license_state?: string;
-  insurance_company_id?: string;
-  claim_number?: string;
+export interface CreateInsuranceCompanyInput {
+  name: string;
+  code?: string;
+  is_drp?: boolean;
+  payment_terms_days?: number;
+  phone?: string;
+  email?: string;
+  address?: string;
   notes?: string;
 }
 
-export type UpdateVehicleInput = Partial<CreateVehicleInput>;
+export type UpdateInsuranceCompanyInput = Partial<CreateInsuranceCompanyInput>;
 
 // ── Helper to build auth headers ──
 
@@ -58,95 +51,94 @@ function useApiHeaders() {
 
 // ── Hooks ──
 
-export function useVehicles(filters: VehicleFilters = {}) {
+export function useInsuranceCompanies(filters: InsuranceCompanyFilters = {}) {
   const getHeaders = useApiHeaders();
 
   const params = new URLSearchParams();
   if (filters.search) params.set('search', filters.search);
-  if (filters.condition) params.set('condition', filters.condition);
-  if (filters.customer_id) params.set('customer_id', filters.customer_id);
+  if (filters.is_drp !== undefined) params.set('is_drp', String(filters.is_drp));
   if (filters.page) params.set('page', String(filters.page));
   if (filters.limit) params.set('limit', String(filters.limit));
   if (filters.sort_by) params.set('sort_by', filters.sort_by);
   if (filters.sort_order) params.set('sort_order', filters.sort_order);
 
   const qs = params.toString();
-  const endpoint = `/vehicles${qs ? `?${qs}` : ''}`;
+  const endpoint = `/insurance${qs ? `?${qs}` : ''}`;
 
   return useQuery({
-    queryKey: ['vehicles', filters],
+    queryKey: ['insurance', filters],
     queryFn: async () => {
       const { token } = await getHeaders();
-      return api<PaginatedVehicles>(endpoint, { token });
+      return api<PaginatedInsuranceCompanies>(endpoint, { token });
     },
   });
 }
 
-export function useVehicle(id: string) {
+export function useInsuranceCompany(id: string) {
   const getHeaders = useApiHeaders();
 
   return useQuery({
-    queryKey: ['vehicles', id],
+    queryKey: ['insurance', id],
     queryFn: async () => {
       const { token } = await getHeaders();
-      return api<Vehicle>(`/vehicles/${id}`, { token });
+      return api<InsuranceCompany>(`/insurance/${id}`, { token });
     },
     enabled: !!id,
   });
 }
 
-export function useCreateVehicle() {
+export function useCreateInsuranceCompany() {
   const queryClient = useQueryClient();
   const getHeaders = useApiHeaders();
 
   return useMutation({
-    mutationFn: async (data: CreateVehicleInput) => {
+    mutationFn: async (data: CreateInsuranceCompanyInput) => {
       const { token } = await getHeaders();
-      return api<Vehicle>('/vehicles', {
+      return api<InsuranceCompany>('/insurance', {
         method: 'POST',
         body: JSON.stringify(data),
         token,
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      queryClient.invalidateQueries({ queryKey: ['insurance'] });
     },
   });
 }
 
-export function useUpdateVehicle(id: string) {
+export function useUpdateInsuranceCompany(id: string) {
   const queryClient = useQueryClient();
   const getHeaders = useApiHeaders();
 
   return useMutation({
-    mutationFn: async (data: UpdateVehicleInput) => {
+    mutationFn: async (data: UpdateInsuranceCompanyInput) => {
       const { token } = await getHeaders();
-      return api<Vehicle>(`/vehicles/${id}`, {
+      return api<InsuranceCompany>(`/insurance/${id}`, {
         method: 'PUT',
         body: JSON.stringify(data),
         token,
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      queryClient.invalidateQueries({ queryKey: ['insurance'] });
     },
   });
 }
 
-export function useDeleteVehicle() {
+export function useDeleteInsuranceCompany() {
   const queryClient = useQueryClient();
   const getHeaders = useApiHeaders();
 
   return useMutation({
     mutationFn: async (id: string) => {
       const { token } = await getHeaders();
-      return api<void>(`/vehicles/${id}`, {
+      return api<void>(`/insurance/${id}`, {
         method: 'DELETE',
         token,
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      queryClient.invalidateQueries({ queryKey: ['insurance'] });
     },
   });
 }

@@ -1,6 +1,13 @@
-import { Controller, Get, Post, Put, Delete, Patch, Body, Param, Query, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Controller, Get, Post, Put, Delete, Patch,
+  Body, Param, Query, UseGuards, ParseUUIDPipe,
+} from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { EstimatesService } from './estimates.service';
+import { CreateEstimateDto } from './dto/create-estimate.dto';
+import { UpdateEstimateDto } from './dto/update-estimate.dto';
+import { QueryEstimateDto } from './dto/query-estimate.dto';
+import { UpdateEstimateStatusDto } from './dto/update-status.dto';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { TenantGuard } from '../../common/guards/tenant.guard';
 import { RbacGuard } from '../../common/guards/rbac.guard';
@@ -15,38 +22,66 @@ export class EstimatesController {
   constructor(private readonly estimatesService: EstimatesService) {}
 
   @Get()
+  @ApiOperation({ summary: 'List estimates with pagination, search, and filters' })
+  @ApiResponse({ status: 200, description: 'Paginated estimate list' })
   @RequirePermissions('estimates:read:list')
-  findAll(@CurrentTenant() tenantId: string, @Query() query: any) {
+  findAll(@CurrentTenant() tenantId: string, @Query() query: QueryEstimateDto) {
     return this.estimatesService.findAll(tenantId, query);
   }
 
   @Post()
+  @ApiOperation({ summary: 'Create a new estimate with optional line items' })
+  @ApiResponse({ status: 201, description: 'Estimate created' })
   @RequirePermissions('estimates:write:create')
-  create(@CurrentTenant() tenantId: string, @Body() body: any) {
-    return this.estimatesService.create(tenantId, body);
+  create(@CurrentTenant() tenantId: string, @Body() dto: CreateEstimateDto) {
+    return this.estimatesService.create(tenantId, dto);
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Get estimate by ID with lines and supplements' })
+  @ApiResponse({ status: 200, description: 'Estimate found' })
+  @ApiResponse({ status: 404, description: 'Estimate not found' })
   @RequirePermissions('estimates:read:detail')
-  findOne(@CurrentTenant() tenantId: string, @Param('id') id: string) {
+  findOne(
+    @CurrentTenant() tenantId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
     return this.estimatesService.findOne(tenantId, id);
   }
 
   @Put(':id')
+  @ApiOperation({ summary: 'Update estimate (draft only)' })
+  @ApiResponse({ status: 200, description: 'Estimate updated' })
   @RequirePermissions('estimates:write:update')
-  update(@CurrentTenant() tenantId: string, @Param('id') id: string, @Body() body: any) {
-    return this.estimatesService.update(tenantId, id, body);
+  update(
+    @CurrentTenant() tenantId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateEstimateDto,
+  ) {
+    return this.estimatesService.update(tenantId, id, dto);
   }
 
   @Patch(':id/status')
+  @ApiOperation({ summary: 'Update estimate status with workflow validation' })
+  @ApiResponse({ status: 200, description: 'Status updated' })
+  @ApiResponse({ status: 400, description: 'Invalid status transition' })
   @RequirePermissions('estimates:write:update')
-  updateStatus(@CurrentTenant() tenantId: string, @Param('id') id: string, @Body() body: any) {
-    return this.estimatesService.updateStatus(tenantId, id, body.status);
+  updateStatus(
+    @CurrentTenant() tenantId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateEstimateStatusDto,
+  ) {
+    return this.estimatesService.updateStatus(tenantId, id, dto);
   }
 
   @Delete(':id')
+  @ApiOperation({ summary: 'Soft delete estimate (draft only)' })
+  @ApiResponse({ status: 200, description: 'Estimate deleted' })
   @RequirePermissions('estimates:write:delete')
-  remove(@CurrentTenant() tenantId: string, @Param('id') id: string) {
+  remove(
+    @CurrentTenant() tenantId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
     return this.estimatesService.remove(tenantId, id);
   }
 }
