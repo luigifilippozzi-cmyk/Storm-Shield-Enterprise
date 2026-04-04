@@ -47,6 +47,8 @@ infra/terraform/*.tfvars
 
 # Confidential / reference docs (not for publishing)
 docs/Leading Practices*
+docs/architecture/SSE_Acompanhamento_Gerencial*
+docs/architecture/SSE_Roadmap_Detalhado*
 
 # Misc
 *.tsbuildinfo
