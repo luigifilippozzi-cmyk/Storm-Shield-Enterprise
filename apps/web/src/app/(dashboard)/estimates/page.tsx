@@ -1,15 +1,14 @@
-export default function EstimatesPage() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Estimates</h1>
-        <button className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground">
-          New Estimate
-        </button>
-      </div>
-      <div className="rounded-lg border">
-        <p className="p-8 text-center text-muted-foreground">Estimates list coming soon</p>
-      </div>
-    </div>
-  );
-}
+'use client';
+
+import { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEstimates, useDeleteEstimate, type EstimateFilters } from '@/hooks/use-estimates';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { cn, formatDate } from '@/lib/utils';
+
+const STATUS_COLORS: Record<string, string> = {
+  draft
