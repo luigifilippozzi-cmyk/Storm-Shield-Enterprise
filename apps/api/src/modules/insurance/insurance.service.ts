@@ -1,20 +1,71 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { TenantDatabaseService } from '../../config/tenant-database.service';
 import { generateId } from '@sse/shared-utils';
+import { CreateInsuranceCompanyDto, UpdateInsuranceCompanyDto, QueryInsuranceCompanyDto } from './dto';
+
+export interface PaginatedResult<T> {
+  data: T[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
 
 @Injectable()
 export class InsuranceService {
   constructor(private readonly tenantDb: TenantDatabaseService) {}
 
-  async findAll(tenantId: string, _query: any) {
+  async findAll(tenantId: string, query: QueryInsuranceCompanyDto): Promise<PaginatedResult<any>> {
     const knex = await this.tenantDb.getConnection();
-    return knex('insurance_companies').where({ tenant_id: tenantId, deleted_at: null });
+    const { search, is_drp, page = 1, limit = 20, sort_by = 'created_at', sort_order = 'desc' } = query;
+
+    const baseQuery = knex('insurance_companies').where({ tenant_id: tenantId, deleted_at: null });
+
+    if (search) {
+      baseQuery.where(function () {
+        this.whereILike('name', `%${search}%`)
+          .orWhereILike('code', `%${search}%`)
+          .orWhereILike('email', `%${search}%`);
+      });
+    }
+
+    if (is_drp !== undefined) {
+      baseQuery.where('is_drp', is_drp);
+    }
+
+    const [{ count }] = await baseQuery.clone().count('id as count');
+    const total = Number(count);
+
+    const allowedSorts = ['name', 'code', 'payment_terms_days', 'created_at', 'updated_at'];
+    const sortColumn = allowedSorts.includes(sort_by) ? sort_by : 'created_at';
+
+    const offset = (page - 1) * limit;
+    const data = await baseQuery
+      .orderBy(sortColumn, sort_order)
+      .limit(limit)
+      .offset(offset);
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
-  async create(tenantId: string, data: any) {
+  async create(tenantId: string, dto: CreateInsuranceCompanyDto) {
     const knex = await this.tenantDb.getConnection();
     const [record] = await knex('insurance_companies')
-      .insert({ id: generateId(), tenant_id: tenantId, ...data })
+      .insert({
+        id: generateId(),
+        tenant_id: tenantId,
+        ...dto,
+      })
       .returning('*');
     return record;
   }
@@ -28,11 +79,11 @@ export class InsuranceService {
     return record;
   }
 
-  async update(tenantId: string, id: string, data: any) {
+  async update(tenantId: string, id: string, dto: UpdateInsuranceCompanyDto) {
     const knex = await this.tenantDb.getConnection();
     const [record] = await knex('insurance_companies')
-      .where({ id, tenant_id: tenantId })
-      .update({ ...data, updated_at: new Date() })
+      .where({ id, tenant_id: tenantId, deleted_at: null })
+      .update({ ...dto, updated_at: new Date() })
       .returning('*');
     if (!record) throw new NotFoundException('Insurance company not found');
     return record;
@@ -40,9 +91,10 @@ export class InsuranceService {
 
   async remove(tenantId: string, id: string) {
     const knex = await this.tenantDb.getConnection();
-    await knex('insurance_companies')
-      .where({ id, tenant_id: tenantId })
+    const updated = await knex('insurance_companies')
+      .where({ id, tenant_id: tenantId, deleted_at: null })
       .update({ deleted_at: new Date() });
+    if (!updated) throw new NotFoundException('Insurance company not found');
     return { deleted: true };
   }
 }

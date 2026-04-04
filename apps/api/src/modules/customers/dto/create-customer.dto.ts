@@ -23,13 +23,13 @@ export class CreateCustomerDto {
   @IsString()
   @MinLength(1)
   @MaxLength(100)
-  first_name: string;
+  first_name!: string;
 
   @ApiProperty({ example: 'Doe' })
   @IsString()
   @MinLength(1)
   @MaxLength(100)
-  last_name: string;
+  last_name!: string;
 
   @ApiPropertyOptional({ example: 'Acme Corp' })
   @IsOptional()
@@ -46,7 +46,7 @@ export class CreateCustomerDto {
   @IsString()
   @MinLength(7)
   @MaxLength(30)
-  phone: string;
+  phone!: string;
 
   @ApiPropertyOptional({ example: '+15559876543' })
   @IsOptional()
