@@ -11,8 +11,10 @@ import { ServiceOrdersModule } from './modules/service-orders/service-orders.mod
 import { FinancialModule } from './modules/financial/financial.module';
 import { DatabaseModule } from './config/database.module';
 import { TenantMiddleware } from './common/interceptors/tenant-context.interceptor';
+import { HealthController } from './health.controller';
 
 @Module({
+  controllers: [HealthController],
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,

@@ -55,10 +55,16 @@ storm-shield-enterprise/
 - [x] PostgreSQL migrations (000–005): public schema, IAM, CRM, estimates, financial, RLS
 - [x] Seed data: roles/permissions, chart of accounts (US GAAP), asset categories
 - [x] Tenant provisioning CLI script
-- [x] 15 domain modules (tenants, auth, users, customers, insurance, vehicles, estimates, service-orders, financial, accounting, fixed-assets, contractors, inventory, rental, notifications)
-- [x] Full DTOs with class-validator + Swagger annotations for all modules
-- [x] Pagination, search (ILIKE), filters, sort whitelist across all CRUD endpoints
-- [x] Status workflow endpoints for estimates and service orders
+- [x] 7 complete modules with DTOs, pagination, search, filters, Swagger docs:
+  - **Customers** — search (ILIKE), type/source filters, sort whitelist
+  - **Vehicles** — search (make/model/VIN/plate), customer filter
+  - **Estimates** — nested line items, status workflow (draft→sent→approved/rejected→converted), draft-only edit/delete
+  - **Service Orders** — 7-state workflow with auto timestamps, status history logging
+  - **Financial** — transactions CRUD, summary aggregation, dashboard (monthly trends, category breakdowns)
+  - **Insurance** — DRP filter, search (name/code/email)
+  - **Users** — search, status/role filters, role assignment/removal endpoints
+- [x] Status workflow endpoints with transition validation for estimates and service orders
+- [x] 8 additional modules scaffolded for Phase 2+ (accounting, fixed-assets, contractors, inventory, rental, notifications, auth, tenants)
 
 ### Frontend (Next.js) — 8 Full CRUD Modules
 - [x] App Router with Clerk auth middleware
@@ -119,10 +125,37 @@ pnpm --filter @sse/api tenant:create    # Provision new tenant
 
 ## Conventions
 
-- **Git**: Conventional Commits · `main` → `develop` → `feature/SSE-xxx-description`
+- **Git**: Conventional Commits · `main` → `feature/SSE-xxx-description`
 - **DB**: UUID v7 PKs · DECIMAL(14,2) for money · Soft deletes · Audit trail
 - **Security**: AES-256-GCM field encryption · Rate limiting · CORS · Helmet.js
 - **RBAC**: 7 roles (owner → viewer) · Granular permissions (`module:action:resource`)
+- **API**: class-validator DTOs · Swagger annotations · `PaginatedResult<T>` standard response
+
+## API Endpoints
+
+All endpoints require Clerk JWT + tenant context. Swagger docs at `/docs` when running the API.
+
+| Module | Endpoints |
+|---|---|
+| Customers | `GET/POST /customers`, `GET/PUT/DELETE /customers/:id` |
+| Vehicles | `GET/POST /vehicles`, `GET/PUT/DELETE /vehicles/:id` |
+| Estimates | `GET/POST /estimates`, `GET/PUT/DELETE /estimates/:id`, `PATCH /estimates/:id/status` |
+| Service Orders | `GET/POST /service-orders`, `GET/PUT/DELETE /service-orders/:id`, `PATCH /service-orders/:id/status` |
+| Financial | `GET /financial/summary`, `GET /financial/dashboard`, `GET/POST /financial/transactions`, `GET/PUT/DELETE /financial/transactions/:id` |
+| Insurance | `GET/POST /insurance`, `GET/PUT/DELETE /insurance/:id` |
+| Users | `GET/POST /users`, `GET/PUT/DELETE /users/:id`, `POST /users/:id/roles`, `DELETE /users/:id/roles/:roleId` |
+
+## Roadmap
+
+| Phase | Focus | Status |
+|---|---|---|
+| 1 — MVP | CRM, Vehicles, Estimates, Service Orders, Financial | **In Progress** |
+| 2 — AI + Integrations | OCR, bank integration (Plaid), n8n automations | Planned |
+| 3 — Accounting + FAM | General Ledger, Fixed Assets, Depreciation, Reports | Planned |
+| 4 — Tax Compliance | Sales Tax, 1099-NEC, LGPD/CCPA, QuickBooks export | Planned |
+| 5 — Mobile | React Native app for technicians | Planned |
+| 6 — Rental + Analytics | Vehicle rental, demand forecasting, dashboards | Planned |
+| 7 — Marketplace | CCC ONE/Mitchell integration, vendor marketplace | Planned |
 
 ## License
 

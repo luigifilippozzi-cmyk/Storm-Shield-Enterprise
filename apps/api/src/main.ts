@@ -17,7 +17,7 @@ async function bootstrap() {
   });
 
   const prefix = config.get<string>('API_PREFIX', 'api/v1');
-  app.setGlobalPrefix(prefix);
+  app.setGlobalPrefix(prefix, { exclude: ['health'] });
 
   app.useGlobalPipes(
     new ValidationPipe({
