@@ -81,8 +81,12 @@ storm-shield-enterprise/
 - [x] **Settings** — Clerk account/org info, system version display
 
 ### Infrastructure
-- [x] Docker Compose (PostgreSQL 16 + Redis 7 + n8n)
-- [x] GitHub Actions CI (lint → test → build)
+- [x] Docker Compose dev stack (PostgreSQL 16 + Redis 7 + n8n)
+- [x] Docker Compose prod stack (API + Web + Postgres + Redis) with health checks
+- [x] Multi-stage Dockerfiles for API and Web (Next.js standalone output)
+- [x] `/health` endpoint (bypasses API prefix) for container liveness checks
+- [x] GitHub Actions CI (lint → test → build) — passing
+- [x] GitHub Actions Deploy Staging — auto-builds images and pushes to ghcr.io on main push
 - [x] PR template with checklist
 
 ## Getting Started
@@ -122,6 +126,22 @@ pnpm --filter @sse/api migration:run    # Run migrations
 pnpm --filter @sse/api seed:run         # Run seed data
 pnpm --filter @sse/api tenant:create    # Provision new tenant
 ```
+
+## Deployment
+
+Every push to `main` automatically builds and publishes Docker images to GitHub Container Registry:
+
+- `ghcr.io/luigifilippozzi-cmyk/storm-shield-enterprise/api:latest`
+- `ghcr.io/luigifilippozzi-cmyk/storm-shield-enterprise/web:latest`
+
+To run the full production stack on any Docker host:
+
+```bash
+cp .env.example .env.production    # Fill in CLERK_*, POSTGRES_*, REDIS_PASSWORD
+docker compose -f docker-compose.prod.yml --env-file .env.production up -d
+```
+
+Images are tagged with both `latest` and the commit SHA.
 
 ## Conventions
 
