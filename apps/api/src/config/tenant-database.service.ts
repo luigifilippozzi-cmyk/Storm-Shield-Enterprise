@@ -1,7 +1,7 @@
 import { Injectable, Inject, Scope } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { Knex } from 'knex';
-import { Request } from 'express';
+import type { Request } from 'express';
 import { KNEX_CONNECTION } from './database.module';
 
 /**
