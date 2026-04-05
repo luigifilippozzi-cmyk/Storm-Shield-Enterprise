@@ -169,7 +169,7 @@ All endpoints require Clerk JWT + tenant context. Swagger docs at `/docs` when r
 
 | Phase | Focus | Status |
 |---|---|---|
-| 1 — MVP | CRM, Vehicles, Estimates, Service Orders, Financial | **In Progress** |
+| 1 — MVP | CRM, Vehicles, Estimates, Service Orders, Financial | **Complete** (CI + staging deploy green) |
 | 2 — AI + Integrations | OCR, bank integration (Plaid), n8n automations | Planned |
 | 3 — Accounting + FAM | General Ledger, Fixed Assets, Depreciation, Reports | Planned |
 | 4 — Tax Compliance | Sales Tax, 1099-NEC, LGPD/CCPA, QuickBooks export | Planned |
