@@ -11,8 +11,8 @@ const config: Config = {
   coverageDirectory: '../coverage',
   testEnvironment: 'node',
   moduleNameMapper: {
-    '^@sse/shared-utils$': '<rootDir>/../../packages/shared-utils/src',
-    '^@sse/shared-types$': '<rootDir>/../../packages/shared-types/src',
+    '^@sse/shared-utils$': '<rootDir>/../../../packages/shared-utils/src',
+    '^@sse/shared-types$': '<rootDir>/../../../packages/shared-types/src',
   },
   globals: {
     'ts-jest': {

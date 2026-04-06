@@ -13,11 +13,15 @@ const mockKnex = () => {
   methods.forEach((m) => {
     chain[m] = jest.fn().mockReturnValue(chain);
   });
-  chain.transaction = jest.fn().mockImplementation(async (cb) => cb(chain));
+  // trx must be callable (trx('table')) AND have chain methods
+  const trxFn: any = jest.fn().mockReturnValue(chain);
+  Object.assign(trxFn, chain);
+  chain.transaction = jest.fn().mockImplementation(async (cb) => cb(trxFn));
 
   const knexFn: any = jest.fn().mockReturnValue(chain);
   Object.assign(knexFn, chain);
   knexFn._chain = chain;
+  knexFn._trx = trxFn;
   return knexFn;
 };
 
