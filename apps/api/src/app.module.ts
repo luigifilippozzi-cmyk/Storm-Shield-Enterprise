@@ -10,6 +10,7 @@ import { EstimatesModule } from './modules/estimates/estimates.module';
 import { ServiceOrdersModule } from './modules/service-orders/service-orders.module';
 import { FinancialModule } from './modules/financial/financial.module';
 import { DatabaseModule } from './config/database.module';
+import { RedisModule } from './config/redis.module';
 import { TenantMiddleware } from './common/interceptors/tenant-context.interceptor';
 import { HealthController } from './health.controller';
 
@@ -21,6 +22,7 @@ import { HealthController } from './health.controller';
       envFilePath: ['.env.local', '.env'],
     }),
     DatabaseModule,
+    RedisModule,
     TenantsModule,
     AuthModule,
     UsersModule,

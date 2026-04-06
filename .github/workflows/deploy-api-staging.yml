@@ -1,0 +1,73 @@
+name: Deploy API (Staging)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/api/**'
+      - 'packages/**'
+      - 'infra/docker/api.Dockerfile'
+      - 'apps/api/fly.toml'
+      - '.github/workflows/deploy-api-staging.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-api-staging
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    name: Run migrations against Neon
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared packages
+        run: |
+          pnpm --filter @sse/shared-types build
+          pnpm --filter @sse/shared-utils build
+
+      - name: Apply SQL migrations
+        env:
+          DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_UNPOOLED }}
+        run: pnpm --filter @sse/api migration:run
+
+  deploy:
+    name: Deploy to Fly.io
+    needs: migrate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: flyctl deploy --remote-only -c apps/api/fly.toml
+
+      - name: Smoke test — readiness probe
+        run: |
+          set -euo pipefail
+          for i in 1 2 3 4 5; do
+            if curl --fail --silent --show-error --max-time 10 https://sse-api-staging.fly.dev/ready; then
+              echo "API is ready"
+              exit 0
+            fi
+            echo "attempt $i: not ready yet, retrying in 5s..."
+            sleep 5
+          done
+          echo "Readiness probe failed after 5 attempts"
+          exit 1
