@@ -85,6 +85,7 @@ storm-shield-enterprise/
 - [x] Docker Compose prod stack (API + Web + Postgres + Redis) with health checks
 - [x] Multi-stage Dockerfiles for API and Web (Next.js standalone output)
 - [x] `/health` endpoint (bypasses API prefix) for container liveness checks
+- [x] `/ready` endpoint with DB + Redis connectivity checks for load balancer readiness
 - [x] GitHub Actions CI (lint → test → build) — passing
 - [x] GitHub Actions Deploy Staging — auto-builds images and pushes to ghcr.io on main push
 - [x] PR template with checklist
@@ -127,21 +128,33 @@ pnpm --filter @sse/api seed:run         # Run seed data
 pnpm --filter @sse/api tenant:create    # Provision new tenant
 ```
 
-## Deployment
+## Deployment (Staging)
 
-Every push to `main` automatically builds and publishes Docker images to GitHub Container Registry:
+Staging runs on a 100% free-tier stack:
 
-- `ghcr.io/luigifilippozzi-cmyk/storm-shield-enterprise/api:latest`
-- `ghcr.io/luigifilippozzi-cmyk/storm-shield-enterprise/web:latest`
+| Service | Provider | Notes |
+|---|---|---|
+| API | Fly.io (`iad`, shared-cpu-1x) | Auto-stop when idle, auto-start on request |
+| Web | Vercel (Hobby) | Next.js optimized builds |
+| PostgreSQL | Neon (Free, 0.5 GB) | Pooled + unpooled endpoints |
+| Redis | Upstash (Free, 256 MB) | TLS (`rediss://`) |
+| Storage | Cloudflare R2 (10 GB) | Zero egress fees |
+| Auth | Clerk (Dev, 10k MAU) | SSO + MFA |
 
-To run the full production stack on any Docker host:
+Every push to `main` triggers two GitHub Actions workflows:
+- **deploy-api-staging** — runs SQL migrations against Neon, deploys API to Fly.io, smoke-tests `/ready`
+- **deploy-web-staging** — builds and deploys frontend to Vercel, smoke-tests the URL
 
-```bash
-cp .env.example .env.production    # Fill in CLERK_*, POSTGRES_*, REDIS_PASSWORD
-docker compose -f docker-compose.prod.yml --env-file .env.production up -d
-```
+Fly.io auto-stops the API machine after idle period (first request takes ~5s cold start). Monthly cost: **$0** within free tier limits.
 
-Images are tagged with both `latest` and the commit SHA.
+Staging URLs:
+- API: https://sse-api-staging.fly.dev
+- Web: https://sse-web-staging.vercel.app
+- Swagger: https://sse-api-staging.fly.dev/docs
+
+See [docs/runbooks/staging-deploy.md](docs/runbooks/staging-deploy.md) for the full operational runbook (setup, rollback, secret rotation, troubleshooting).
+
+**Production** (future): AWS ECS Fargate + RDS + ElastiCache, managed via Terraform. Docker images also published to `ghcr.io` on each push to `main`.
 
 ## Conventions
 
@@ -169,7 +182,7 @@ All endpoints require Clerk JWT + tenant context. Swagger docs at `/docs` when r
 
 | Phase | Focus | Status |
 |---|---|---|
-| 1 — MVP | CRM, Vehicles, Estimates, Service Orders, Financial | **Complete** (CI + staging deploy green) |
+| 1 — MVP | CRM, Vehicles, Estimates, Service Orders, Financial | **Complete** (CI green · staging infra committed, first deploy pending) |
 | 2 — AI + Integrations | OCR, bank integration (Plaid), n8n automations | Planned |
 | 3 — Accounting + FAM | General Ledger, Fixed Assets, Depreciation, Reports | Planned |
 | 4 — Tax Compliance | Sales Tax, 1099-NEC, LGPD/CCPA, QuickBooks export | Planned |

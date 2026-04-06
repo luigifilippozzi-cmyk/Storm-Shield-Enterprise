@@ -1,0 +1,62 @@
+name: Deploy Web (Staging)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/web/**'
+      - 'packages/**'
+      - '.github/workflows/deploy-web-staging.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-web-staging
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy to Vercel
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel environment
+        working-directory: apps/web
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build project artifacts
+        working-directory: apps/web
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy to Vercel
+        working-directory: apps/web
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Smoke test — frontend loads
+        run: |
+          set -euo pipefail
+          for i in 1 2 3 4 5; do
+            if curl --fail --silent --show-error --max-time 10 --output /dev/null https://sse-web-staging.vercel.app; then
+              echo "Web is up"
+              exit 0
+            fi
+            echo "attempt $i: not up yet, retrying in 5s..."
+            sleep 5
+          done
+          echo "Smoke test failed after 5 attempts"
+          exit 1
