@@ -72,15 +72,29 @@ export class UsersService {
 
   async create(tenantId: string, dto: CreateUserDto) {
     const knex = await this.tenantDb.getConnection();
-    const [user] = await knex('users')
-      .insert({
-        id: generateId(),
-        tenant_id: tenantId,
-        ...dto,
-        status: dto.status || 'active',
-      })
-      .returning('*');
-    return user;
+    const { role_id, ...userData } = dto;
+
+    return knex.transaction(async (trx) => {
+      const [user] = await trx('users')
+        .insert({
+          id: generateId(),
+          tenant_id: tenantId,
+          ...userData,
+          status: dto.status || 'active',
+        })
+        .returning('*');
+
+      if (role_id) {
+        await trx('user_role_assignments').insert({
+          id: generateId(),
+          tenant_id: tenantId,
+          user_id: user.id,
+          role_id,
+        });
+      }
+
+      return user;
+    });
   }
 
   async findOne(tenantId: string, id: string) {
