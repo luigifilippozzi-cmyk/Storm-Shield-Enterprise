@@ -43,7 +43,7 @@ storm-shield-enterprise/
 └── n8n/                  # Automation workflow exports
 ```
 
-## Current Status — Phase 1 MVP
+## Current Status — Phase 1 MVP (~90% complete)
 
 ### Backend (NestJS API)
 - [x] Monorepo setup (Turborepo + pnpm workspaces)
@@ -57,27 +57,31 @@ storm-shield-enterprise/
 - [x] Tenant provisioning CLI script
 - [x] 7 complete modules with DTOs, pagination, search, filters, Swagger docs:
   - **Customers** — search (ILIKE), type/source filters, sort whitelist
-  - **Vehicles** — search (make/model/VIN/plate), customer filter
-  - **Estimates** — nested line items, status workflow (draft→sent→approved/rejected→converted), draft-only edit/delete
+  - **Vehicles** — search (make/model/VIN/plate), customer filter, **photo upload/delete** (S3/R2)
+  - **Estimates** — nested line items, status workflow (draft→sent→approved/rejected→converted), draft-only edit/delete, **document upload/delete**
   - **Service Orders** — 7-state workflow with auto timestamps, status history logging
   - **Financial** — transactions CRUD, summary aggregation, dashboard (monthly trends, category breakdowns)
   - **Insurance** — DRP filter, search (name/code/email)
-  - **Users** — search, status/role filters, role assignment/removal endpoints
+  - **Users** — search, status/role filters, role assignment/removal, transactional create with role
 - [x] Status workflow endpoints with transition validation for estimates and service orders
 - [x] 8 additional modules scaffolded for Phase 2+ (accounting, fixed-assets, contractors, inventory, rental, notifications, auth, tenants)
+- [x] **StorageService** — S3/R2 file upload with signed URLs, local dev fallback
+- [x] **Customer consent** module for LGPD/CCPA compliance (migration 006)
+- [x] **Unit tests: 66 tests across 5 services** (customers, vehicles, estimates, financial, users) — all passing
 
 ### Frontend (Next.js) — 8 Full CRUD Modules
 - [x] App Router with Clerk auth middleware
 - [x] Dashboard layout (sidebar + header)
-- [x] Reusable UI components (Button, Input, Select, Label, Textarea, Badge)
-- [x] React Query hooks for all modules (CRUD + status transitions)
+- [x] Reusable UI components (Button, Input, Select, Label, Textarea, Badge, Popover, Command)
+- [x] Shared components: `CustomerCombobox` (searchable), `VehicleCombobox` (cascading filter)
+- [x] React Query hooks for all modules (CRUD + status transitions + dashboard)
 - [x] **Customers** — list (search, type/source filters, sort, pagination), create/edit forms, detail page
-- [x] **Vehicles** — list (search, sort by year/created, condition badges), create/edit forms, detail page
-- [x] **Estimates** — list (status filter, color-coded badges), create with dynamic line items, detail with status workflow actions
+- [x] **Vehicles** — list (search, sort by year/created, condition badges, **customer name column**), create/edit with searchable customer select, detail with **photo gallery** (upload/delete)
+- [x] **Estimates** — list (status filter, color-coded badges, **customer name column**), create with searchable customer/vehicle selects + dynamic line items, detail with line items table + **document upload** + **status timeline** + workflow actions
 - [x] **Service Orders** — list (7-status filter), create/edit, detail with status workflow timeline
-- [x] **Financial** — summary cards (real API data), transaction list with inline create, type/category filters
+- [x] **Financial** — summary cards (real API data), transaction list with inline create, type/category filters, **income vs expenses trend chart** (recharts)
 - [x] **Insurance** — list (DRP filter), create/edit, detail with payment terms
-- [x] **Dashboard** — real-time metrics (customers, open estimates, active SOs, monthly revenue), quick actions
+- [x] **Dashboard** — real-time metrics (customers, open estimates [sent], active SOs, **monthly revenue**), quick actions, **financial trend chart**, **recent activity feed**
 - [x] **Settings** — Clerk account/org info, system version display
 
 ### Infrastructure
@@ -182,7 +186,7 @@ All endpoints require Clerk JWT + tenant context. Swagger docs at `/docs` when r
 
 | Phase | Focus | Status |
 |---|---|---|
-| 1 — MVP | CRM, Vehicles, Estimates, Service Orders, Financial | **Complete** (CI green · staging infra committed, first deploy pending) |
+| 1 — MVP | CRM, Vehicles, Estimates, Service Orders, Financial | **~90%** (CI green · 66 tests · staging infra ready · all P0 closed · photo/doc upload · consent module · 4 remaining P2 polish items) |
 | 2 — AI + Integrations | OCR, bank integration (Plaid), n8n automations | Planned |
 | 3 — Accounting + FAM | General Ledger, Fixed Assets, Depreciation, Reports | Planned |
 | 4 — Tax Compliance | Sales Tax, 1099-NEC, LGPD/CCPA, QuickBooks export | Planned |

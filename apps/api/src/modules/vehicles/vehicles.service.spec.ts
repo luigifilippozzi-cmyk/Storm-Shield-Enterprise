@@ -2,13 +2,14 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { VehiclesService } from './vehicles.service';
 import { TenantDatabaseService } from '../../config/tenant-database.service';
+import { StorageService } from '../../common/services/storage.service';
 
 const mockKnex = () => {
   const chain: any = {};
   const methods = [
     'where', 'insert', 'update', 'select', 'first', 'returning',
     'clone', 'count', 'orderBy', 'limit', 'offset', 'del',
-    'whereILike', 'orWhereILike',
+    'whereILike', 'orWhereILike', 'leftJoin',
   ];
   methods.forEach((m) => {
     chain[m] = jest.fn().mockReturnValue(chain);
@@ -16,6 +17,7 @@ const mockKnex = () => {
 
   const knexFn: any = jest.fn().mockReturnValue(chain);
   Object.assign(knexFn, chain);
+  knexFn.raw = jest.fn().mockReturnValue('raw_expr');
   knexFn._chain = chain;
   return knexFn;
 };
@@ -38,6 +40,7 @@ describe('VehiclesService', () => {
       providers: [
         VehiclesService,
         { provide: TenantDatabaseService, useValue: { getConnection: jest.fn().mockResolvedValue(knex) } },
+        { provide: StorageService, useValue: { upload: jest.fn(), delete: jest.fn(), generateKey: jest.fn().mockReturnValue('key') } },
       ],
     }).compile();
     service = module.get<VehiclesService>(VehiclesService);
@@ -61,7 +64,7 @@ describe('VehiclesService', () => {
 
       await service.findAll(TENANT_ID, { customer_id: CUSTOMER_ID, page: 1, limit: 20 });
 
-      expect(knex._chain.where).toHaveBeenCalledWith('customer_id', CUSTOMER_ID);
+      expect(knex._chain.where).toHaveBeenCalledWith('vehicles.customer_id', CUSTOMER_ID);
     });
 
     it('should filter by make', async () => {
@@ -70,7 +73,7 @@ describe('VehiclesService', () => {
 
       await service.findAll(TENANT_ID, { make: 'Honda', page: 1, limit: 20 });
 
-      expect(knex._chain.whereILike).toHaveBeenCalledWith('make', '%Honda%');
+      expect(knex._chain.whereILike).toHaveBeenCalledWith('vehicles.make', '%Honda%');
     });
 
     it('should filter by year', async () => {
@@ -79,7 +82,7 @@ describe('VehiclesService', () => {
 
       await service.findAll(TENANT_ID, { year: 2023, page: 1, limit: 20 } as any);
 
-      expect(knex._chain.where).toHaveBeenCalledWith('year', 2023);
+      expect(knex._chain.where).toHaveBeenCalledWith('vehicles.year', 2023);
     });
   });
 
@@ -103,13 +106,15 @@ describe('VehiclesService', () => {
   });
 
   describe('findOne', () => {
-    it('should return vehicle when found', async () => {
+    it('should return vehicle with photos', async () => {
       const mockVehicle = { id: VEHICLE_ID, make: 'Honda' };
+      const mockPhotos = [{ id: 'photo-1', file_name: 'front.jpg' }];
       knex._chain.first.mockReturnValueOnce(mockVehicle);
+      knex._chain.orderBy.mockReturnValueOnce(mockPhotos);
 
       const result = await service.findOne(TENANT_ID, VEHICLE_ID);
 
-      expect(result).toEqual(mockVehicle);
+      expect(result).toEqual({ ...mockVehicle, photos: mockPhotos });
     });
 
     it('should throw NotFoundException when not found', async () => {

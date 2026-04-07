@@ -1,10 +1,21 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { TenantDatabaseService } from '../../config/tenant-database.service';
+import { StorageService } from '../../common/services/storage.service';
 import { generateId } from '@sse/shared-utils';
 import { CreateEstimateDto, CreateEstimateLineDto } from './dto/create-estimate.dto';
 import { UpdateEstimateDto } from './dto/update-estimate.dto';
 import { QueryEstimateDto } from './dto/query-estimate.dto';
 import { UpdateEstimateStatusDto } from './dto/update-status.dto';
+
+const ALLOWED_DOC_TYPES = [
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+];
+const MAX_DOC_SIZE = 25 * 1024 * 1024; // 25MB
 
 export interface PaginatedResult<T> {
   data: T[];
@@ -27,7 +38,10 @@ const ALLOWED_STATUS_TRANSITIONS: Record<string, string[]> = {
 
 @Injectable()
 export class EstimatesService {
-  constructor(private readonly tenantDb: TenantDatabaseService) {}
+  constructor(
+    private readonly tenantDb: TenantDatabaseService,
+    private readonly storageService: StorageService,
+  ) {}
 
   async findAll(tenantId: string, query: QueryEstimateDto): Promise<PaginatedResult<any>> {
     const knex = await this.tenantDb.getConnection();
@@ -152,7 +166,11 @@ export class EstimatesService {
       .where({ estimate_id: id, tenant_id: tenantId })
       .orderBy('supplement_number', 'asc');
 
-    return { ...estimate, lines, supplements };
+    const documents = await knex('estimate_documents')
+      .where({ estimate_id: id, tenant_id: tenantId })
+      .orderBy('created_at', 'desc');
+
+    return { ...estimate, lines, supplements, documents };
   }
 
   async update(tenantId: string, id: string, dto: UpdateEstimateDto) {
@@ -240,5 +258,69 @@ export class EstimatesService {
       .where({ id, tenant_id: tenantId })
       .update({ deleted_at: new Date() });
     return { deleted: true };
+  }
+
+  // ── Document Upload ──
+
+  async attachDocument(
+    tenantId: string,
+    estimateId: string,
+    userId: string,
+    file: Express.Multer.File,
+    documentType = 'other',
+  ) {
+    if (!ALLOWED_DOC_TYPES.includes(file.mimetype)) {
+      throw new BadRequestException(
+        `Invalid file type. Allowed: PDF, images, Word documents`,
+      );
+    }
+    if (file.size > MAX_DOC_SIZE) {
+      throw new BadRequestException('File size exceeds 25MB limit');
+    }
+
+    const knex = await this.tenantDb.getConnection();
+
+    const estimate = await knex('estimates')
+      .where({ id: estimateId, tenant_id: tenantId, deleted_at: null })
+      .first();
+    if (!estimate) throw new NotFoundException('Estimate not found');
+
+    const key = this.storageService.generateKey(tenantId, 'estimates', file.originalname);
+    await this.storageService.upload(key, file.buffer, file.mimetype);
+
+    const [doc] = await knex('estimate_documents')
+      .insert({
+        id: generateId(),
+        tenant_id: tenantId,
+        estimate_id: estimateId,
+        storage_key: key,
+        file_name: file.originalname,
+        document_type: documentType,
+        uploaded_by: userId,
+      })
+      .returning('*');
+
+    return doc;
+  }
+
+  async deleteDocument(tenantId: string, estimateId: string, documentId: string) {
+    const knex = await this.tenantDb.getConnection();
+
+    const doc = await knex('estimate_documents')
+      .where({ id: documentId, estimate_id: estimateId, tenant_id: tenantId })
+      .first();
+    if (!doc) throw new NotFoundException('Document not found');
+
+    await this.storageService.delete(doc.storage_key);
+    await knex('estimate_documents').where({ id: documentId }).del();
+
+    return { deleted: true };
+  }
+
+  async getDocuments(tenantId: string, estimateId: string) {
+    const knex = await this.tenantDb.getConnection();
+    return knex('estimate_documents')
+      .where({ estimate_id: estimateId, tenant_id: tenantId })
+      .orderBy('created_at', 'desc');
   }
 }

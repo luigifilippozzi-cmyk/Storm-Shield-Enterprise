@@ -4,6 +4,7 @@ import { use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useVehicle, useDeleteVehicle } from '@/hooks/use-vehicles';
+import { VehiclePhotos } from '@/components/vehicles/vehicle-photos';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn, formatDate } from '@/lib/utils';
@@ -127,6 +128,9 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
           <DetailRow label="License State" value={vehicle.license_state} />
         </dl>
       </section>
+
+      {/* Photos */}
+      <VehiclePhotos vehicleId={vehicle.id} photos={(vehicle as any).photos || []} />
 
       {/* Insurance */}
       {vehicle.claim_number && (

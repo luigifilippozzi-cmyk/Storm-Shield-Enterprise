@@ -154,6 +154,7 @@ export default function VehiclesPage() {
                       </span>
                     </th>
                   ))}
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Customer</th>
                   <th className="px-4 py-3 text-left font-medium text-muted-foreground">VIN</th>
                   <th className="px-4 py-3 text-left font-medium text-muted-foreground">Color</th>
                   <th className="px-4 py-3 text-left font-medium text-muted-foreground">
@@ -183,6 +184,7 @@ export default function VehiclesPage() {
                     <td className="px-4 py-3 text-muted-foreground">
                       {vehicle.mileage ? vehicle.mileage.toLocaleString() : '\u2014'}
                     </td>
+                    <td className="px-4 py-3 text-muted-foreground">{(vehicle as any).customer_name || '\u2014'}</td>
                     <td className="px-4 py-3 text-muted-foreground">{vehicle.vin || '\u2014'}</td>
                     <td className="px-4 py-3 text-muted-foreground">{vehicle.color || '\u2014'}</td>
                     <td className="px-4 py-3">

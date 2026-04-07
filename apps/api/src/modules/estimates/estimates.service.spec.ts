@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { EstimatesService } from './estimates.service';
 import { TenantDatabaseService } from '../../config/tenant-database.service';
+import { StorageService } from '../../common/services/storage.service';
 
 const mockKnex = () => {
   const chain: any = {};
@@ -45,6 +46,7 @@ describe('EstimatesService', () => {
       providers: [
         EstimatesService,
         { provide: TenantDatabaseService, useValue: { getConnection: jest.fn().mockResolvedValue(knex) } },
+        { provide: StorageService, useValue: { upload: jest.fn(), delete: jest.fn(), generateKey: jest.fn().mockReturnValue('key') } },
       ],
     }).compile();
     service = module.get<EstimatesService>(EstimatesService);
@@ -107,17 +109,21 @@ describe('EstimatesService', () => {
   });
 
   describe('findOne', () => {
-    it('should return estimate with lines and supplements', async () => {
+    it('should return estimate with lines, supplements, and documents', async () => {
       const mockEstimate = { id: ESTIMATE_ID, status: 'draft' };
       const mockLines = [{ id: 'line-1', description: 'Repair' }];
       const mockSupplements = [{ id: 'supp-1', reason: 'Extra damage' }];
+      const mockDocuments = [{ id: 'doc-1', file_name: 'photo.jpg' }];
 
       knex._chain.first.mockReturnValueOnce(mockEstimate);
-      knex._chain.orderBy.mockReturnValueOnce(mockLines).mockReturnValueOnce(mockSupplements);
+      knex._chain.orderBy
+        .mockReturnValueOnce(mockLines)
+        .mockReturnValueOnce(mockSupplements)
+        .mockReturnValueOnce(mockDocuments);
 
       const result = await service.findOne(TENANT_ID, ESTIMATE_ID);
 
-      expect(result).toEqual({ ...mockEstimate, lines: mockLines, supplements: mockSupplements });
+      expect(result).toEqual({ ...mockEstimate, lines: mockLines, supplements: mockSupplements, documents: mockDocuments });
     });
 
     it('should throw NotFoundException when not found', async () => {

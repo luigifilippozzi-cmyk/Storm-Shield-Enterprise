@@ -4,6 +4,8 @@ import { use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEstimate, useUpdateEstimateStatus, useDeleteEstimate } from '@/hooks/use-estimates';
+import { EstimateDocuments } from '@/components/estimates/estimate-documents';
+import { StatusTimeline } from '@/components/estimates/status-timeline';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn, formatDate } from '@/lib/utils';
@@ -139,6 +141,12 @@ export default function EstimateDetailPage({ params }: { params: Promise<{ id: s
           <DetailRow label="Valid Until" value={estimate.valid_until ? formatDate(estimate.valid_until) : null} />
         </dl>
       </section>
+
+      {/* Documents */}
+      <EstimateDocuments estimateId={estimate.id} documents={(estimate as any).documents || []} />
+
+      {/* Status Timeline */}
+      <StatusTimeline estimate={estimate} />
 
       {estimate.notes && (
         <section className="rounded-lg border">

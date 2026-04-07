@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@clerk/nextjs';
-import { api } from '@/lib/api';
+import { api, apiUpload } from '@/lib/api';
 import type { Estimate } from '@sse/shared-types';
 
 export interface EstimateFilters {
@@ -121,5 +121,43 @@ export function useDeleteEstimate() {
       return api<void>(`/estimates/${id}`, { method: 'DELETE', token });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['estimates'] }),
+  });
+}
+
+// ── Estimate Document Hooks ──
+
+export interface EstimateDocument {
+  id: string;
+  estimate_id: string;
+  storage_key: string;
+  file_name: string;
+  document_type: string;
+  created_at: string;
+}
+
+export function useUploadEstimateDocument(estimateId: string) {
+  const qc = useQueryClient();
+  const getHeaders = useApiHeaders();
+  return useMutation({
+    mutationFn: async (data: { file: File; document_type?: string }) => {
+      const { token } = await getHeaders();
+      const formData = new FormData();
+      formData.append('file', data.file);
+      if (data.document_type) formData.append('document_type', data.document_type);
+      return apiUpload<EstimateDocument>(`/estimates/${estimateId}/documents`, formData, { token });
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['estimates', estimateId] }),
+  });
+}
+
+export function useDeleteEstimateDocument(estimateId: string) {
+  const qc = useQueryClient();
+  const getHeaders = useApiHeaders();
+  return useMutation({
+    mutationFn: async (documentId: string) => {
+      const { token } = await getHeaders();
+      return api<void>(`/estimates/${estimateId}/documents/${documentId}`, { method: 'DELETE', token });
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['estimates', estimateId] }),
   });
 }

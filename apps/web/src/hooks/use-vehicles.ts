@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@clerk/nextjs';
-import { api } from '@/lib/api';
+import { api, apiUpload } from '@/lib/api';
 import type { Vehicle } from '@sse/shared-types';
 
 // ── Types ──
@@ -147,6 +147,56 @@ export function useDeleteVehicle() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+    },
+  });
+}
+
+// ── Vehicle Photo Hooks ──
+
+export interface VehiclePhoto {
+  id: string;
+  vehicle_id: string;
+  storage_key: string;
+  file_name: string;
+  description: string | null;
+  photo_type: string;
+  url?: string;
+  created_at: string;
+}
+
+export function useUploadVehiclePhoto(vehicleId: string) {
+  const queryClient = useQueryClient();
+  const getHeaders = useApiHeaders();
+
+  return useMutation({
+    mutationFn: async (data: { file: File; photo_type?: string; description?: string }) => {
+      const { token } = await getHeaders();
+      const formData = new FormData();
+      formData.append('file', data.file);
+      if (data.photo_type) formData.append('photo_type', data.photo_type);
+      if (data.description) formData.append('description', data.description);
+      return apiUpload<VehiclePhoto>(`/vehicles/${vehicleId}/photos`, formData, { token });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vehicles', vehicleId] });
+    },
+  });
+}
+
+export function useDeleteVehiclePhoto(vehicleId: string) {
+  const queryClient = useQueryClient();
+  const getHeaders = useApiHeaders();
+
+  return useMutation({
+    mutationFn: async (photoId: string) => {
+      const { token } = await getHeaders();
+      return api<void>(`/vehicles/${vehicleId}/photos/${photoId}`, {
+        method: 'DELETE',
+        token,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vehicles', vehicleId] });
     },
   });
 }

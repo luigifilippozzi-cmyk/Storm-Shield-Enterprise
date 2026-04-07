@@ -85,6 +85,7 @@ export default function EstimatesPage() {
                   <th className="cursor-pointer px-4 py-3 text-left font-medium text-muted-foreground hover:text-foreground" onClick={() => handleSort('estimate_number')}>
                     Estimate # {filters.sort_by === 'estimate_number' && (filters.sort_order === 'asc' ? '\u2191' : '\u2193')}
                   </th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Customer</th>
                   <th className="px-4 py-3 text-left font-medium text-muted-foreground">Status</th>
                   <th className="cursor-pointer px-4 py-3 text-right font-medium text-muted-foreground hover:text-foreground" onClick={() => handleSort('total')}>
                     Total {filters.sort_by === 'total' && (filters.sort_order === 'asc' ? '\u2191' : '\u2193')}
@@ -100,6 +101,7 @@ export default function EstimatesPage() {
                 {data.data.map((est) => (
                   <tr key={est.id} className="cursor-pointer border-b transition-colors hover:bg-muted/30" onClick={() => router.push(`/estimates/${est.id}`)}>
                     <td className="px-4 py-3 font-medium font-mono">{est.estimate_number}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{(est as any).customer_name || '\u2014'}</td>
                     <td className="px-4 py-3">
                       <Badge className={cn('border-transparent', STATUS_COLORS[est.status] || STATUS_COLORS.draft)}>
                         {STATUS_LABELS[est.status] || est.status}

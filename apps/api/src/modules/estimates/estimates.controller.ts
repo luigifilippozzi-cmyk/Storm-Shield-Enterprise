@@ -1,8 +1,10 @@
 import {
   Controller, Get, Post, Put, Delete, Patch,
   Body, Param, Query, UseGuards, ParseUUIDPipe,
+  UseInterceptors, UploadedFile,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { EstimatesService } from './estimates.service';
 import { CreateEstimateDto } from './dto/create-estimate.dto';
 import { UpdateEstimateDto } from './dto/update-estimate.dto';
@@ -12,6 +14,7 @@ import { AuthGuard } from '../../common/guards/auth.guard';
 import { TenantGuard } from '../../common/guards/tenant.guard';
 import { RbacGuard } from '../../common/guards/rbac.guard';
 import { CurrentTenant } from '../../common/decorators/current-tenant.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RequirePermissions } from '../../common/decorators/permissions.decorator';
 
 @ApiTags('estimates')
@@ -83,5 +86,61 @@ export class EstimatesController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.estimatesService.remove(tenantId, id);
+  }
+
+  // ── Estimate Documents ──
+
+  @Get(':id/documents')
+  @ApiOperation({ summary: 'List estimate documents' })
+  @ApiResponse({ status: 200, description: 'Document list' })
+  @RequirePermissions('estimates:read:detail')
+  getDocuments(
+    @CurrentTenant() tenantId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.estimatesService.getDocuments(tenantId, id);
+  }
+
+  @Post(':id/documents')
+  @ApiOperation({ summary: 'Upload a document to an estimate' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary' },
+        document_type: { type: 'string', enum: ['insurance_estimate', 'supplement', 'photo', 'invoice', 'other'] },
+      },
+    },
+  })
+  @ApiResponse({ status: 201, description: 'Document uploaded' })
+  @RequirePermissions('estimates:write:update')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 25 * 1024 * 1024 } }))
+  attachDocument(
+    @CurrentTenant() tenantId: string,
+    @CurrentUser('id') userId: string,
+    @Param('id', ParseUUIDPipe) estimateId: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Body() body: { document_type?: string },
+  ) {
+    return this.estimatesService.attachDocument(
+      tenantId,
+      estimateId,
+      userId,
+      file,
+      body.document_type,
+    );
+  }
+
+  @Delete(':id/documents/:documentId')
+  @ApiOperation({ summary: 'Delete an estimate document' })
+  @ApiResponse({ status: 200, description: 'Document deleted' })
+  @RequirePermissions('estimates:write:update')
+  deleteDocument(
+    @CurrentTenant() tenantId: string,
+    @Param('id', ParseUUIDPipe) estimateId: string,
+    @Param('documentId', ParseUUIDPipe) documentId: string,
+  ) {
+    return this.estimatesService.deleteDocument(tenantId, estimateId, documentId);
   }
 }
