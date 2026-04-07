@@ -1,23 +1,11 @@
 import { IsString, IsEmail, IsOptional, IsEnum, IsUUID, MaxLength, MinLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-
-export enum CustomerTypeDto {
-  INDIVIDUAL = 'individual',
-  BUSINESS = 'business',
-}
-
-export enum CustomerSourceDto {
-  INSURANCE = 'insurance',
-  WALK_IN = 'walk_in',
-  REFERRAL = 'referral',
-  WEBSITE = 'website',
-  OTHER = 'other',
-}
+import { CustomerType, CustomerSource } from '@sse/shared-types';
 
 export class CreateCustomerDto {
-  @ApiProperty({ enum: CustomerTypeDto, default: CustomerTypeDto.INDIVIDUAL })
-  @IsEnum(CustomerTypeDto)
-  type: CustomerTypeDto = CustomerTypeDto.INDIVIDUAL;
+  @ApiProperty({ enum: CustomerType, default: CustomerType.INDIVIDUAL })
+  @IsEnum(CustomerType)
+  type: CustomerType = CustomerType.INDIVIDUAL;
 
   @ApiProperty({ example: 'John' })
   @IsString()
@@ -77,9 +65,9 @@ export class CreateCustomerDto {
   @MaxLength(10)
   zip?: string;
 
-  @ApiProperty({ enum: CustomerSourceDto, default: CustomerSourceDto.WALK_IN })
-  @IsEnum(CustomerSourceDto)
-  source: CustomerSourceDto = CustomerSourceDto.WALK_IN;
+  @ApiProperty({ enum: CustomerSource, default: CustomerSource.WALK_IN })
+  @IsEnum(CustomerSource)
+  source: CustomerSource = CustomerSource.WALK_IN;
 
   @ApiPropertyOptional()
   @IsOptional()

@@ -1,26 +1,11 @@
-import { IsString, IsUUID, IsOptional, IsEnum, IsNumber, MaxLength, Min } from 'class-validator';
+import { IsString, IsUUID, IsOptional, IsEnum, IsNumber, IsISO8601, MaxLength, Min } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-
-export enum TransactionTypeDto {
-  INCOME = 'income',
-  EXPENSE = 'expense',
-  TRANSFER = 'transfer',
-}
-
-export enum PaymentMethodDto {
-  CASH = 'cash',
-  CHECK = 'check',
-  CREDIT_CARD = 'credit_card',
-  DEBIT_CARD = 'debit_card',
-  ACH = 'ach',
-  WIRE = 'wire',
-  INSURANCE_PAYMENT = 'insurance_payment',
-}
+import { TransactionType, PaymentMethod } from '@sse/shared-types';
 
 export class CreateTransactionDto {
-  @ApiProperty({ enum: TransactionTypeDto })
-  @IsEnum(TransactionTypeDto)
-  transaction_type!: TransactionTypeDto;
+  @ApiProperty({ enum: TransactionType })
+  @IsEnum(TransactionType)
+  transaction_type!: TransactionType;
 
   @ApiProperty({ example: 'Parts & Materials' })
   @IsString()
@@ -37,12 +22,12 @@ export class CreateTransactionDto {
   @Min(0)
   amount!: number;
 
-  @ApiProperty({ enum: PaymentMethodDto })
-  @IsEnum(PaymentMethodDto)
-  payment_method!: PaymentMethodDto;
+  @ApiProperty({ enum: PaymentMethod })
+  @IsEnum(PaymentMethod)
+  payment_method!: PaymentMethod;
 
   @ApiProperty({ example: '2024-01-15' })
-  @IsString()
+  @IsISO8601({ strict: true })
   transaction_date!: string;
 
   @ApiProperty()

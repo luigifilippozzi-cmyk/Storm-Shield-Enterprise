@@ -1,7 +1,7 @@
 import { IsOptional, IsString, IsEnum, IsUUID, IsInt, Min, Max } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ServiceOrderStatusDto } from './create-service-order.dto';
+import { ServiceOrderStatus } from '@sse/shared-types';
 
 export class QueryServiceOrderDto {
   @ApiPropertyOptional({ description: 'Search by order number or customer name' })
@@ -9,10 +9,10 @@ export class QueryServiceOrderDto {
   @IsString()
   search?: string;
 
-  @ApiPropertyOptional({ enum: ServiceOrderStatusDto })
+  @ApiPropertyOptional({ enum: ServiceOrderStatus })
   @IsOptional()
-  @IsEnum(ServiceOrderStatusDto)
-  status?: ServiceOrderStatusDto;
+  @IsEnum(ServiceOrderStatus)
+  status?: ServiceOrderStatus;
 
   @ApiPropertyOptional()
   @IsOptional()

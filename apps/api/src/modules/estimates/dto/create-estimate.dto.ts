@@ -1,29 +1,12 @@
-import { IsString, IsUUID, IsOptional, IsEnum, IsNumber, IsBoolean, IsInt, IsArray, ValidateNested, MaxLength, Min } from 'class-validator';
+import { IsString, IsUUID, IsOptional, IsEnum, IsNumber, IsBoolean, IsInt, IsISO8601, IsArray, ValidateNested, MaxLength, Min } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-
-export enum EstimateStatusDto {
-  DRAFT = 'draft',
-  SENT = 'sent',
-  APPROVED = 'approved',
-  REJECTED = 'rejected',
-  SUPPLEMENT_REQUESTED = 'supplement_requested',
-  CONVERTED = 'converted',
-}
-
-export enum EstimateLineTypeDto {
-  LABOR = 'labor',
-  PARTS = 'parts',
-  PAINT = 'paint',
-  MATERIALS = 'materials',
-  SUBLET = 'sublet',
-  OTHER = 'other',
-}
+import { EstimateStatus, EstimateLineType } from '@sse/shared-types';
 
 export class CreateEstimateLineDto {
-  @ApiProperty({ enum: EstimateLineTypeDto })
-  @IsEnum(EstimateLineTypeDto)
-  line_type!: EstimateLineTypeDto;
+  @ApiProperty({ enum: EstimateLineType })
+  @IsEnum(EstimateLineType)
+  line_type!: EstimateLineType;
 
   @ApiProperty({ example: 'Front bumper repair' })
   @IsString()
@@ -92,9 +75,9 @@ export class CreateEstimateDto {
   @IsUUID()
   estimated_by!: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ example: '2024-03-15' })
   @IsOptional()
-  @IsString()
+  @IsISO8601({ strict: true })
   valid_until?: string;
 
   @ApiPropertyOptional({ type: [CreateEstimateLineDto] })
