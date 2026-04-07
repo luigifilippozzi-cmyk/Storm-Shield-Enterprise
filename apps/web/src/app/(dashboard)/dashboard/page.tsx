@@ -3,8 +3,10 @@
 import Link from 'next/link';
 import { useEstimates } from '@/hooks/use-estimates';
 import { useServiceOrders } from '@/hooks/use-service-orders';
-import { useFinancialSummary } from '@/hooks/use-financial';
+import { useFinancialSummary, useFinancialDashboard } from '@/hooks/use-financial';
 import { useCustomers } from '@/hooks/use-customers';
+import { TrendChart } from '@/components/financial/trend-chart';
+import { RecentActivity } from '@/components/dashboard/recent-activity';
 import { cn } from '@/lib/utils';
 
 function StatCard({ title, value, href, color }: { title: string; value: string; href: string; color?: string }) {
@@ -17,17 +19,24 @@ function StatCard({ title, value, href, color }: { title: string; value: string;
 }
 
 export default function DashboardPage() {
-  const { data: estimates } = useEstimates({ status: 'draft', limit: 1 });
+  const { data: estimates } = useEstimates({ status: 'sent', limit: 1 });
   const { data: activeOrders } = useServiceOrders({ status: 'in_progress', limit: 1 });
   const { data: summary } = useFinancialSummary();
   const { data: customers } = useCustomers({ limit: 1 });
+  const { data: dashboard } = useFinancialDashboard();
 
   const openEstimates = estimates?.meta?.total ?? '\u2014';
   const activeSOs = activeOrders?.meta?.total ?? '\u2014';
-  const revenue = summary?.total_income !== undefined
-    ? `$${summary.total_income.toLocaleString('en-US', { minimumFractionDigits: 2 })}`
-    : '\u2014';
   const totalCustomers = customers?.meta?.total ?? '\u2014';
+
+  // Monthly revenue: get current month from dashboard trend
+  const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+  const monthlyIncome = dashboard?.monthly_trend?.find((m) => m.month === currentMonth);
+  const revenue = monthlyIncome
+    ? `$${parseFloat(monthlyIncome.income).toLocaleString('en-US', { minimumFractionDigits: 2 })}`
+    : summary?.total_income !== undefined
+      ? `$${summary.total_income.toLocaleString('en-US', { minimumFractionDigits: 2 })}`
+      : '\u2014';
 
   return (
     <div className="space-y-6">
@@ -37,7 +46,7 @@ export default function DashboardPage() {
         <StatCard title="Total Customers" value={String(totalCustomers)} href="/customers" />
         <StatCard title="Open Estimates" value={String(openEstimates)} href="/estimates" color="text-blue-600" />
         <StatCard title="Active Service Orders" value={String(activeSOs)} href="/service-orders" color="text-orange-600" />
-        <StatCard title="Total Revenue" value={String(revenue)} href="/financial" color="text-green-600" />
+        <StatCard title="Monthly Revenue" value={String(revenue)} href="/financial" color="text-green-600" />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -81,6 +90,19 @@ export default function DashboardPage() {
           </div>
         </section>
       </div>
+
+      {/* Financial Trend Chart */}
+      <section className="rounded-lg border">
+        <div className="border-b px-4 py-3">
+          <h2 className="font-semibold">Income vs Expenses (Last 12 Months)</h2>
+        </div>
+        <div className="p-4">
+          <TrendChart data={dashboard?.monthly_trend || []} />
+        </div>
+      </section>
+
+      {/* Recent Activity */}
+      <RecentActivity />
     </div>
   );
 }

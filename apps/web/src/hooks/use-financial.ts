@@ -45,6 +45,25 @@ function useApiHeaders() {
   return async () => ({ token: (await getToken()) || undefined });
 }
 
+export interface FinancialDashboard {
+  summary: FinancialSummary;
+  income_by_category: { category: string; total: string }[];
+  expense_by_category: { category: string; total: string }[];
+  monthly_trend: { month: string; income: string; expenses: string }[];
+  recent_transactions: FinancialTransaction[];
+}
+
+export function useFinancialDashboard() {
+  const getHeaders = useApiHeaders();
+  return useQuery({
+    queryKey: ['financial', 'dashboard'],
+    queryFn: async () => {
+      const { token } = await getHeaders();
+      return api<FinancialDashboard>('/financial/dashboard', { token });
+    },
+  });
+}
+
 export function useFinancialSummary() {
   const getHeaders = useApiHeaders();
   return useQuery({
