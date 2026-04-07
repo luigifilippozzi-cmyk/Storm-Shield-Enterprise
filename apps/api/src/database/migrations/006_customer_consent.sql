@@ -20,3 +20,14 @@ CREATE TABLE customer_consent_records (
 CREATE INDEX idx_consent_customer ON customer_consent_records(customer_id);
 CREATE INDEX idx_consent_tenant ON customer_consent_records(tenant_id);
 CREATE INDEX idx_consent_type ON customer_consent_records(tenant_id, consent_type);
+
+-- ══════════════════════════════════════
+-- ROW LEVEL SECURITY
+-- ══════════════════════════════════════
+ALTER TABLE customer_consent_records ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY tenant_isolation_consent ON customer_consent_records
+    USING (tenant_id = current_tenant_id());
+
+CREATE POLICY tenant_insert_consent ON customer_consent_records
+    FOR INSERT WITH CHECK (tenant_id = current_tenant_id());

@@ -1,10 +1,10 @@
 # Auditoria Grupo B (Frontend) — Gap Analysis
 
 > **Data:** 2026-04-05 (atualizado 2026-04-07)
-> **Base:** `main` @ `af7a30a` (Phase 1 MVP complete)
+> **Base:** `main` @ `83c0691` (Phase 1 MVP ~92% complete)
 > **Spec de referencia:** `docs/PROMPT_CLAUDE_CODE_FASE1.md` secao Grupo B
 > **Autor:** Agente 3 (Claude Code)
-> **Atualizacao:** Agente consolidador (2026-04-07)
+> **Atualizacao:** Review de documentacao (2026-04-07)
 
 ---
 
@@ -118,10 +118,10 @@ spec original foram omitidas ou simplificadas.
 | PR-1 | `feature/SSE-013-searchable-customer-select` | `<CustomerCombobox>` + `<VehicleCombobox>` (P0: B1-2 + B2-2) | **MERGED** `b335a2a` |
 | PR-2 | `feature/SSE-014-estimate-detail-line-items` | Line items na detail page (P0: B2-3) | **MERGED** `b335a2a` |
 | PR-3 | `feature/SSE-015-dashboard-recent-activity` | Recent Activity + fix status + monthly revenue (B4-2/3/5) | **MERGED** `0584a98` |
-| PR-4 | `feature/SSE-016-vehicle-photos` | Photo gallery + upload hooks (P1: B1-3/4/5) | Pendente — requer backend |
+| PR-4 | `feature/SSE-016-vehicle-photos` | Photo gallery + upload hooks (P1: B1-3/4/5) | **MERGED** PR-5 |
 | PR-5 | `feature/SSE-017-financial-trend-chart` | Recharts trend chart (P1: B3-3) | **MERGED** `0584a98` |
-| PR-6 | `feature/SSE-018-estimate-supplements-docs` | Supplements + docs + timeline (P2: B2-4/5/6) | Pendente — requer backend |
-| PR-7 | `feature/SSE-019-list-customer-columns` | Customer name em listas (P2: B1-1/B2-1) | Pendente |
+| PR-6 | `feature/SSE-018-estimate-supplements-docs` | Supplements + docs + timeline (P2: B2-4/5/6) | **MERGED** PR-5 (docs + timeline) |
+| PR-7 | `feature/SSE-019-list-customer-columns` | Customer name em listas (P2: B1-1/B2-1) | **MERGED** PR-5 |
 
 ---
 
@@ -135,17 +135,20 @@ spec original foram omitidas ou simplificadas.
 | `components/ui/command.tsx` | PR-1 | **Criado** (shadcn/ui + cmdk) |
 | `components/financial/trend-chart.tsx` | PR-5 | **Criado** (recharts BarChart) |
 | `components/dashboard/recent-activity.tsx` | PR-3 | **Criado** |
-| `components/vehicles/vehicle-photos.tsx` | PR-4 | Pendente — requer backend |
-| `components/estimates/supplement-form.tsx` | PR-6 | Pendente — requer backend |
-| `components/estimates/status-timeline.tsx` | PR-6 | Pendente |
+| `components/vehicles/vehicle-photos.tsx` | PR-4 | **Criado** |
+| `components/estimates/estimate-documents.tsx` | PR-6 | **Criado** |
+| `components/estimates/status-timeline.tsx` | PR-6 | **Criado** |
+| `components/estimates/supplement-form.tsx` | - | Pendente (P2) |
 
 ---
 
-## Gaps Remanescentes (3 de 17)
+## Gaps Remanescentes (4 de 17) — todos P2
 
 | # | Descricao | Prioridade | Dependencia |
 |---|---|---|---|
 | B1-3 | Vehicle detail: estimates vinculados | P2 | Frontend query por vehicle_id |
 | B2-2 | Form multi-step (wizard completo) | P2 | Frontend UX refactor |
 | B2-4 | supplement-form.tsx | P2 | `POST /estimates/:id/supplements` |
-| B3-4 | Financial breakdown por categoria | P2 | Dashboard endpoint ja retorna dados |
+| B3-4 | Financial breakdown por categoria | P2 | Dashboard endpoint expand |
+
+> **Nota:** Todos os P0 e P1 estao resolvidos. Os 4 gaps restantes sao P2 (polish) e nao bloqueiam a Fase 1.

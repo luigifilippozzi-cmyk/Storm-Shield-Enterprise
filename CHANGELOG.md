@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Security
+- **RLS policy** added to `customer_consent_records` table (migration 006) — was missing, violating CLAUDE.md rule #13
+
+### Documentation
+- **ADRs 001-004** created: multi-tenant schema, UUID v7 keys, double-entry bookkeeping, fixed asset management
+- **CLAUDE.md** updated: Next.js 14→15, accurate migration list (000-006), expanded plan limits table (6 resources), common/ directory tree with StorageService
+- **grupo-b-gaps.md** updated: 13 of 17 gaps resolved, 4 P2 remaining, all PRs marked as merged
+- **Phase 1 entregaveis** marked as completed in CLAUDE.md roadmap section
+
 ### Added
 - **CustomerCombobox** — searchable select with debounced API search, shows name + phone (`b335a2a`)
 - **VehicleCombobox** — cascading select filtered by customer, shows year/make/model/VIN (`b335a2a`)
