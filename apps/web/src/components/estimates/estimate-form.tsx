@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { CustomerCombobox } from '@/components/shared/customer-combobox';
+import { VehicleCombobox } from '@/components/shared/vehicle-combobox';
 import type { CreateEstimateInput, EstimateLineInput } from '@/hooks/use-estimates';
 import type { Estimate } from '@sse/shared-types';
 
@@ -35,6 +37,8 @@ interface EstimateFormProps {
 export function EstimateForm({ initialData, onSubmit, isLoading }: EstimateFormProps) {
   const router = useRouter();
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [customerId, setCustomerId] = useState(initialData?.customer_id || '');
+  const [vehicleId, setVehicleId] = useState(initialData?.vehicle_id || '');
   const [lines, setLines] = useState<EstimateLineInput[]>([emptyLine()]);
 
   const addLine = () => setLines((prev) => [...prev, emptyLine()]);
@@ -50,8 +54,8 @@ export function EstimateForm({ initialData, onSubmit, isLoading }: EstimateFormP
     const fd = new FormData(e.currentTarget);
 
     const data: CreateEstimateInput = {
-      customer_id: (fd.get('customer_id') as string).trim(),
-      vehicle_id: (fd.get('vehicle_id') as string).trim(),
+      customer_id: customerId,
+      vehicle_id: vehicleId,
       lines: lines.map((l, i) => ({ ...l, sort_order: i + 1 })),
     };
 
@@ -87,14 +91,21 @@ export function EstimateForm({ initialData, onSubmit, isLoading }: EstimateFormP
         <h2 className="text-lg font-semibold">References</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="customer_id">Customer ID *</Label>
-            <Input id="customer_id" name="customer_id" defaultValue={initialData?.customer_id || ''} placeholder="Customer UUID" />
-            {errors.customer_id && <p className="text-xs text-destructive">{errors.customer_id}</p>}
+            <Label>Customer *</Label>
+            <CustomerCombobox
+              value={customerId}
+              onChange={(id) => { setCustomerId(id); setVehicleId(''); }}
+              error={errors.customer_id}
+            />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="vehicle_id">Vehicle ID *</Label>
-            <Input id="vehicle_id" name="vehicle_id" defaultValue={initialData?.vehicle_id || ''} placeholder="Vehicle UUID" />
-            {errors.vehicle_id && <p className="text-xs text-destructive">{errors.vehicle_id}</p>}
+            <Label>Vehicle *</Label>
+            <VehicleCombobox
+              customerId={customerId}
+              value={vehicleId}
+              onChange={setVehicleId}
+              error={errors.vehicle_id}
+            />
           </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-3">

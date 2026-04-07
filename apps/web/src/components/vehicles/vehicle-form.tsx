@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { CustomerCombobox } from '@/components/shared/customer-combobox';
 import type { CreateVehicleInput } from '@/hooks/use-vehicles';
 import type { Vehicle } from '@sse/shared-types';
 
@@ -73,13 +74,14 @@ interface VehicleFormProps {
 export function VehicleForm({ initialData, onSubmit, isLoading }: VehicleFormProps) {
   const router = useRouter();
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [customerId, setCustomerId] = useState(initialData?.customer_id || '');
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
 
     const data: CreateVehicleInput = {
-      customer_id: (formData.get('customer_id') as string).trim(),
+      customer_id: customerId,
       year: parseInt(formData.get('year') as string, 10),
       make: (formData.get('make') as string).trim(),
       model: (formData.get('model') as string).trim(),
@@ -293,16 +295,12 @@ export function VehicleForm({ initialData, onSubmit, isLoading }: VehicleFormPro
       <section className="space-y-4">
         <h2 className="text-lg font-semibold">Customer</h2>
         <div className="space-y-2">
-          <Label htmlFor="customer_id">Customer ID *</Label>
-          <Input
-            id="customer_id"
-            name="customer_id"
-            defaultValue={initialData?.customer_id || ''}
-            placeholder="UUID"
+          <Label>Customer *</Label>
+          <CustomerCombobox
+            value={customerId}
+            onChange={setCustomerId}
+            error={errors.customer_id}
           />
-          {errors.customer_id && (
-            <p className="text-xs text-destructive">{errors.customer_id}</p>
-          )}
         </div>
       </section>
 

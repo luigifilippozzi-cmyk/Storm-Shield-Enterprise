@@ -8,6 +8,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn, formatDate } from '@/lib/utils';
 
+interface EstimateLineItem {
+  id: string;
+  line_type: string;
+  description: string;
+  quantity: number;
+  unit_price: string;
+}
+
 const STATUS_COLORS: Record<string, string> = {
   draft: 'bg-gray-100 text-gray-800',
   sent: 'bg-blue-100 text-blue-800',
@@ -82,6 +90,43 @@ export default function EstimateDetailPage({ params }: { params: Promise<{ id: s
       <Badge className={cn('border-transparent', STATUS_COLORS[estimate.status])}>
         {estimate.status.replace('_', ' ').toUpperCase()}
       </Badge>
+
+      {/* Line Items */}
+      {(estimate as any).lines && ((estimate as any).lines as EstimateLineItem[]).length > 0 && (
+        <section className="rounded-lg border">
+          <div className="border-b px-4 py-3"><h2 className="font-semibold">Line Items</h2></div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="px-4 py-2 text-left font-medium">Type</th>
+                  <th className="px-4 py-2 text-left font-medium">Description</th>
+                  <th className="px-4 py-2 text-right font-medium">Qty</th>
+                  <th className="px-4 py-2 text-right font-medium">Unit Price</th>
+                  <th className="px-4 py-2 text-right font-medium">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {((estimate as any).lines as EstimateLineItem[]).map((line, idx) => (
+                  <tr key={line.id || idx} className="border-b last:border-0">
+                    <td className="px-4 py-2 capitalize">{line.line_type}</td>
+                    <td className="px-4 py-2">{line.description}</td>
+                    <td className="px-4 py-2 text-right">{line.quantity}</td>
+                    <td className="px-4 py-2 text-right">${parseFloat(line.unit_price).toFixed(2)}</td>
+                    <td className="px-4 py-2 text-right font-medium">${(line.quantity * parseFloat(line.unit_price)).toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="bg-muted/50">
+                  <td colSpan={4} className="px-4 py-2 text-right font-semibold">Subtotal</td>
+                  <td className="px-4 py-2 text-right font-semibold">${parseFloat(estimate.subtotal).toFixed(2)}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </section>
+      )}
 
       <section className="rounded-lg border">
         <div className="border-b px-4 py-3"><h2 className="font-semibold">Details</h2></div>
