@@ -31,13 +31,16 @@
 - **4 planos**: free, starter, pro, enterprise
 - **Feature gating**: `PlanGuard` + `@RequirePlanFeature('module')` bloqueia acesso a módulos fora do plano
 - **Resource limits**: `PlanLimitsInterceptor` verifica contagem de recursos em POST (ex: free = 50 customers)
-- **Limites por plano**:
+- **Limites por plano** (conforme `plan.guard.ts`):
   | Resource | Free | Starter | Pro | Enterprise |
   |---|---|---|---|---|
   | Customers | 50 | 500 | ∞ | ∞ |
+  | Vehicles | 50 | 500 | ∞ | ∞ |
+  | Estimates | 25 | 250 | ∞ | ∞ |
+  | Service Orders | 25 | 250 | ∞ | ∞ |
   | Users | 3 | 10 | 50 | ∞ |
   | Storage | 500MB | 5GB | 50GB | ∞ |
-  | Modules | 5 básicos | +insurance,reports | +accounting,FAM | Todos |
+  | Modules | 5 básicos | +insurance,contractors,reports | +accounting,FAM,inventory | Todos (+rental,api,integrations) |
 
 ---
 
@@ -45,7 +48,7 @@
 
 | Camada | Tecnologia | Notas |
 |---|---|---|
-| **Frontend Web** | Next.js 14+ (App Router) + Tailwind CSS + shadcn/ui | SSR, dashboards responsivos |
+| **Frontend Web** | Next.js 15+ (App Router) + React 19 + Tailwind CSS + shadcn/ui | SSR, dashboards responsivos |
 | **App Móvel** | React Native / Expo | Técnicos e vendedores em campo |
 | **API Gateway** | Kong ou AWS API Gateway | Rate limiting, auth centralizada |
 | **Backend** | NestJS (Node.js) com TypeScript | Módulos isolados por domínio |
@@ -162,9 +165,14 @@ storm-shield-enterprise/
 │   │   ├── 001-multi-tenant-schema.md
 │   │   ├── 002-uuid-v7-primary-keys.md
 │   │   ├── 003-double-entry-bookkeeping.md
-│   │   └── 004-fixed-asset-management.md
+│   │   ├── 004-fixed-asset-management.md
+│   │   ├── 005-saas-tenant-isolation.md
+│   │   └── 006-staging-deploy-stack.md
+│   ├── audits/
+│   │   └── grupo-b-gaps.md          # Frontend gap analysis
 │   └── runbooks/
 │       ├── tenant-provisioning.md
+│       ├── staging-deploy.md
 │       └── depreciation-monthly.md
 │
 ├── packages/                         # Shared packages
@@ -200,16 +208,21 @@ storm-shield-enterprise/
 │   │   ├── src/
 │   │   │   ├── main.ts
 │   │   │   ├── app.module.ts
-│   │   │   ├── common/               # Guards, filters, interceptors, pipes
+│   │   │   ├── common/               # Guards, filters, interceptors, pipes, services
+│   │   │   │   ├── common.module.ts  # Global module exporting StorageService
 │   │   │   │   ├── guards/
 │   │   │   │   │   ├── auth.guard.ts
 │   │   │   │   │   ├── rbac.guard.ts
+│   │   │   │   │   ├── plan.guard.ts     # PlanGuard + @RequirePlanFeature
 │   │   │   │   │   └── tenant.guard.ts
 │   │   │   │   ├── filters/
 │   │   │   │   │   └── global-exception.filter.ts
 │   │   │   │   ├── interceptors/
 │   │   │   │   │   ├── audit-log.interceptor.ts
+│   │   │   │   │   ├── plan-limits.interceptor.ts
 │   │   │   │   │   └── tenant-context.interceptor.ts
+│   │   │   │   ├── services/
+│   │   │   │   │   └── storage.service.ts  # S3/R2 file upload, mock mode for dev
 │   │   │   │   └── decorators/
 │   │   │   │       ├── current-tenant.decorator.ts
 │   │   │   │       ├── current-user.decorator.ts
@@ -219,18 +232,15 @@ storm-shield-enterprise/
 │   │   │   │   ├── redis.config.ts
 │   │   │   │   └── auth.config.ts
 │   │   │   ├── database/
-│   │   │   │   ├── migrations/       # SQL migrations (Knex ou TypeORM)
-│   │   │   │   │   ├── 000_create_public_schema.sql
-│   │   │   │   │   ├── 001_platform_iam.sql
-│   │   │   │   │   ├── 002_crm_insurance_vehicles.sql
-│   │   │   │   │   ├── 003_estimates_service_orders.sql
-│   │   │   │   │   ├── 004_financial.sql
-│   │   │   │   │   ├── 005_accounting_gl.sql
-│   │   │   │   │   ├── 006_fam_tables.sql
-│   │   │   │   │   ├── 007_fam_seed_data.sql
-│   │   │   │   │   ├── 008_fam_functions.sql
-│   │   │   │   │   ├── 009_rental.sql
-│   │   │   │   │   └── 010_audit_compliance.sql
+│   │   │   │   ├── migrations/       # SQL migrations (Knex)
+│   │   │   │   │   ├── 000_create_public_schema.sql   # tenants, api_keys, update_updated_at trigger
+│   │   │   │   │   ├── 001_platform_iam.sql           # users, roles, permissions, sessions
+│   │   │   │   │   ├── 002_crm_insurance_vehicles.sql # customers, insurance, vehicles, vehicle_photos
+│   │   │   │   │   ├── 003_estimates_service_orders.sql # estimates, lines, supplements, docs, SOs
+│   │   │   │   │   ├── 004_financial.sql              # transactions, payments, contractors, bank_accounts
+│   │   │   │   │   ├── 005_row_level_security.sql     # RLS policies, sse_app role, current_tenant_id()
+│   │   │   │   │   └── 006_customer_consent.sql       # customer_consent_records (LGPD/CCPA) + RLS
+│   │   │   │   │   # Fase 2+: accounting_gl, fam_tables, fam_seeds, fam_functions, rental, audit
 │   │   │   │   ├── seeds/
 │   │   │   │   │   ├── chart_of_accounts.seed.ts
 │   │   │   │   │   ├── asset_categories.seed.ts
@@ -376,15 +386,18 @@ storm-shield-enterprise/
 5. **Financeiro Básico** — Entradas/saídas, categorização, dashboard resumo
 
 **Entregáveis técnicos:**
-- [ ] Monorepo setup (Turborepo + pnpm)
-- [ ] NestJS API scaffolding com multi-tenant middleware
-- [ ] PostgreSQL migrations (schemas 1-4)
-- [ ] Next.js app com autenticação e dashboard skeleton
-- [ ] Docker Compose para dev environment
-- [ ] CI pipeline (lint + test + build)
-- [ ] Tenant provisioning script (cria schema + seed data)
-- [ ] RBAC guard no backend
-- [ ] 80%+ test coverage nos services
+- [x] Monorepo setup (Turborepo + pnpm)
+- [x] NestJS API scaffolding com multi-tenant middleware
+- [x] PostgreSQL migrations (000-006)
+- [x] Next.js app com autenticação e dashboard
+- [x] Docker Compose para dev environment
+- [x] CI pipeline (lint + test + build) + staging deploy (Fly.io, Vercel, Neon)
+- [x] Tenant provisioning script (cria schema + seed data)
+- [x] RBAC guard + PlanGuard no backend
+- [x] 76 testes unitários passando (7 test suites)
+- [x] StorageService (S3/R2) para upload de fotos e documentos
+- [x] Consent Records (LGPD/CCPA) com RLS
+- [ ] 80%+ test coverage nos services (meta em progresso)
 
 **Critérios de aceite:**
 - Criar tenant, adicionar usuários com roles diferentes
@@ -505,10 +518,11 @@ Os seguintes arquivos de referência estão na pasta `docs/architecture/`:
 |---|---|
 | `000_create_public_schema.sql` | Tabela `tenants`, `api_keys`, trigger `update_updated_at` |
 | `001_platform_iam.sql` | Users, roles, permissions, sessions, tenant_settings |
-| `002_crm_insurance_vehicles.sql` | Customers, insurance_companies, vehicles, photos |
-| `003_estimates_service_orders.sql` | Estimates, service_orders, tasks, time_entries, parts |
-| `004_financial.sql` | Transactions, insurance_payments, contractors, bank_accounts, audit_logs |
+| `002_crm_insurance_vehicles.sql` | Customers, insurance_companies, vehicles, vehicle_photos |
+| `003_estimates_service_orders.sql` | Estimates, estimate_lines, supplements, documents, service_orders, tasks, time_entries, parts |
+| `004_financial.sql` | Transactions, insurance_payments, contractors, contractor_payments, bank_accounts, commissions, audit_logs, notifications |
 | `005_row_level_security.sql` | RLS policies em todas as tabelas, role `sse_app`, função `current_tenant_id()` |
+| `006_customer_consent.sql` | Customer consent records (LGPD/CCPA) + RLS policy |
 
 ---
 
