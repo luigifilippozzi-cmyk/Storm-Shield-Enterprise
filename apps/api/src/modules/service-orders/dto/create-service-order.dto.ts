@@ -1,15 +1,6 @@
-import { IsString, IsUUID, IsOptional, IsEnum, MaxLength } from 'class-validator';
+import { IsString, IsUUID, IsOptional, IsEnum, IsISO8601, MaxLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-
-export enum ServiceOrderStatusDto {
-  PENDING = 'pending',
-  IN_PROGRESS = 'in_progress',
-  WAITING_PARTS = 'waiting_parts',
-  WAITING_APPROVAL = 'waiting_approval',
-  COMPLETED = 'completed',
-  DELIVERED = 'delivered',
-  CANCELLED = 'cancelled',
-}
+import { ServiceOrderStatus } from '@sse/shared-types';
 
 export class CreateServiceOrderDto {
   @ApiProperty({ example: 'SO-2024-001' })
@@ -36,7 +27,7 @@ export class CreateServiceOrderDto {
 
   @ApiPropertyOptional({ example: '2024-02-15' })
   @IsOptional()
-  @IsString()
+  @IsISO8601({ strict: true })
   estimated_completion?: string;
 
   @ApiPropertyOptional()

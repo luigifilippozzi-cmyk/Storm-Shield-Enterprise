@@ -1,11 +1,6 @@
 import { IsString, IsEmail, IsOptional, IsEnum, IsUUID, MaxLength, MinLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-
-export enum UserStatusDto {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  SUSPENDED = 'suspended',
-}
+import { UserStatus } from '@sse/shared-types';
 
 export class CreateUserDto {
   @ApiProperty({ example: 'john@example.com' })
@@ -39,8 +34,8 @@ export class CreateUserDto {
   @IsString()
   external_auth_id?: string;
 
-  @ApiPropertyOptional({ enum: UserStatusDto, default: UserStatusDto.ACTIVE })
+  @ApiPropertyOptional({ enum: UserStatus, default: UserStatus.ACTIVE })
   @IsOptional()
-  @IsEnum(UserStatusDto)
-  status?: UserStatusDto;
+  @IsEnum(UserStatus)
+  status?: UserStatus;
 }

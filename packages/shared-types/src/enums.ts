@@ -27,6 +27,7 @@ export enum UserStatus {
   ACTIVE = 'active',
   INACTIVE = 'inactive',
   INVITED = 'invited',
+  SUSPENDED = 'suspended',
 }
 
 // ── CRM ──
@@ -72,6 +73,7 @@ export enum EstimateLineType {
   LABOR = 'labor',
   PARTS = 'parts',
   PAINT = 'paint',
+  MATERIALS = 'materials',
   SUBLET = 'sublet',
   OTHER = 'other',
 }

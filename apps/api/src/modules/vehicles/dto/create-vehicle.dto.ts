@@ -1,12 +1,6 @@
 import { IsString, IsOptional, IsEnum, IsUUID, IsInt, Min, Max, MaxLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-
-export enum VehicleConditionDto {
-  EXCELLENT = 'excellent',
-  GOOD = 'good',
-  FAIR = 'fair',
-  POOR = 'poor',
-}
+import { VehicleCondition } from '@sse/shared-types';
 
 export class CreateVehicleDto {
   @ApiProperty({ description: 'Customer who owns the vehicle' })
@@ -53,10 +47,10 @@ export class CreateVehicleDto {
   @Min(0)
   mileage?: number;
 
-  @ApiPropertyOptional({ enum: VehicleConditionDto })
+  @ApiPropertyOptional({ enum: VehicleCondition })
   @IsOptional()
-  @IsEnum(VehicleConditionDto)
-  condition?: VehicleConditionDto;
+  @IsEnum(VehicleCondition)
+  condition?: VehicleCondition;
 
   @ApiPropertyOptional({ example: 'ABC-1234' })
   @IsOptional()

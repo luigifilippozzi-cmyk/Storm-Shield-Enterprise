@@ -1,7 +1,7 @@
-import { IsOptional, IsString, IsEnum, IsUUID, IsInt, Min, Max } from 'class-validator';
+import { IsOptional, IsString, IsEnum, IsUUID, IsInt, IsISO8601, Min, Max } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { EstimateStatusDto } from './create-estimate.dto';
+import { EstimateStatus } from '@sse/shared-types';
 
 export class QueryEstimateDto {
   @ApiPropertyOptional({ description: 'Search by estimate number, claim number, or customer name' })
@@ -9,10 +9,10 @@ export class QueryEstimateDto {
   @IsString()
   search?: string;
 
-  @ApiPropertyOptional({ enum: EstimateStatusDto })
+  @ApiPropertyOptional({ enum: EstimateStatus })
   @IsOptional()
-  @IsEnum(EstimateStatusDto)
-  status?: EstimateStatusDto;
+  @IsEnum(EstimateStatus)
+  status?: EstimateStatus;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -24,14 +24,14 @@ export class QueryEstimateDto {
   @IsUUID()
   vehicle_id?: string;
 
-  @ApiPropertyOptional({ description: 'Filter from date (ISO string)' })
+  @ApiPropertyOptional({ description: 'Filter from date (ISO 8601)', example: '2024-01-01' })
   @IsOptional()
-  @IsString()
+  @IsISO8601({ strict: true })
   date_from?: string;
 
-  @ApiPropertyOptional({ description: 'Filter to date (ISO string)' })
+  @ApiPropertyOptional({ description: 'Filter to date (ISO 8601)', example: '2024-12-31' })
   @IsOptional()
-  @IsString()
+  @IsISO8601({ strict: true })
   date_to?: string;
 
   @ApiPropertyOptional({ default: 1 })

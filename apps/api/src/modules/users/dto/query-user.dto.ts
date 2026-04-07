@@ -1,7 +1,7 @@
 import { IsOptional, IsString, IsEnum, IsInt, Min, Max } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { UserStatusDto } from './create-user.dto';
+import { UserStatus } from '@sse/shared-types';
 
 export class QueryUserDto {
   @ApiPropertyOptional({ description: 'Search by name, email, or phone' })
@@ -9,10 +9,10 @@ export class QueryUserDto {
   @IsString()
   search?: string;
 
-  @ApiPropertyOptional({ enum: UserStatusDto })
+  @ApiPropertyOptional({ enum: UserStatus })
   @IsOptional()
-  @IsEnum(UserStatusDto)
-  status?: UserStatusDto;
+  @IsEnum(UserStatus)
+  status?: UserStatus;
 
   @ApiPropertyOptional({ description: 'Filter by role name' })
   @IsOptional()

@@ -1,7 +1,7 @@
-import { IsOptional, IsString, IsEnum, IsInt, Min, Max } from 'class-validator';
+import { IsOptional, IsString, IsEnum, IsInt, IsISO8601, Min, Max } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { TransactionTypeDto } from './create-transaction.dto';
+import { TransactionType } from '@sse/shared-types';
 
 export class QueryTransactionDto {
   @ApiPropertyOptional({ description: 'Search by description or reference number' })
@@ -9,24 +9,24 @@ export class QueryTransactionDto {
   @IsString()
   search?: string;
 
-  @ApiPropertyOptional({ enum: TransactionTypeDto })
+  @ApiPropertyOptional({ enum: TransactionType })
   @IsOptional()
-  @IsEnum(TransactionTypeDto)
-  transaction_type?: TransactionTypeDto;
+  @IsEnum(TransactionType)
+  transaction_type?: TransactionType;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   category?: string;
 
-  @ApiPropertyOptional({ description: 'Filter from date (ISO string)' })
+  @ApiPropertyOptional({ description: 'Filter from date (ISO 8601)', example: '2024-01-01' })
   @IsOptional()
-  @IsString()
+  @IsISO8601({ strict: true })
   date_from?: string;
 
-  @ApiPropertyOptional({ description: 'Filter to date (ISO string)' })
+  @ApiPropertyOptional({ description: 'Filter to date (ISO 8601)', example: '2024-12-31' })
   @IsOptional()
-  @IsString()
+  @IsISO8601({ strict: true })
   date_to?: string;
 
   @ApiPropertyOptional({ default: 1 })

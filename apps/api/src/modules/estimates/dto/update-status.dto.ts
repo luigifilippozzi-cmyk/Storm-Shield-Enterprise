@@ -1,11 +1,11 @@
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { EstimateStatusDto } from './create-estimate.dto';
+import { EstimateStatus } from '@sse/shared-types';
 
 export class UpdateEstimateStatusDto {
-  @ApiProperty({ enum: EstimateStatusDto })
-  @IsEnum(EstimateStatusDto)
-  status!: EstimateStatusDto;
+  @ApiProperty({ enum: EstimateStatus })
+  @IsEnum(EstimateStatus)
+  status!: EstimateStatus;
 
   @ApiPropertyOptional()
   @IsOptional()

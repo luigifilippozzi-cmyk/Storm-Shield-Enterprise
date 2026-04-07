@@ -1,11 +1,11 @@
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ServiceOrderStatusDto } from './create-service-order.dto';
+import { ServiceOrderStatus } from '@sse/shared-types';
 
 export class UpdateServiceOrderStatusDto {
-  @ApiProperty({ enum: ServiceOrderStatusDto })
-  @IsEnum(ServiceOrderStatusDto)
-  status!: ServiceOrderStatusDto;
+  @ApiProperty({ enum: ServiceOrderStatus })
+  @IsEnum(ServiceOrderStatus)
+  status!: ServiceOrderStatus;
 
   @ApiPropertyOptional()
   @IsOptional()
