@@ -6,6 +6,7 @@ import { CreateEstimateDto, CreateEstimateLineDto } from './dto/create-estimate.
 import { UpdateEstimateDto } from './dto/update-estimate.dto';
 import { QueryEstimateDto } from './dto/query-estimate.dto';
 import { UpdateEstimateStatusDto } from './dto/update-status.dto';
+import { CreateSupplementDto } from './dto/create-supplement.dto';
 
 const ALLOWED_DOC_TYPES = [
   'application/pdf',
@@ -322,5 +323,44 @@ export class EstimatesService {
     return knex('estimate_documents')
       .where({ estimate_id: estimateId, tenant_id: tenantId })
       .orderBy('created_at', 'desc');
+  }
+
+  // ── Supplements ──
+
+  async getSupplements(tenantId: string, estimateId: string) {
+    const knex = await this.tenantDb.getConnection();
+    return knex('estimate_supplements')
+      .where({ estimate_id: estimateId, tenant_id: tenantId })
+      .orderBy('supplement_number', 'asc');
+  }
+
+  async createSupplement(tenantId: string, estimateId: string, userId: string, dto: CreateSupplementDto) {
+    const knex = await this.tenantDb.getConnection();
+
+    const estimate = await knex('estimates')
+      .where({ id: estimateId, tenant_id: tenantId, deleted_at: null })
+      .first();
+    if (!estimate) throw new NotFoundException('Estimate not found');
+
+    // Get next supplement number
+    const [{ count }] = await knex('estimate_supplements')
+      .where({ estimate_id: estimateId, tenant_id: tenantId })
+      .count('id as count');
+    const supplementNumber = Number(count) + 1;
+
+    const [record] = await knex('estimate_supplements')
+      .insert({
+        id: generateId(),
+        tenant_id: tenantId,
+        estimate_id: estimateId,
+        supplement_number: supplementNumber,
+        reason: dto.reason,
+        amount: dto.amount,
+        status: 'draft',
+        requested_by: userId,
+      })
+      .returning('*');
+
+    return record;
   }
 }

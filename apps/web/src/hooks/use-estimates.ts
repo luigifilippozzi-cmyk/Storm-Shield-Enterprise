@@ -161,3 +161,37 @@ export function useDeleteEstimateDocument(estimateId: string) {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['estimates', estimateId] }),
   });
 }
+
+// ── Estimate Supplement Hooks ──
+
+export interface SupplementInput {
+  reason: string;
+  amount: number;
+}
+
+export interface EstimateSupplementData {
+  id: string;
+  estimate_id: string;
+  supplement_number: number;
+  reason: string;
+  amount: string;
+  status: string;
+  requested_by: string;
+  created_at: string;
+}
+
+export function useCreateSupplement(estimateId: string) {
+  const qc = useQueryClient();
+  const getHeaders = useApiHeaders();
+  return useMutation({
+    mutationFn: async (data: SupplementInput) => {
+      const { token } = await getHeaders();
+      return api<EstimateSupplementData>(`/estimates/${estimateId}/supplements`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+        token,
+      });
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['estimates', estimateId] }),
+  });
+}
