@@ -4,9 +4,11 @@ import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
+import { WinstonLogger } from './common/logger/winston.logger';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const logger = new WinstonLogger();
+  const app = await NestFactory.create(AppModule, { logger });
   const config = app.get(ConfigService);
 
   app.use(helmet());
@@ -38,7 +40,7 @@ async function bootstrap() {
 
   const port = config.get<number>('API_PORT', 3001);
   await app.listen(port);
-  console.log(`SSE API running on port ${port}`);
+  logger.log(`SSE API running on port ${port}`, 'Bootstrap');
 }
 
 bootstrap();
