@@ -9,6 +9,7 @@ import { VehiclesModule } from './modules/vehicles/vehicles.module';
 import { EstimatesModule } from './modules/estimates/estimates.module';
 import { ServiceOrdersModule } from './modules/service-orders/service-orders.module';
 import { FinancialModule } from './modules/financial/financial.module';
+import { AccountingModule } from './modules/accounting/accounting.module';
 import { DatabaseModule } from './config/database.module';
 import { RedisModule } from './config/redis.module';
 import { CommonModule } from './common/common.module';
@@ -34,6 +35,7 @@ import { HealthController } from './health.controller';
     EstimatesModule,
     ServiceOrdersModule,
     FinancialModule,
+    AccountingModule,
   ],
 })
 export class AppModule implements NestModule {
