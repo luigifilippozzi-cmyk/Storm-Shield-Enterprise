@@ -1,11 +1,12 @@
 'use client';
 
-import { use } from 'react';
+import { use, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEstimate, useUpdateEstimateStatus, useDeleteEstimate } from '@/hooks/use-estimates';
+import { useEstimate, useUpdateEstimateStatus, useDeleteEstimate, useCreateSupplement } from '@/hooks/use-estimates';
 import { EstimateDocuments } from '@/components/estimates/estimate-documents';
 import { StatusTimeline } from '@/components/estimates/status-timeline';
+import { SupplementForm, type SupplementFormData } from '@/components/estimates/supplement-form';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn, formatDate } from '@/lib/utils';
@@ -52,6 +53,8 @@ export default function EstimateDetailPage({ params }: { params: Promise<{ id: s
   const { data: estimate, isLoading, error } = useEstimate(id);
   const updateStatus = useUpdateEstimateStatus(id);
   const deleteEstimate = useDeleteEstimate();
+  const createSupplement = useCreateSupplement(id);
+  const [showSupplementForm, setShowSupplementForm] = useState(false);
 
   const handleDelete = async () => {
     if (!estimate) return;
@@ -129,6 +132,62 @@ export default function EstimateDetailPage({ params }: { params: Promise<{ id: s
           </div>
         </section>
       )}
+
+      {/* Supplements */}
+      <section className="rounded-lg border">
+        <div className="flex items-center justify-between border-b px-4 py-3">
+          <h2 className="font-semibold">Supplements</h2>
+          {!showSupplementForm && (
+            <Button variant="outline" size="sm" onClick={() => setShowSupplementForm(true)}>
+              Add Supplement
+            </Button>
+          )}
+        </div>
+        <div className="p-4">
+          {showSupplementForm && (
+            <div className="mb-4 rounded-md border bg-muted/30 p-4">
+              <SupplementForm
+                onSubmit={async (data: SupplementFormData) => {
+                  await createSupplement.mutateAsync(data);
+                  setShowSupplementForm(false);
+                }}
+                onCancel={() => setShowSupplementForm(false)}
+                isLoading={createSupplement.isPending}
+              />
+            </div>
+          )}
+          {(estimate as any).supplements && ((estimate as any).supplements as any[]).length > 0 ? (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="px-3 py-2 text-left font-medium">#</th>
+                  <th className="px-3 py-2 text-left font-medium">Reason</th>
+                  <th className="px-3 py-2 text-right font-medium">Amount</th>
+                  <th className="px-3 py-2 text-left font-medium">Status</th>
+                  <th className="px-3 py-2 text-left font-medium">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {((estimate as any).supplements as any[]).map((s: any) => (
+                  <tr key={s.id} className="border-b last:border-0">
+                    <td className="px-3 py-2">{s.supplement_number}</td>
+                    <td className="px-3 py-2">{s.reason}</td>
+                    <td className="px-3 py-2 text-right">${parseFloat(s.amount).toFixed(2)}</td>
+                    <td className="px-3 py-2">
+                      <Badge className={cn('border-transparent text-xs', STATUS_COLORS[s.status] || 'bg-gray-100 text-gray-800')}>
+                        {s.status.replace('_', ' ').toUpperCase()}
+                      </Badge>
+                    </td>
+                    <td className="px-3 py-2 text-muted-foreground">{formatDate(s.created_at)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            !showSupplementForm && <p className="text-sm text-muted-foreground">No supplements yet.</p>
+          )}
+        </div>
+      </section>
 
       <section className="rounded-lg border">
         <div className="border-b px-4 py-3"><h2 className="font-semibold">Details</h2></div>

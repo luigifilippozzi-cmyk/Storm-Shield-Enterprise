@@ -10,6 +10,7 @@ import { CreateEstimateDto } from './dto/create-estimate.dto';
 import { UpdateEstimateDto } from './dto/update-estimate.dto';
 import { QueryEstimateDto } from './dto/query-estimate.dto';
 import { UpdateEstimateStatusDto } from './dto/update-status.dto';
+import { CreateSupplementDto } from './dto/create-supplement.dto';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { TenantGuard } from '../../common/guards/tenant.guard';
 import { RbacGuard } from '../../common/guards/rbac.guard';
@@ -142,5 +143,31 @@ export class EstimatesController {
     @Param('documentId', ParseUUIDPipe) documentId: string,
   ) {
     return this.estimatesService.deleteDocument(tenantId, estimateId, documentId);
+  }
+
+  // ── Estimate Supplements ──
+
+  @Get(':id/supplements')
+  @ApiOperation({ summary: 'List estimate supplements' })
+  @ApiResponse({ status: 200, description: 'Supplement list' })
+  @RequirePermissions('estimates:read:detail')
+  getSupplements(
+    @CurrentTenant() tenantId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.estimatesService.getSupplements(tenantId, id);
+  }
+
+  @Post(':id/supplements')
+  @ApiOperation({ summary: 'Create a supplement for an estimate' })
+  @ApiResponse({ status: 201, description: 'Supplement created' })
+  @RequirePermissions('estimates:write:update')
+  createSupplement(
+    @CurrentTenant() tenantId: string,
+    @CurrentUser('id') userId: string,
+    @Param('id', ParseUUIDPipe) estimateId: string,
+    @Body() dto: CreateSupplementDto,
+  ) {
+    return this.estimatesService.createSupplement(tenantId, estimateId, userId, dto);
   }
 }
