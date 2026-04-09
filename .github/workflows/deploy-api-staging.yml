@@ -37,6 +37,13 @@ jobs:
           pnpm --filter @sse/shared-types build
           pnpm --filter @sse/shared-utils build
 
+      - name: Validate secrets
+        run: |
+          if [ -z "${{ secrets.DATABASE_URL_UNPOOLED }}" ]; then
+            echo "::error::Secret DATABASE_URL_UNPOOLED is not set. Configure it in Settings → Secrets."
+            exit 1
+          fi
+
       - name: Apply SQL migrations
         env:
           DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_UNPOOLED }}
@@ -50,6 +57,13 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Validate secrets
+        run: |
+          if [ -z "${{ secrets.FLY_API_TOKEN }}" ]; then
+            echo "::error::Secret FLY_API_TOKEN is not set. Configure it in Settings → Secrets."
+            exit 1
+          fi
 
       - name: Deploy
         env:
