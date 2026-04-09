@@ -18,7 +18,7 @@ spec original foram omitidas ou simplificadas.
 **Total de gaps identificados:** 17
 - **P0 (UX inaceitavel):** 3 — **TODOS resolvidos** (B1-2, B2-2 parcial, B2-3)
 - **P1 (features spec'd):** 3 — **TODOS resolvidos** (B1-3/4/5 photos, B3-3 trend chart, B4-5 activity)
-- **P2 (polish):** 6 — **5 resolvidos** (B4-2, B4-3, B1-1 customer column, B2-1 customer column, B2-5 doc upload)
+- **P2 (polish):** 6 — **TODOS resolvidos** (B4-2, B4-3, B1-1, B2-1, B2-3 detail, B2-4 supplement-form, B2-5 docs)
 - **Aceitavel (divergencia menor):** 5
 
 ---
@@ -63,8 +63,8 @@ spec original foram omitidas ou simplificadas.
 |---|---|---|---|---|
 | B2-1 | Lista com coluna **customer name** | **RESOLVIDO** | ~~P2~~ | Backend ja retorna customer_name via JOIN. Frontend exibe. |
 | B2-2 | Form **multi-step**: cliente > veiculo > itens > revisao | **Parcial** | P1 | `CustomerCombobox` + `VehicleCombobox` cascading. Form ainda single-page mas com selects pesquisaveis. Commit `b335a2a`. |
-| B2-3 | Detail: **line items** + **supplements** + **docs** + **timeline** | **Parcial** | ~~P0~~ P2 | Line items renderizados em tabela com type/desc/qty/price/total. Supplements e docs pendentes. Commit `b335a2a`. |
-| B2-4 | `supplement-form.tsx` | Ausente | P2 | Componente inexistente. |
+| B2-3 | Detail: **line items** + **supplements** + **docs** + **timeline** | **RESOLVIDO** | ~~P0~~ ~~P2~~ | Line items + supplements table + documents + status timeline. Commits `b335a2a`, `cc658ed`. |
+| B2-4 | `supplement-form.tsx` | **RESOLVIDO** | ~~P2~~ | `SupplementForm` component com amount + reason fields. PR #12 `cc658ed`. |
 | B2-5 | Documents attach UI | **RESOLVIDO** | ~~P2~~ | `EstimateDocuments` component com upload/delete. Backend endpoints criados. |
 | B2-6 | Status timeline (historico de mudancas) | **RESOLVIDO** | ~~P2~~ | `StatusTimeline` component no detail page. |
 
@@ -138,17 +138,16 @@ spec original foram omitidas ou simplificadas.
 | `components/vehicles/vehicle-photos.tsx` | PR-4 | **Criado** |
 | `components/estimates/estimate-documents.tsx` | PR-6 | **Criado** |
 | `components/estimates/status-timeline.tsx` | PR-6 | **Criado** |
-| `components/estimates/supplement-form.tsx` | - | Pendente (P2) |
+| `components/estimates/supplement-form.tsx` | PR-12 | **Criado** |
 
 ---
 
-## Gaps Remanescentes (4 de 17) — todos P2
+## Gaps Remanescentes (3 de 17) — todos P2
 
 | # | Descricao | Prioridade | Dependencia |
 |---|---|---|---|
 | B1-3 | Vehicle detail: estimates vinculados | P2 | Frontend query por vehicle_id |
 | B2-2 | Form multi-step (wizard completo) | P2 | Frontend UX refactor |
-| B2-4 | supplement-form.tsx | P2 | `POST /estimates/:id/supplements` |
 | B3-4 | Financial breakdown por categoria | P2 | Dashboard endpoint expand |
 
-> **Nota:** Todos os P0 e P1 estao resolvidos. Os 4 gaps restantes sao P2 (polish) e nao bloqueiam a Fase 1.
+> **Nota:** Todos os P0 e P1 estao resolvidos. Os 3 gaps restantes sao P2 (polish) e nao bloqueiam a Fase 1.
