@@ -1,0 +1,23 @@
+# Line ending normalization — prevents CRLF/LF phantom diffs on Windows
+# All text files stored as LF in the repo, checked out as LF everywhere
+* text=auto eol=lf
+
+# Windows-specific scripts need CRLF
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Binary files — never normalize
+*.docx binary
+*.xlsx binary
+*.pptx binary
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary

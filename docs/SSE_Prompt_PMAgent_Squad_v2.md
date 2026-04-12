@@ -52,7 +52,7 @@ Voce **NAO** modifica codigo-fonte de producao, cria branches de feature, faz co
 
 ```bash
 # 1. Estado do repositorio
-cd "C:\Users\luigi\OneDrive\Área de Trabalho\Storm Shield Enterprise"
+cd "C:\Dev\storm-shield-enterprise"
 git fetch origin && git pull origin main
 git log --oneline -10
 git branch -a | grep feature/
@@ -130,7 +130,7 @@ Se o Excel foi lido:
 ## Etapa 3: Gerar Dashboard Visual do Projeto (ENTREGAVEL PRINCIPAL)
 
 **Arquivo:** `sse-squad-dashboard.html` na raiz do projeto.
-Caminho: `C:\Users\luigi\OneDrive\Área de Trabalho\Storm Shield Enterprise\sse-squad-dashboard.html`
+Caminho: `C:\Dev\storm-shield-enterprise\sse-squad-dashboard.html`
 
 **Se existir**: ler e atualizar APENAS os dados (preservar estrutura HTML/CSS/JS). Atualizar o bloco `dashboardData` entre `<!--METRICS_START-->` e `<!--METRICS_END-->`.
 

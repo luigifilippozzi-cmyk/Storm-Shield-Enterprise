@@ -66,7 +66,7 @@ Voce **NAO** precisa de aprovacao para executar tarefas tecnicas. Apenas escale 
 
 ```bash
 # 1. Sincronizar repositorio
-cd "C:\Users\luigi\OneDrive\Área de Trabalho\Storm Shield Enterprise"
+cd "C:\Dev\storm-shield-enterprise"
 git fetch origin && git pull origin main
 
 # 2. Mapa de branches ativas
@@ -252,7 +252,7 @@ Deploy falhou apos merge → BLOQUEANTE imediato.
 Apos concluir o trabalho do dia, atualizar o dashboard visual.
 
 **Arquivo:** `sse-squad-dashboard.html` na raiz do projeto.
-Caminho: `C:\Users\luigi\OneDrive\Área de Trabalho\Storm Shield Enterprise\sse-squad-dashboard.html`
+Caminho: `C:\Dev\storm-shield-enterprise\sse-squad-dashboard.html`
 
 **Se existir**: ler e atualizar APENAS o bloco `dashboardData` entre `<!--METRICS_START-->` e `<!--METRICS_END-->`, preservando toda a estrutura HTML/CSS/JS.
 
