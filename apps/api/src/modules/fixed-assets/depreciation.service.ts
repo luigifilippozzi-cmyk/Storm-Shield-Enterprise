@@ -93,6 +93,7 @@ export class DepreciationService {
     // Check for duplicate depreciation in this period
     const existingEntry = await knex('depreciation_entries')
       .where({
+        tenant_id: tenantId,
         fixed_asset_id: fixedAssetId,
         fiscal_period_id: fiscalPeriodId,
         entry_type: 'regular',
