@@ -1,9 +1,8 @@
 import {
-  IsString, IsOptional, IsUUID, IsEnum,
+  IsString, IsOptional, IsUUID,
   MaxLength,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { AssetStatus } from '@sse/shared-types';
 
 export class UpdateFixedAssetDto {
   @ApiPropertyOptional()
@@ -34,8 +33,5 @@ export class UpdateFixedAssetDto {
   @IsUUID()
   responsible_user_id?: string;
 
-  @ApiPropertyOptional({ enum: AssetStatus })
-  @IsOptional()
-  @IsEnum(AssetStatus)
-  status?: AssetStatus;
+  // Status changes only via depreciation (fully_depreciated) or disposal (disposed) workflows
 }
