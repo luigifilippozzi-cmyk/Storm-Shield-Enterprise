@@ -16,9 +16,9 @@ git log --oneline -10               # últimos commits
 
 # 2. Ler contexto do projeto
 #    - CLAUDE.md (raiz)            → arquitetura, convenções, stack
-#    - docs/PROMPT_CLAUDE_CODE_*.md → prompts da fase ativa
-#    - docs/architecture/SSE_Acompanhamento_Gerencial.xlsx → tarefas pendentes
-#    - docs/decisions/*.md         → ADRs vigentes
+#    - .auto-memory/MEMORY.md     → persistent memory index
+#    - docs/architecture/SSE_Development_Plan.xlsx → tarefas pendentes
+#    - docs/decisions/*.md         → ADRs vigentes (001–008)
 
 # 3. Identificar sua tarefa
 #    Pergunte ao Luigi qual grupo/tarefa, OU consulte o prompt da fase ativa
@@ -31,8 +31,8 @@ git log --oneline -10               # últimos commits
 | # | Arquivo | Quando usar |
 |---|---|---|
 | 1 | `CLAUDE.md` | Arquitetura, stack, 14 regras obrigatórias, convenções universais |
-| 2 | `docs/PROMPT_CLAUDE_CODE_FASE{N}.md` | Tarefas específicas da fase ativa (Grupos A, B, C...) |
-| 3 | `docs/PROMPT_CLAUDE_CODE_DEPLOY_STAGING.md` | Grupo 0 (deploy infra) — prioridade zero |
+| 2 | `.auto-memory/MEMORY.md` | Persistent memory — project status, priorities, session history |
+| 3 | `sse-squad-dashboard.html` | Squad dashboard — live metrics, pipeline, alerts |
 | 4 | `docs/decisions/NNN-*.md` | ADRs — justificativas arquiteturais |
 | 5 | `docs/architecture/*.docx` | Especificações de BD e requisitos funcionais |
 | 6 | Mensagem do Luigi | Supraordena os acima em caso de conflito |
@@ -113,6 +113,8 @@ Há outro(s) agente(s) trabalhando neste repo simultaneamente.
 
 - **Padrão de referência (copy this pattern):** `apps/api/src/modules/customers/`
 - **Frontend pattern:** `apps/web/src/app/(dashboard)/customers/`
-- **Convenção de migrations:** `apps/api/src/database/migrations/005_row_level_security.sql`
+- **Convenção de migrations:** `apps/api/src/database/migrations/` (000–010 active)
 - **Tenant provisioning:** `apps/api/src/database/tenant-provisioning.ts`
-- **Planilha de tarefas:** `docs/architecture/SSE_Acompanhamento_Gerencial.xlsx`
+- **Planilha de tarefas:** `docs/architecture/SSE_Development_Plan.xlsx`
+- **FAM reference SQL:** `docs/sql/001_fam_tables.sql`, `002_fam_seed_data.sql`, `003_fam_depreciation_functions.sql`
+- **ADRs:** `docs/decisions/001-*.md` through `008-*.md`

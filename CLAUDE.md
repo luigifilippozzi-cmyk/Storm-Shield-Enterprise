@@ -239,8 +239,11 @@ storm-shield-enterprise/
 │   │   │   │   │   ├── 003_estimates_service_orders.sql # estimates, lines, supplements, docs, SOs
 │   │   │   │   │   ├── 004_financial.sql              # transactions, payments, contractors, bank_accounts
 │   │   │   │   │   ├── 005_row_level_security.sql     # RLS policies, sse_app role, current_tenant_id()
-│   │   │   │   │   └── 006_customer_consent.sql       # customer_consent_records (LGPD/CCPA) + RLS
-│   │   │   │   │   # Fase 2+: accounting_gl, fam_tables, fam_seeds, fam_functions, rental, audit
+│   │   │   │   │   ├── 006_customer_consent.sql       # customer_consent_records (LGPD/CCPA) + RLS
+│   │   │   │   │   ├── 007_accounting_gl.sql          # chart_of_accounts + ENUM types
+│   │   │   │   │   ├── 008_journal_entries_fiscal_periods.sql # journal_entries, lines, fiscal_periods
+│   │   │   │   │   ├── 009_fam_tables.sql             # asset_categories, fixed_assets, depreciation_*, asset_disposals + RLS
+│   │   │   │   │   └── 010_fam_not_null_and_idempotency.sql  # NOT NULL hardening + idempotent RLS/triggers
 │   │   │   │   ├── seeds/
 │   │   │   │   │   ├── chart_of_accounts.seed.ts
 │   │   │   │   │   ├── asset_categories.seed.ts
@@ -394,9 +397,12 @@ storm-shield-enterprise/
 - [x] CI pipeline (lint + test + build) + staging deploy (Fly.io, Vercel, Neon)
 - [x] Tenant provisioning script (cria schema + seed data)
 - [x] RBAC guard + PlanGuard no backend
-- [x] 76 testes unitários passando (7 test suites)
+- [x] 272 testes unitários passando (20 test suites)
 - [x] StorageService (S3/R2) para upload de fotos e documentos
 - [x] Consent Records (LGPD/CCPA) com RLS
+- [x] Contractors module (CRUD + payments + 1099 tracking)
+- [x] Accounting GL module (Chart of Accounts + Journal Entries + Fiscal Periods)
+- [x] Fixed Assets module (FAM) — 4-method depreciation, auto JE, batch execution, disposal
 - [ ] 80%+ test coverage nos services (meta em progresso)
 
 **Critérios de aceite:**
@@ -523,6 +529,10 @@ Os seguintes arquivos de referência estão na pasta `docs/architecture/`:
 | `004_financial.sql` | Transactions, insurance_payments, contractors, contractor_payments, bank_accounts, commissions, audit_logs, notifications |
 | `005_row_level_security.sql` | RLS policies em todas as tabelas, role `sse_app`, função `current_tenant_id()` |
 | `006_customer_consent.sql` | Customer consent records (LGPD/CCPA) + RLS policy |
+| `007_accounting_gl.sql` | Chart of accounts table, ENUMs (`account_type`, `normal_balance`), indexes, RLS |
+| `008_journal_entries_fiscal_periods.sql` | Journal entries + lines, fiscal periods, ENUMs (`journal_entry_status`, `fiscal_period_status`) |
+| `009_fam_tables.sql` | Fixed Asset Management: `asset_categories`, `fixed_assets`, `depreciation_schedules`, `depreciation_entries`, `asset_disposals` + RLS + ENUMs |
+| `010_fam_not_null_and_idempotency.sql` | NOT NULL hardening on FAM tables + idempotent RLS policies and triggers |
 
 ---
 
