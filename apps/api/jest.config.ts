@@ -5,7 +5,18 @@ const config: Config = {
   rootDir: 'src',
   testRegex: '.*\\.spec\\.ts$',
   transform: {
-    '^.+\\.ts$': 'ts-jest',
+    '^.+\\.ts$': [
+      'ts-jest',
+      {
+        tsconfig: {
+          module: 'commonjs',
+          moduleResolution: 'node',
+          esModuleInterop: true,
+          emitDecoratorMetadata: true,
+          experimentalDecorators: true,
+        },
+      },
+    ],
   },
   collectCoverageFrom: ['**/*.service.ts', '!**/node_modules/**', '!**/dist/**'],
   coverageDirectory: '../coverage',
@@ -13,17 +24,6 @@ const config: Config = {
   moduleNameMapper: {
     '^@sse/shared-utils$': '<rootDir>/../../../packages/shared-utils/src',
     '^@sse/shared-types$': '<rootDir>/../../../packages/shared-types/src',
-  },
-  globals: {
-    'ts-jest': {
-      tsconfig: {
-        module: 'commonjs',
-        moduleResolution: 'node',
-        esModuleInterop: true,
-        emitDecoratorMetadata: true,
-        experimentalDecorators: true,
-      },
-    },
   },
 };
 
