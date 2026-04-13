@@ -391,7 +391,7 @@ storm-shield-enterprise/
 **Entregáveis técnicos:**
 - [x] Monorepo setup (Turborepo + pnpm)
 - [x] NestJS API scaffolding com multi-tenant middleware
-- [x] PostgreSQL migrations (000-006)
+- [x] PostgreSQL migrations (000-010)
 - [x] Next.js app com autenticação e dashboard
 - [x] Docker Compose para dev environment
 - [x] CI pipeline (lint + test + build) + staging deploy (Fly.io, Vercel, Neon)
