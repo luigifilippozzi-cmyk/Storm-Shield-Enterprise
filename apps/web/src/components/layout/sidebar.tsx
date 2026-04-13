@@ -10,6 +10,7 @@ const navigation = [
   { name: 'Estimates', href: '/estimates', icon: 'E' },
   { name: 'Service Orders', href: '/service-orders', icon: 'S' },
   { name: 'Financial', href: '/financial', icon: 'F' },
+  { name: 'Reports', href: '/accounting/reports', icon: 'R' },
   { name: 'Settings', href: '/settings', icon: 'G' },
 ];
 

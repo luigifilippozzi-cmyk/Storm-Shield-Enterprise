@@ -2,13 +2,14 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useFinancialSummary, useTransactions, useDeleteTransaction, useCreateTransaction, type TransactionFilters, type CreateTransactionInput } from '@/hooks/use-financial';
+import { useFinancialDashboard, useTransactions, useDeleteTransaction, useCreateTransaction, type TransactionFilters, type CreateTransactionInput } from '@/hooks/use-financial';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { cn, formatDate } from '@/lib/utils';
 import { TransactionForm } from '@/components/financial/transaction-form';
+import { TrendChart } from '@/components/financial/trend-chart';
 
 const TYPE_COLORS: Record<string, string> = {
   income: 'bg-green-100 text-green-800',
@@ -21,7 +22,9 @@ export default function FinancialPage() {
   const [searchInput, setSearchInput] = useState('');
   const [showForm, setShowForm] = useState(false);
 
-  const { data: summary, isLoading: summaryLoading } = useFinancialSummary();
+  const { data: dashboard, isLoading: dashboardLoading } = useFinancialDashboard();
+  const summary = dashboard?.summary;
+  const summaryLoading = dashboardLoading;
   const { data, isLoading, error } = useTransactions(filters);
   const deleteTransaction = useDeleteTransaction();
   const createTransaction = useCreateTransaction();
@@ -69,6 +72,14 @@ export default function FinancialPage() {
           </p>
         </div>
       </div>
+
+      {/* Trend Chart */}
+      {!dashboardLoading && dashboard?.monthly_trend && dashboard.monthly_trend.length > 0 && (
+        <div className="rounded-lg border bg-card p-6">
+          <h2 className="mb-4 text-lg font-semibold">Monthly Trend</h2>
+          <TrendChart data={dashboard.monthly_trend} />
+        </div>
+      )}
 
       {/* Inline Form */}
       {showForm && (
