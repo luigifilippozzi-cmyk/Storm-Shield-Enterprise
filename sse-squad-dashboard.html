@@ -3,81 +3,168 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Storm Shield Enterprise — Squad Dashboard</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>SSE Squad Control Panel</title>
 <style>
-:root{--bg:#0F172A;--surface:#1E293B;--surface2:#334155;--border:#475569;--text:#E2E8F0;--text2:#94A3B8;--navy:#1B3A5C;--teal:#0D9488;--green:#22C55E;--green-bg:rgba(34,197,94,.12);--yellow:#EAB308;--yellow-bg:rgba(234,179,8,.12);--red:#EF4444;--red-bg:rgba(239,68,68,.12);--blue:#3B82F6;--blue-bg:rgba(59,130,246,.12);--purple:#A855F7;--orange:#F97316}
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Segoe UI','Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.5}
-.header{background:linear-gradient(135deg,var(--navy),#0F172A);border-bottom:1px solid var(--border);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;position:sticky;top:0;z-index:100}
-.header-left{display:flex;align-items:center;gap:12px}
-.logo{width:40px;height:40px;background:linear-gradient(135deg,var(--teal),var(--blue));border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:#fff}
-.header h1{font-size:18px;font-weight:700}
-.header h1 span{color:var(--text2);font-weight:400;font-size:13px;margin-left:8px}
-.header-right{display:flex;align-items:center;gap:12px;font-size:12px;color:var(--text2)}
-.health-badge{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
-.health-verde{background:var(--green-bg);color:var(--green);border:1px solid rgba(34,197,94,.3)}
-.health-amarelo{background:var(--yellow-bg);color:var(--yellow);border:1px solid rgba(234,179,8,.3)}
-.health-vermelho{background:var(--red-bg);color:var(--red);border:1px solid rgba(239,68,68,.3)}
-.container{max-width:1400px;margin:0 auto;padding:20px 24px}
-.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}
-.kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;transition:transform .2s}
-.kpi:hover{transform:translateY(-2px)}
-.kpi-value{font-size:28px;font-weight:800;color:var(--teal)}
-.kpi-label{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
-.kpi-sub{font-size:10px;color:var(--text2);margin-top:2px}
-.section{margin-bottom:20px}
-.section-title{font-size:15px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
-.card-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.card-header h3{font-size:14px;font-weight:600}
-.card-body{padding:16px}
-.phase-bar{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(71,85,105,.3)}
-.phase-bar:last-child{border-bottom:none}
-.phase-name{min-width:200px;font-size:13px;font-weight:600}
-.phase-progress{flex:1;height:24px;background:rgba(71,85,105,.3);border-radius:6px;overflow:hidden;position:relative}
-.phase-fill{height:100%;border-radius:6px;transition:width .8s ease;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:11px;font-weight:700;min-width:fit-content}
-.phase-stats{min-width:120px;text-align:right;font-size:12px;color:var(--text2)}
-.phase-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;margin-left:8px}
-.badge-verde{background:var(--green-bg);color:var(--green)}
-.badge-amarelo{background:var(--yellow-bg);color:var(--yellow)}
-.badge-vermelho{background:var(--red-bg);color:var(--red)}
-.badge-futuro{background:rgba(148,163,184,.12);color:var(--text2)}
-.tabs{display:flex;gap:0;margin-bottom:0;border-bottom:2px solid var(--border)}
-.tab{padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text2);transition:all .2s}
-.tab:hover{color:var(--text)}
-.tab.active{color:var(--teal);border-bottom-color:var(--teal)}
-.tab-count{background:var(--surface2);padding:1px 6px;border-radius:8px;font-size:10px;margin-left:4px}
-.tab-panel{display:none;padding:12px 0}
-.tab-panel.active{display:block}
-.alert-item{padding:10px 12px;background:var(--surface2);border-radius:8px;margin-bottom:8px;font-size:13px;display:flex;align-items:flex-start;gap:10px;border-left:3px solid}
-.alert-item.bloqueante{border-left-color:var(--red)}
-.alert-item.risco{border-left-color:var(--yellow)}
-.alert-item.overdue{border-left-color:var(--orange)}
-.alert-item.proximo{border-left-color:var(--blue)}
-.alert-icon{font-size:16px;flex-shrink:0;margin-top:1px}
-.alert-text strong{display:block;margin-bottom:2px}
-.alert-text span{color:var(--text2);font-size:12px}
-.infra-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
-.infra-item{background:var(--surface2);border-radius:8px;padding:12px;display:flex;align-items:center;gap:10px}
-.infra-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-.infra-dot.green{background:var(--green)}
-.infra-dot.red{background:var(--red)}
-.infra-dot.yellow{background:var(--yellow)}
-.infra-label{font-size:12px}
-.infra-label strong{display:block;font-size:13px}
-.infra-label span{color:var(--text2);font-size:11px}
-.inconsistency{padding:8px 12px;background:rgba(249,115,22,.08);border-left:3px solid var(--orange);border-radius:0 8px 8px 0;margin-bottom:6px;font-size:12px}
-.reco{padding:10px 12px;background:var(--surface2);border-radius:8px;margin-bottom:8px;font-size:13px;display:flex;gap:10px}
-.reco-num{background:var(--teal);color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
-.squad-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
-.squad-item{background:var(--surface2);border-radius:8px;padding:12px}
-.squad-item h4{font-size:12px;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
-.squad-item p{font-size:13px}
-.footer{text-align:center;padding:20px;color:var(--text2);font-size:11px}
-.new-badge{background:var(--green-bg);color:var(--green);padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700;margin-left:6px}
-.warn-badge{background:var(--red-bg);color:var(--red);padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700;margin-left:6px}
-@media(max-width:768px){.kpi-row{grid-template-columns:repeat(2,1fr)}.phase-name{min-width:120px;font-size:12px}.header{padding:12px 16px}.container{padding:16px}.phase-stats{min-width:80px;font-size:11px}}
-@media(max-width:480px){.kpi-row{grid-template-columns:repeat(2,1fr)}.phase-bar{flex-wrap:wrap}.phase-name{min-width:100%}.infra-grid{grid-template-columns:1fr}}
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #242834;
+    --border: #2e3344;
+    --text: #e4e6ed;
+    --text2: #8b90a0;
+    --accent: #0d9488;
+    --accent2: #2dd4bf;
+    --navy: #1B3A5C;
+    --green: #22c55e;
+    --green-bg: rgba(34,197,94,.12);
+    --yellow: #eab308;
+    --yellow-bg: rgba(234,179,8,.12);
+    --red: #ef4444;
+    --red-bg: rgba(239,68,68,.12);
+    --blue: #3b82f6;
+    --blue-bg: rgba(59,130,246,.12);
+    --purple: #a855f7;
+    --purple-bg: rgba(168,85,247,.12);
+    --cyan: #06b6d4;
+    --orange: #f97316;
+    --orange-bg: rgba(249,115,22,.12);
+    --teal-bg: rgba(13,148,136,.12);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+  .header { background:var(--surface); border-bottom:1px solid var(--border); padding:16px 32px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+  .header-left { display:flex; align-items:center; gap:16px; }
+  .logo { width:36px; height:36px; background:linear-gradient(135deg,var(--accent),var(--blue)); border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:16px; color:#fff; }
+  .header h1 { font-size:18px; font-weight:600; }
+  .header h1 span { color:var(--text2); font-weight:400; font-size:14px; margin-left:8px; }
+  .pulse-dot { width:8px; height:8px; background:var(--green); border-radius:50%; animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
+  .header-right { display:flex; align-items:center; gap:16px; font-size:13px; color:var(--text2); }
+  .refresh-btn { background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:6px 14px; border-radius:6px; cursor:pointer; font-size:13px; display:flex; align-items:center; gap:6px; transition:all .2s; }
+  .refresh-btn:hover { border-color:var(--accent); color:var(--accent2); }
+
+  .container { max-width:1440px; margin:0 auto; padding:24px 32px; }
+
+  /* Health Banner */
+  .health-banner { padding:12px 20px; border-radius:10px; margin-bottom:24px; display:flex; align-items:center; gap:12px; font-size:14px; font-weight:500; }
+  .health-green { background:var(--green-bg); border:1px solid rgba(34,197,94,.25); color:var(--green); }
+  .health-yellow { background:var(--yellow-bg); border:1px solid rgba(234,179,8,.25); color:var(--yellow); }
+  .health-red { background:var(--red-bg); border:1px solid rgba(239,68,68,.25); color:var(--red); }
+
+  .kpi-row { display:grid; grid-template-columns:repeat(5,1fr); gap:16px; margin-bottom:24px; }
+  .kpi-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px; }
+  .kpi-label { font-size:12px; color:var(--text2); text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; }
+  .kpi-value { font-size:28px; font-weight:700; }
+  .kpi-sub { font-size:12px; color:var(--text2); margin-top:4px; display:flex; align-items:center; gap:4px; }
+  .kpi-sub .up { color:var(--green); }
+  .kpi-sub .warn { color:var(--yellow); }
+  .kpi-sub .down { color:var(--red); }
+
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px; }
+  .grid-3 { display:grid; grid-template-columns:2fr 1fr; gap:16px; margin-bottom:24px; }
+
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .card-header { padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+  .card-header h2 { font-size:14px; font-weight:600; }
+  .card-body { padding:20px; }
+  .badge { display:inline-flex; align-items:center; padding:2px 8px; border-radius:99px; font-size:11px; font-weight:500; }
+  .badge-green { background:var(--green-bg); color:var(--green); }
+  .badge-yellow { background:var(--yellow-bg); color:var(--yellow); }
+  .badge-blue { background:var(--blue-bg); color:var(--blue); }
+  .badge-purple { background:var(--purple-bg); color:var(--purple); }
+  .badge-red { background:var(--red-bg); color:var(--red); }
+  .badge-orange { background:var(--orange-bg); color:var(--orange); }
+  .badge-teal { background:var(--teal-bg); color:var(--accent2); }
+  .badge-muted { background:rgba(139,144,160,.12); color:var(--text2); }
+
+  /* Agent cards */
+  .agents-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:24px; }
+  .agent-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px; position:relative; transition:all .3s; cursor:default; }
+  .agent-card:hover { border-color:var(--accent); transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,.3); }
+  .agent-icon { width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px; margin-bottom:12px; }
+  .agent-card h3 { font-size:13px; font-weight:600; margin-bottom:4px; }
+  .agent-card .role { font-size:11px; color:var(--text2); margin-bottom:12px; }
+  .agent-card .status-line { display:flex; align-items:center; gap:6px; font-size:12px; margin-bottom:8px; }
+  .status-dot { width:6px; height:6px; border-radius:50%; }
+  .status-dot.active { background:var(--green); box-shadow:0 0 6px var(--green); }
+  .status-dot.idle { background:var(--yellow); }
+  .status-dot.standby { background:var(--text2); }
+  .agent-stat { display:flex; justify-content:space-between; font-size:11px; color:var(--text2); padding:4px 0; border-top:1px solid var(--border); }
+  .agent-stat span:last-child { color:var(--text); font-weight:500; }
+
+  /* Timeline */
+  .timeline { list-style:none; }
+  .timeline li { display:flex; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); font-size:13px; }
+  .timeline li:last-child { border-bottom:none; }
+  .timeline .time { color:var(--text2); min-width:70px; font-size:11px; padding-top:2px; }
+  .timeline .dot { width:8px; height:8px; border-radius:50%; margin-top:5px; flex-shrink:0; }
+  .timeline .msg { flex:1; line-height:1.5; }
+  .timeline .msg strong { color:var(--text); }
+  .timeline .msg .tag { color:var(--accent2); font-size:11px; }
+
+  /* Milestones */
+  .milestone-row { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--border); }
+  .milestone-row:last-child { border-bottom:none; }
+  .ms-badge { font-size:11px; font-weight:700; padding:4px 10px; border-radius:6px; min-width:56px; text-align:center; white-space:nowrap; }
+  .ms-info { flex:1; }
+  .ms-info h4 { font-size:13px; font-weight:600; margin-bottom:2px; }
+  .ms-info p { font-size:11px; color:var(--text2); }
+  .ms-progress { display:flex; align-items:center; gap:8px; }
+  .ms-pct { font-size:13px; font-weight:700; min-width:40px; text-align:right; }
+  .progress-bar { height:6px; background:var(--surface2); border-radius:3px; overflow:hidden; }
+  .progress-fill { height:100%; border-radius:3px; transition:width 1s ease; }
+
+  /* Module table */
+  .mod-table { width:100%; border-collapse:collapse; }
+  .mod-table th { text-align:left; font-size:11px; color:var(--text2); text-transform:uppercase; letter-spacing:.5px; padding:8px 12px; border-bottom:1px solid var(--border); }
+  .mod-table td { padding:10px 12px; font-size:13px; border-bottom:1px solid var(--border); }
+  .mod-table tr:last-child td { border-bottom:none; }
+  .mod-table .mod-name { display:flex; align-items:center; gap:8px; }
+  .mod-dot { width:8px; height:8px; border-radius:2px; }
+
+  /* Pipeline */
+  .pipeline-step { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); }
+  .pipeline-step:last-child { border-bottom:none; }
+  .pipe-icon { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; flex-shrink:0; }
+  .pipe-info { flex:1; }
+  .pipe-info h4 { font-size:12px; font-weight:600; }
+  .pipe-info p { font-size:11px; color:var(--text2); }
+
+  /* Alerts */
+  .alert-item { padding:12px 14px; background:var(--surface2); border-radius:8px; margin-bottom:8px; font-size:13px; display:flex; align-items:flex-start; gap:10px; border-left:3px solid; }
+  .alert-item:last-child { margin-bottom:0; }
+  .alert-item.bloqueante { border-left-color:var(--red); }
+  .alert-item.overdue { border-left-color:var(--orange); }
+  .alert-item.risco { border-left-color:var(--yellow); }
+  .alert-item.info { border-left-color:var(--blue); }
+  .alert-icon { font-size:16px; flex-shrink:0; margin-top:1px; }
+  .alert-text strong { display:block; margin-bottom:2px; }
+  .alert-text span { color:var(--text2); font-size:12px; }
+
+  /* Tabs */
+  .tabs { display:flex; gap:0; border-bottom:2px solid var(--border); }
+  .tab { padding:8px 16px; font-size:12px; font-weight:600; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; color:var(--text2); transition:all .2s; }
+  .tab:hover { color:var(--text); }
+  .tab.active { color:var(--accent2); border-bottom-color:var(--accent); }
+  .tab-count { background:var(--surface2); padding:1px 6px; border-radius:8px; font-size:10px; margin-left:4px; }
+  .tab-panel { display:none; padding:16px 0 0; }
+  .tab-panel.active { display:block; }
+
+  /* Reco */
+  .reco { display:flex; gap:12px; padding:12px 14px; background:var(--surface2); border-radius:8px; margin-bottom:8px; font-size:13px; }
+  .reco:last-child { margin-bottom:0; }
+  .reco-num { background:var(--accent); color:#fff; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0; }
+
+  .scroll-area { max-height:420px; overflow-y:auto; }
+  .scroll-area::-webkit-scrollbar { width:4px; }
+  .scroll-area::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+  @media(max-width:1200px) { .agents-grid { grid-template-columns:repeat(2,1fr); } .kpi-row { grid-template-columns:repeat(3,1fr); } }
+  @media(max-width:768px) { .agents-grid { grid-template-columns:1fr; } .kpi-row { grid-template-columns:repeat(2,1fr); } .grid-2,.grid-3 { grid-template-columns:1fr; } .container { padding:16px; } }
 </style>
 </head>
 <body>
@@ -85,261 +172,374 @@ body{font-family:'Segoe UI','Inter',system-ui,sans-serif;background:var(--bg);co
 <div class="header">
   <div class="header-left">
     <div class="logo">S</div>
-    <h1 id="headerTitle">Storm Shield Enterprise<span>Squad Dashboard</span></h1>
+    <h1>SSE Squad Control Panel <span>v1.0</span></h1>
+    <div class="pulse-dot" title="Dashboard Active"></div>
   </div>
   <div class="header-right">
-    <span id="healthBadge" class="health-badge"></span>
-    <span id="lastUpdate"></span>
+    <span id="lastUpdate">Atualizado: --</span>
+    <button class="refresh-btn" onclick="location.reload()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+      Refresh
+    </button>
   </div>
 </div>
 
 <div class="container">
 
-  <!-- KPIs -->
+  <!-- Health Banner -->
+  <div id="healthBanner" class="health-banner health-yellow"></div>
+
+  <!-- KPI Row -->
   <div class="kpi-row" id="kpiRow"></div>
 
-  <!-- Phase Progress -->
-  <div class="section">
-    <div class="section-title">Progresso por Fase</div>
+  <!-- Squad Agents -->
+  <div style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;">
+    <h2 style="font-size:16px;font-weight:600;">Squad Agents</h2>
+    <span style="font-size:12px;color:var(--text2);">Configurado via .claude/agents/ + AGENTS.md</span>
+  </div>
+  <div class="agents-grid" id="agentsGrid"></div>
+
+  <!-- Activity + Milestones -->
+  <div class="grid-3">
     <div class="card">
-      <div class="card-body" id="phaseContainer"></div>
+      <div class="card-header">
+        <h2>Atividade Recente</h2>
+        <span class="badge badge-teal" id="activityBadge">Live</span>
+      </div>
+      <div class="card-body scroll-area" id="activityTimeline" style="max-height:420px;"></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <h2>Milestones (Fases)</h2>
+        <span class="badge badge-blue" id="milestoneBadge"></span>
+      </div>
+      <div class="card-body scroll-area" id="milestoneList"></div>
+    </div>
+  </div>
+
+  <!-- Backend Modules + CI/CD Pipeline -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header">
+        <h2>Modulos Backend — Status</h2>
+        <span style="font-size:12px;color:var(--text2);">apps/api/src/modules/</span>
+      </div>
+      <div class="card-body scroll-area" style="max-height:420px;" id="modulesContainer"></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <h2>Pipeline CI/CD</h2>
+        <span class="badge" id="pipelineBadge"></span>
+      </div>
+      <div class="card-body" id="pipelineContainer"></div>
     </div>
   </div>
 
   <!-- Alerts -->
-  <div class="section">
-    <div class="section-title">Alertas Ativos</div>
-    <div class="card">
+  <div class="card" style="margin-bottom:24px;">
+    <div class="card-header">
+      <h2>Alertas Ativos</h2>
+    </div>
+    <div style="padding:0 20px;">
       <div class="tabs" id="alertTabs"></div>
-      <div class="card-body" id="alertPanels"></div>
     </div>
+    <div class="card-body" id="alertPanels"></div>
   </div>
 
-  <!-- Infrastructure -->
-  <div class="section">
-    <div class="section-title">Infraestrutura CI/CD</div>
+  <!-- Inconsistencies + Recommendations -->
+  <div class="grid-2">
     <div class="card">
-      <div class="card-body">
-        <div class="infra-grid" id="infraGrid"></div>
+      <div class="card-header">
+        <h2>Inconsistencias Excel vs Repo</h2>
+        <span class="badge badge-orange" id="inconsistCount"></span>
       </div>
+      <div class="card-body scroll-area" id="inconsistBody"></div>
     </div>
-  </div>
-
-  <!-- Squad -->
-  <div class="section">
-    <div class="section-title">Squad Status</div>
     <div class="card">
-      <div class="card-body">
-        <div class="squad-grid" id="squadGrid"></div>
+      <div class="card-header">
+        <h2>Recomendacoes</h2>
+        <span class="badge badge-teal">Top 3</span>
       </div>
-    </div>
-  </div>
-
-  <!-- Inconsistencies -->
-  <div class="section" id="inconsistenciesSection">
-    <div class="section-title">Inconsistencias Excel vs Repo</div>
-    <div class="card">
-      <div class="card-body" id="inconsistenciesBody"></div>
-    </div>
-  </div>
-
-  <!-- Recommendations -->
-  <div class="section">
-    <div class="section-title">Recomendacoes Top 3</div>
-    <div class="card">
       <div class="card-body" id="recoBody"></div>
     </div>
   </div>
 
-</div>
+  <!-- Backlog Summary -->
+  <div class="card" style="margin-bottom:24px;">
+    <div class="card-header">
+      <h2>Backlog (Excel) — Proximas Tasks</h2>
+      <span class="badge badge-blue" id="backlogBadge"></span>
+    </div>
+    <div class="card-body scroll-area" style="max-height:360px;" id="backlogBody"></div>
+  </div>
 
-<div class="footer" id="footerText"></div>
+  <!-- Footer -->
+  <div style="text-align:center;padding:24px;color:var(--text2);font-size:12px;">
+    Storm Shield Enterprise &mdash; Squad Control Panel v1.0 &mdash; Gerado pelo PM Agent<br>
+    <span style="color:var(--accent2);">PO: Luigi</span> &middot; <span style="color:var(--blue);">PM Agent: Diario</span> &middot; <span style="color:var(--purple);">Dev Manager: Por sessao</span> &middot; <span style="color:var(--text2);">Fontes: Git, GitHub Actions, Excel, .claude/agents/</span>
+  </div>
+
+</div>
 
 <script>
 // <!--METRICS_START-->
-const dashboardData = {
-  lastUpdated: "2026-04-09T22:00:00-05:00",
-  updatedBy: "PM Agent",
-  health: "Amarelo",
-  healthReason: "Deploy API staging falhando (secrets); 3 tasks at risk com deadline amanha; branch local divergiu de origin/main com merge conflict",
-  activeFase: 1,
+const D = {
+  lastUpdated: "2026-04-12 23:45",
+  updatedBy: "Dev Manager",
+  health: "yellow",
+  healthText: "Deploy API staging FAILURE (secrets ausentes) — CI verde, 272 testes passando, 5 PRs merged, 0 stale branches, docs synced",
+  activeFase: "2",
   kpis: {
-    totalTarefas: 121,
-    concluidas: 25,
-    percentGeral: 21,
-    fase1Percent: 72,
-    backendModules: 15,
-    frontendPages: 27,
-    specFiles: 15,
-    endpoints: 72,
-    emptyModules: 4
+    backendModules: 12,
+    controllers: 15,
+    endpoints: 95,
+    frontendPages: 26,
+    specFiles: 20,
+    tests: 272,
+    migrations: 10,
+    excelTotal: 36,
+    excelDone: 24
   },
+  agents: [
+    { name: "PM Agent", role: "Status Diario + Metricas", color: "var(--blue)", bg: "var(--blue-bg)", icon: "clipboard", status: "standby", statusText: "Standby", stats: [["Frequencia","Diario"],["Escopo","Read-only"],["Output","Relatorio + Dashboard"]] },
+    { name: "Dev Manager", role: "Implementacao + Orquestracao", color: "var(--accent2)", bg: "var(--teal-bg)", icon: "gear", status: "active", statusText: "Sessao 2026-04-12", stats: [["Autoridade","Execucao tecnica"],["Subagentes","3 acionados"],["Git","5 PRs merged (#18-#22)"]] },
+    { name: "test-runner", role: "Jest + Coverage", color: "var(--green)", bg: "var(--green-bg)", icon: "check", status: "active", statusText: "PASS 272 tests", stats: [["Framework","Jest + ts-jest"],["Specs","20 test suites"],["Trigger","Sempre pre-PR"]] },
+    { name: "security-reviewer", role: "RLS + XSS + Auth", color: "var(--red)", bg: "var(--red-bg)", icon: "shield", status: "active", statusText: "Acionado FAM", stats: [["Foco","tenant_id, RLS, AES"],["Checks","OWASP Top 10"],["Trigger","auth/db changes"]] },
+    { name: "db-reviewer", role: "Migrations + Schema", color: "var(--purple)", bg: "var(--purple-bg)", icon: "database", status: "active", statusText: "Acionado 009_fam", stats: [["Foco","RLS, indexes, FK"],["Migrations","10 SQL files"],["Trigger","Schema changes"]] },
+    { name: "frontend-reviewer", role: "Next.js + shadcn/ui", color: "var(--cyan)", bg: "rgba(6,182,212,.12)", icon: "layout", status: "standby", statusText: "N/A (backend-only)", stats: [["Framework","Next.js 15 + React 19"],["Pages","26 paginas"],["Trigger","UI/component changes"]] }
+  ],
+  activity: [
+    { time: "Abr 12", color: "var(--accent2)", msg: "<strong>PR #22</strong> docs: sync project documentation (README, CLAUDE.md, AGENTS.md, ADR-008)", tag: "merge" },
+    { time: "Abr 12", color: "var(--accent2)", msg: "<strong>PR #21</strong> fix(db): FAM migration hardening — NOT NULL + idempotent RLS", tag: "merge" },
+    { time: "Abr 12", color: "var(--accent2)", msg: "<strong>PR #20</strong> fix(fixed-assets): security review — tenant_id in queries + status removal from DTO", tag: "merge" },
+    { time: "Abr 12", color: "var(--accent2)", msg: "<strong>PR #19</strong> feat(fixed-assets): FAM module — 4 services, 18 files, 48 tests, migration 009", tag: "merge" },
+    { time: "Abr 12", color: "var(--accent2)", msg: "<strong>PR #18</strong> fix(build): Windows symlink fix + Jest deprecated globals migration", tag: "merge" },
+    { time: "Abr 12", color: "var(--green)", msg: "<strong>Dev Manager</strong> sessao autonoma — 3 subagentes, 5 PRs merged, branches cleaned, docs synced", tag: "dm" },
+    { time: "Abr 12", color: "var(--blue)", msg: "<strong>PM Agent</strong> revisao diaria — saude amarela, deploy API RED, Excel desatualizado", tag: "pm" },
+    { time: "Abr 12", color: "var(--green)", msg: "<strong>CI</strong> workflows SUCCESS em main (CI + Deploy Staging + Pages)", tag: "ci" },
+    { time: "Abr 12", color: "var(--purple)", msg: "<strong>ADR-007</strong> agent squad architecture criado em docs/decisions/", tag: "docs" },
+    { time: "Abr 12", color: "var(--orange)", msg: "<strong>Fix</strong> null byte corruption removida de 105 files (OneDrive artifact)", tag: "fix" },
+    { time: "Abr 12", color: "var(--accent2)", msg: "<strong>PR #17</strong> post-migration cleanup — .gitattributes, .gitignore, CRLF normalization", tag: "merge" },
+    { time: "Abr 10", color: "var(--accent2)", msg: "<strong>PR #16</strong> OneDrive rescue — uncommitted work migrado para C:\\Dev", tag: "merge" },
+    { time: "Abr 9", color: "var(--green)", msg: "<strong>PR #15</strong> contractors module — CRUD + payments + 1099 tracking", tag: "merge" }
+  ],
   fases: [
-    { nome: "Fase 1 — MVP", total: 40, concluidas: 25, emAndamento: 8, naoIniciado: 7, percent: 72, saude: "Amarelo" },
-    { nome: "Fase 2 — IA + Integracoes", total: 12, concluidas: 0, emAndamento: 0, naoIniciado: 12, percent: 0, saude: "Futuro" },
-    { nome: "Fase 3 — Contabilidade + FAM", total: 25, concluidas: 0, emAndamento: 0, naoIniciado: 25, percent: 0, saude: "Futuro" },
-    { nome: "Fase 4 — Compliance Fiscal", total: 16, concluidas: 0, emAndamento: 0, naoIniciado: 16, percent: 0, saude: "Futuro" },
-    { nome: "Fase 5 — Mobile + Comunicacao", total: 11, concluidas: 0, emAndamento: 0, naoIniciado: 11, percent: 0, saude: "Futuro" },
-    { nome: "Fase 6 — Rental + Analytics", total: 11, concluidas: 0, emAndamento: 0, naoIniciado: 11, percent: 0, saude: "Futuro" },
-    { nome: "Fase 7 — Marketplace", total: 6, concluidas: 0, emAndamento: 0, naoIniciado: 6, percent: 0, saude: "Futuro" }
+    { id: "1A", nome: "Hardening & Tests", total: 10, done: 8, saude: "green", desc: "Jest config + 7 unit test suites + error handler DONE. Faltam: T-008, T-009" },
+    { id: "1B", nome: "Deploy Staging", total: 9, done: 8, saude: "yellow", desc: "Fly.io, Redis, migrations, health, GH Actions, Neon, Vercel DONE. Falta: T-019 smoke test" },
+    { id: "2", nome: "Frontend Polish", total: 9, done: 0, saude: "muted", desc: "Combobox, line editor, KPI cards — proxima fase ativa" },
+    { id: "3", nome: "Accounting & FAM", total: 8, done: 6, saude: "green", desc: "COA + JE + Fiscal Periods + FAM CRUD + depreciation + disposal DONE. Faltam: T-032, T-036" }
+  ],
+  modules: [
+    { name: "customers", files: 12, spec: true, controller: true, endpoints: 8 },
+    { name: "estimates", files: 10, spec: true, controller: true, endpoints: 8 },
+    { name: "vehicles", files: 9, spec: true, controller: true, endpoints: 7 },
+    { name: "service-orders", files: 9, spec: true, controller: true, endpoints: 8 },
+    { name: "financial", files: 8, spec: true, controller: true, endpoints: 6 },
+    { name: "contractors", files: 9, spec: true, controller: true, endpoints: 8 },
+    { name: "users", files: 8, spec: true, controller: true, endpoints: 6 },
+    { name: "insurance", files: 8, spec: true, controller: true, endpoints: 6 },
+    { name: "accounting", files: 17, spec: true, controller: true, endpoints: 12 },
+    { name: "fixed-assets", files: 18, spec: true, controller: true, endpoints: 15 },
+    { name: "auth", files: 4, spec: true, controller: false, endpoints: 0 },
+    { name: "tenants", files: 4, spec: true, controller: false, endpoints: 0 }
+  ],
+  pipeline: [
+    { label: "CI", desc: "Lint + Test + Build (GitHub Actions)", status: "green", date: "2026-04-12" },
+    { label: "Deploy Staging", desc: "Workflow geral (triggered on push main)", status: "green", date: "2026-04-12" },
+    { label: "Deploy API", desc: "Fly.io — FAILURE (secrets ausentes)", status: "red", date: "2026-04-12" },
+    { label: "Deploy Web", desc: "Vercel — SUCCESS", status: "green", date: "2026-04-12" },
+    { label: "PRs Abertos", desc: "Nenhum PR pendente", status: "green", date: "2026-04-12" }
   ],
   alertas: {
     bloqueantes: [
-      { titulo: "Merge Conflict: local main divergiu de origin/main", descricao: "apps/web/next.config.js em conflito. Local tem 1 commit, remote tem 4 commits nao integrados. Resolver ANTES de qualquer novo trabalho.", acao: "git merge origin/main e resolver conflito" },
-      { titulo: "GitHub Secrets nao registrados", descricao: "FLY_API_TOKEN, VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID, DATABASE_URL_UNPOOLED, NEON_API_KEY ausentes. Deploy API staging FALHANDO.", acao: "PO registrar secrets em github.com/settings" },
-      { titulo: "Deploy API Staging: FAILURE", descricao: "Ultimo run 2026-04-09 falhou. Bloqueando 3 tasks de deploy.", acao: "Registrar secrets + re-run workflow" }
+      { titulo: "GitHub Secrets nao configurados", desc: "FLY_API_TOKEN, DATABASE_URL_UNPOOLED ausentes. Deploy API staging FALHANDO.", acao: "PO registrar em github.com/settings/secrets" },
+      { titulo: "Deploy API Staging: FAILURE", desc: "Ultimo run 2026-04-12 falhou. T-019 (smoke test) bloqueado.", acao: "Registrar secrets + re-run workflow" }
     ],
     overdue: [],
     emRisco: [
-      { titulo: "Executar deploy Fly.io (1o deploy staging)", descricao: "Inicio prev: 06/04, Fim prev: 10/04. Status: Nao Iniciado. Deadline AMANHA.", acao: "Registrar secrets hoje" },
-      { titulo: "Configurar GitHub Actions (deploy-api + deploy-web)", descricao: "Inicio prev: 06/04, Fim prev: 10/04. Status: Nao Iniciado. Deadline AMANHA.", acao: "Depende de secrets" },
-      { titulo: "Smoke test URLs publicas + atualizar README", descricao: "Inicio prev: 10/04, Fim prev: 11/04. Depende dos 2 deploys acima.", acao: "Executar apos deploy" }
+      { titulo: "T-019: Smoke test staging", desc: "Depende de deploy API funcionar. Unica task restante de Fase 1B.", acao: "Registrar secrets primeiro" }
     ],
     proximos7: [
-      { titulo: "Deploy Fly.io — Fim prev: 10/04", descricao: "Bloqueado por secrets" },
-      { titulo: "GitHub Actions config — Fim prev: 10/04", descricao: "Bloqueado por secrets" },
-      { titulo: "Smoke test staging — Fim prev: 11/04", descricao: "Bloqueado por deploy" }
+      { titulo: "T-008: Remove duplicate enums from DTOs", desc: "P1 cleanup — usar @sse/shared-types. Pode ser feito imediatamente." },
+      { titulo: "T-009: Add @IsISO8601 validation to date params", desc: "P1 cleanup — financial, estimates date filters." },
+      { titulo: "T-032: Reports (Trial Balance, P&L, Balance Sheet)", desc: "P1 — completar Fase 3 accounting." },
+      { titulo: "T-036: Accounting frontend pages", desc: "P2 — COA, JE, reports pages em Next.js." }
     ]
   },
-  infra: {
-    ci: { status: "verde", label: "CI (main)", data: "2026-04-09", descricao: "lint + test + build" },
-    deployStaging: { status: "verde", label: "Deploy Staging", data: "2026-04-09", descricao: "Fly.io workflow" },
-    deployApi: { status: "vermelho", label: "Deploy API Staging", data: "2026-04-09", descricao: "FAILURE — secrets ausentes" },
-    deployWeb: { status: "verde", label: "Deploy Web Staging", data: "2026-04-09", descricao: "SUCCESS (fix 430a794)", extra: "NEW" },
-    prsAbertos: []
-  },
-  squad: {
-    ultimaSessaoDM: "N/A",
-    subagentes: ["db-reviewer", "frontend-reviewer", "security-reviewer", "test-runner"],
-    branchesAtivas: ["feature/SSE-035-consolidation-and-squad-setup (remote)", "feature/SSE-040-missing-module-tests (remote)"],
-    ultimoCommit: "430a794 — fix(web): conditionally disable standalone output on Vercel",
-    prsMerged: "PR #14 (SSE-040-missing-module-tests) — 4 novos spec files (+924 linhas)"
-  },
   inconsistencias: [
-    "StorageService implementado no codigo mas 'Upload de fotos (S3/R2)' marcado 'Nao Iniciado' no Excel",
-    "Modulos accounting (9 files, 3 specs), fixed-assets (2 files), insurance (5 files) tem codigo mas sao Fase 2/3 — nao rastreados na Fase 1",
-    "4 modulos backend vazios: contractors, inventory, notifications, rental — existem como diretorios mas sem arquivos",
-    "Local main divergiu de origin/main — 4 commits remotos nao integrados (incl. delete dashboard page.tsx)"
+    { tipo: "Insurance", desc: "8 files + spec no repo mas sem task explicita no Excel — considerar adicionar task retroativa" }
   ],
   recomendacoes: [
-    { prioridade: "P0", texto: "RESOLVER MERGE CONFLICT entre local e origin/main imediatamente. Rodar: git merge origin/main, resolver next.config.js, commitar." },
-    { prioridade: "P0", texto: "REGISTRAR GitHub Secrets (FLY_API_TOKEN, VERCEL_TOKEN, etc.) para desbloquear deploy API staging e as 3 tasks de deploy com deadline 10-11/04." },
-    { prioridade: "P1", texto: "Completar CRUDs em andamento: Vehicle DTOs (70%), Estimate workflow (60%), User Mgmt (50%), Financial entries (40%). Focar nos que estao mais perto de 100% primeiro." }
+    { prioridade: "P0", texto: "Registrar GitHub Secrets (FLY_API_TOKEN, DATABASE_URL_UNPOOLED) para desbloquear deploy API staging e T-019 smoke test." },
+    { prioridade: "P1", texto: "T-008 + T-009: Cleanup tasks de Fase 1A — enums duplicados e validacao de datas. Fechar Fase 1A." },
+    { prioridade: "P1", texto: "T-032: Reports (P&L, Balance Sheet, Trial Balance) — completar Fase 3 accounting (6/8 done)." }
   ],
-  changesSinceLastReview: [
-    "Deploy Web Staging: FAILURE -> SUCCESS (fix 430a794 desabilitou standalone output no Vercel)",
-    "PR #14 merged: 4 novos spec files para service-orders, insurance, auth, tenants (+924 linhas)",
-    "Detectado: local main divergiu de origin/main (4 commits remotos com merge conflict)"
+  backlog: [
+    { id: "T-008", task: "Remove duplicate enums from DTOs", fase: "1A", prio: "P1", status: "Backlog", nota: "Usar @sse/shared-types" },
+    { id: "T-009", task: "Add @IsISO8601 validation to date params", fase: "1A", prio: "P1", status: "Backlog", nota: "financial, estimates" },
+    { id: "T-019", task: "Smoke test staging deploy end-to-end", fase: "1B", prio: "P1", status: "Backlog", nota: "Depende de secrets + deploy API" },
+    { id: "T-020", task: "Vehicles: customer combobox (replace text input)", fase: "2", prio: "P0", status: "Backlog", nota: "Gap B1-2" },
+    { id: "T-021", task: "Estimates: inline line editor", fase: "2", prio: "P0", status: "Backlog", nota: "Gap B2-3" },
+    { id: "T-022", task: "Financial: KPI cards + trend chart", fase: "2", prio: "P0", status: "Backlog", nota: "Gap B3-1" },
+    { id: "T-032", task: "Reports: Trial Balance, P&L, Balance Sheet", fase: "3", prio: "P1", status: "Backlog", nota: "Completar accounting" },
+    { id: "T-036", task: "Accounting frontend pages", fase: "3", prio: "P2", status: "Backlog", nota: "COA, JE, reports pages" }
   ]
 };
 // <!--METRICS_END-->
 
-// === RENDER ===
+// === ICONS (inline SVG) ===
+const ICONS = {
+  clipboard: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
+  check: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>',
+  shield: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+  database: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>',
+  gear: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+  layout: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>',
+  warn: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+  ok: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>'
+};
+
 function render() {
-  const d = dashboardData;
-  // Health badge
-  const hClass = d.health.toLowerCase();
-  document.getElementById('healthBadge').className = 'health-badge health-' + hClass;
-  document.getElementById('healthBadge').textContent = d.health;
-  document.getElementById('lastUpdate').textContent = 'Atualizado: ' + new Date(d.lastUpdated).toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) + ' por ' + d.updatedBy;
+  // Last update
+  document.getElementById("lastUpdate").textContent = "Atualizado: " + D.lastUpdated + " por " + D.updatedBy;
+
+  // Health banner
+  const banner = document.getElementById("healthBanner");
+  banner.className = "health-banner health-" + D.health;
+  const hIcon = D.health === "green" ? ICONS.ok : ICONS.warn;
+  banner.innerHTML = hIcon + " <span>" + D.healthText + "</span>";
 
   // KPIs
+  const k = D.kpis;
+  const pct = Math.round(k.excelDone / k.excelTotal * 100);
   const kpis = [
-    { value: d.kpis.totalTarefas, label: 'Total Tarefas', sub: d.kpis.concluidas + ' concluidas' },
-    { value: d.kpis.percentGeral + '%', label: '% Geral', sub: 'Todas as fases' },
-    { value: d.kpis.fase1Percent + '%', label: 'Fase 1 (MVP)', sub: '25/40 tarefas' },
-    { value: 'F' + d.activeFase, label: 'Fase Ativa', sub: d.health },
-    { value: d.kpis.backendModules, label: 'Modulos Backend', sub: d.kpis.emptyModules + ' vazios' },
-    { value: d.kpis.frontendPages, label: 'Paginas Frontend', sub: 'Next.js App Router' },
-    { value: d.kpis.specFiles, label: 'Spec Files', sub: 'Jest test suites' },
-    { value: d.kpis.endpoints, label: 'Endpoints API', sub: 'GET/POST/PUT/PATCH/DELETE' }
+    { value: k.backendModules, label: "Modulos Backend", sub: k.controllers + " controllers", cls: "up" },
+    { value: k.tests || k.specFiles, label: "Testes", sub: k.specFiles + " suites passando", cls: "up" },
+    { value: k.endpoints, label: "Endpoints API", sub: k.frontendPages + " paginas frontend", cls: "up" },
+    { value: k.migrations, label: "Migrations", sub: "PostgreSQL 16+", cls: "up" },
+    { value: k.excelDone + "/" + k.excelTotal, label: "Backlog (Excel)", sub: pct + "% concluido", cls: pct >= 60 ? "up" : pct >= 30 ? "warn" : "down" }
   ];
-  document.getElementById('kpiRow').innerHTML = kpis.map(k => '<div class="kpi"><div class="kpi-value">' + k.value + '</div><div class="kpi-label">' + k.label + '</div><div class="kpi-sub">' + k.sub + '</div></div>').join('');
+  document.getElementById("kpiRow").innerHTML = kpis.map(x =>
+    '<div class="kpi-card"><div class="kpi-label">' + x.label + '</div><div class="kpi-value">' + x.value + '</div><div class="kpi-sub"><span class="' + x.cls + '">' + x.sub + '</span></div></div>'
+  ).join("");
 
-  // Phase progress
-  const colors = { Verde: 'var(--green)', Amarelo: 'var(--yellow)', Vermelho: 'var(--red)', Futuro: 'var(--surface2)' };
-  const badgeClass = { Verde: 'badge-verde', Amarelo: 'badge-amarelo', Vermelho: 'badge-vermelho', Futuro: 'badge-futuro' };
-  document.getElementById('phaseContainer').innerHTML = d.fases.map(f => {
-    const fillColor = colors[f.saude] || 'var(--surface2)';
-    const pct = f.percent;
-    return '<div class="phase-bar">' +
-      '<div class="phase-name">' + f.nome + '<span class="phase-badge ' + (badgeClass[f.saude]||'badge-futuro') + '">' + f.saude + '</span></div>' +
-      '<div class="phase-progress"><div class="phase-fill" style="width:' + Math.max(pct,2) + '%;background:' + fillColor + '">' + (pct > 10 ? pct + '%' : '') + '</div></div>' +
-      '<div class="phase-stats">' + f.concluidas + '/' + f.total + ' (' + pct + '%)</div>' +
+  // Agents
+  document.getElementById("agentsGrid").innerHTML = D.agents.map(a => {
+    const dotCls = a.status === "active" ? "active" : a.status === "idle" ? "idle" : "standby";
+    return '<div class="agent-card" style="border-top:3px solid ' + a.color + ';">' +
+      '<div class="agent-icon" style="background:' + a.bg + ';color:' + a.color + ';">' + ICONS[a.icon] + '</div>' +
+      '<h3>' + a.name + '</h3>' +
+      '<div class="role">' + a.role + '</div>' +
+      '<div class="status-line"><div class="status-dot ' + dotCls + '"></div> ' + a.statusText + '</div>' +
+      a.stats.map(s => '<div class="agent-stat"><span>' + s[0] + '</span><span>' + s[1] + '</span></div>').join("") +
     '</div>';
-  }).join('');
+  }).join("");
 
-  // Alerts
+  // Activity timeline
+  document.getElementById("activityTimeline").innerHTML = '<ul class="timeline">' +
+    D.activity.map(a => '<li><span class="time">' + a.time + '</span><div class="dot" style="background:' + a.color + ';"></div><div class="msg">' + a.msg + ' <span class="tag">' + a.tag + '</span></div></li>').join("") +
+  '</ul>';
+
+  // Milestones
+  const faseColors = { green: "var(--green)", yellow: "var(--yellow)", red: "var(--red)", muted: "var(--text2)" };
+  const faseBg = { green: "var(--green-bg)", yellow: "var(--yellow-bg)", red: "var(--red-bg)", muted: "rgba(139,144,160,.12)" };
+  document.getElementById("milestoneBadge").textContent = D.fases.length + " fases";
+  document.getElementById("milestoneList").innerHTML = D.fases.map(f => {
+    const pct = f.total > 0 ? Math.round(f.done / f.total * 100) : 0;
+    const c = faseColors[f.saude]; const bg = faseBg[f.saude];
+    return '<div class="milestone-row">' +
+      '<div class="ms-badge" style="background:' + bg + ';color:' + c + ';">' + f.id + '</div>' +
+      '<div class="ms-info"><h4>' + f.nome + '</h4><p>' + f.done + '/' + f.total + ' — ' + f.desc + '</p></div>' +
+      '<div class="ms-progress"><div class="progress-bar" style="width:80px"><div class="progress-fill" style="width:' + Math.max(pct, 2) + '%;background:' + c + ';"></div></div><span class="ms-pct" style="color:' + c + ';">' + pct + '%</span></div>' +
+    '</div>';
+  }).join("");
+
+  // Backend modules table
+  document.getElementById("modulesContainer").innerHTML =
+    '<table class="mod-table"><thead><tr><th>Modulo</th><th>Files</th><th>Spec</th><th>Controller</th></tr></thead><tbody>' +
+    D.modules.map(m => {
+      const dotColor = m.spec ? "var(--green)" : "var(--red)";
+      return '<tr><td><div class="mod-name"><div class="mod-dot" style="background:' + dotColor + ';"></div>' + m.name + '</div></td>' +
+        '<td>' + m.files + '</td>' +
+        '<td><span class="badge ' + (m.spec ? 'badge-green' : 'badge-red') + '">' + (m.spec ? 'Sim' : 'Nao') + '</span></td>' +
+        '<td><span class="badge ' + (m.controller ? 'badge-green' : 'badge-muted') + '">' + (m.controller ? 'Sim' : 'N/A') + '</span></td></tr>';
+    }).join("") +
+    '</tbody></table>';
+
+  // Pipeline
+  const pipeStatusColors = { green: "var(--green)", red: "var(--red)", yellow: "var(--yellow)" };
+  const pipeStatusBg = { green: "var(--green-bg)", red: "var(--red-bg)", yellow: "var(--yellow-bg)" };
+  const pipeStatusBadge = { green: "badge-green", red: "badge-red", yellow: "badge-yellow" };
+  const pipeStatusLabel = { green: "SUCCESS", red: "FAILURE", yellow: "UNSTABLE" };
+  const allGreen = D.pipeline.every(p => p.status === "green");
+  const pb = document.getElementById("pipelineBadge");
+  pb.className = "badge " + (allGreen ? "badge-green" : "badge-red");
+  pb.textContent = allGreen ? "All green" : "Issue detected";
+
+  document.getElementById("pipelineContainer").innerHTML = D.pipeline.map((p, i) =>
+    '<div class="pipeline-step">' +
+      '<div class="pipe-icon" style="background:' + pipeStatusBg[p.status] + ';color:' + pipeStatusColors[p.status] + ';">' + (i + 1) + '</div>' +
+      '<div class="pipe-info"><h4>' + p.label + '</h4><p>' + p.desc + ' — ' + p.date + '</p></div>' +
+      '<span class="badge ' + pipeStatusBadge[p.status] + '">' + pipeStatusLabel[p.status] + '</span>' +
+    '</div>'
+  ).join("");
+
+  // Alerts with tabs
   const alertTypes = [
-    { key: 'bloqueantes', label: 'Bloqueantes', cls: 'bloqueante', icon: '\u26D4' },
-    { key: 'overdue', label: 'Overdue', cls: 'overdue', icon: '\u23F0' },
-    { key: 'emRisco', label: 'Em Risco', cls: 'risco', icon: '\u26A0\uFE0F' },
-    { key: 'proximos7', label: 'Proximos 7d', cls: 'proximo', icon: '\uD83D\uDCC5' }
+    { key: "bloqueantes", label: "Bloqueantes", cls: "bloqueante", icon: "\u26D4" },
+    { key: "overdue", label: "Overdue", cls: "overdue", icon: "\u23F0" },
+    { key: "emRisco", label: "Em Risco", cls: "risco", icon: "\u26A0\uFE0F" },
+    { key: "proximos7", label: "Proximos 7d", cls: "info", icon: "\uD83D\uDCC5" }
   ];
-  let tabsHtml = '', panelsHtml = '';
+  let tabsH = "", panelsH = "";
   alertTypes.forEach((t, i) => {
-    const items = d.alertas[t.key] || [];
-    const active = i === 0 ? ' active' : '';
-    tabsHtml += '<div class="tab' + active + '" onclick="switchTab(this,' + i + ')">' + t.label + '<span class="tab-count">' + items.length + '</span></div>';
-    panelsHtml += '<div class="tab-panel' + active + '" data-panel="' + i + '">';
-    if (items.length === 0) {
-      panelsHtml += '<div style="color:var(--text2);font-size:13px;padding:8px">Nenhum alerta nesta categoria.</div>';
+    const items = D.alertas[t.key] || [];
+    const act = i === 0 ? " active" : "";
+    tabsH += '<div class="tab' + act + '" onclick="switchTab(this,' + i + ')">' + t.label + '<span class="tab-count">' + items.length + '</span></div>';
+    panelsH += '<div class="tab-panel' + act + '" data-panel="' + i + '">';
+    if (!items.length) {
+      panelsH += '<div style="color:var(--text2);font-size:13px;">Nenhum alerta.</div>';
     } else {
       items.forEach(a => {
-        panelsHtml += '<div class="alert-item ' + t.cls + '"><span class="alert-icon">' + t.icon + '</span><div class="alert-text"><strong>' + a.titulo + '</strong><span>' + a.descricao + (a.acao ? ' | Acao: ' + a.acao : '') + '</span></div></div>';
+        panelsH += '<div class="alert-item ' + t.cls + '"><span class="alert-icon">' + t.icon + '</span><div class="alert-text"><strong>' + a.titulo + '</strong><span>' + a.desc + (a.acao ? ' | Acao: ' + a.acao : '') + '</span></div></div>';
       });
     }
-    panelsHtml += '</div>';
+    panelsH += '</div>';
   });
-  document.getElementById('alertTabs').innerHTML = tabsHtml;
-  document.getElementById('alertPanels').innerHTML = panelsHtml;
-
-  // Infrastructure
-  const infraItems = [d.infra.ci, d.infra.deployStaging, d.infra.deployApi, d.infra.deployWeb];
-  document.getElementById('infraGrid').innerHTML = infraItems.map(item => {
-    const dotCls = item.status === 'verde' ? 'green' : item.status === 'vermelho' ? 'red' : 'yellow';
-    const extra = item.extra ? '<span class="new-badge">' + item.extra + '</span>' : '';
-    return '<div class="infra-item"><div class="infra-dot ' + dotCls + '"></div><div class="infra-label"><strong>' + item.label + extra + '</strong><span>' + item.descricao + ' — ' + item.data + '</span></div></div>';
-  }).join('') + (d.infra.prsAbertos.length > 0 ? '<div class="infra-item"><div class="infra-dot yellow"></div><div class="infra-label"><strong>PRs Abertos: ' + d.infra.prsAbertos.length + '</strong></div></div>' : '<div class="infra-item"><div class="infra-dot green"></div><div class="infra-label"><strong>PRs Abertos: 0</strong><span>Nenhum PR pendente</span></div></div>');
-
-  // Squad
-  document.getElementById('squadGrid').innerHTML =
-    '<div class="squad-item"><h4>Ultimo Commit</h4><p>' + d.squad.ultimoCommit + '</p></div>' +
-    '<div class="squad-item"><h4>PR Recente</h4><p>' + d.squad.prsMerged + '</p></div>' +
-    '<div class="squad-item"><h4>Subagentes</h4><p>' + d.squad.subagentes.join(', ') + '</p></div>' +
-    '<div class="squad-item"><h4>Branches Remotas</h4><p>' + (d.squad.branchesAtivas.length > 0 ? d.squad.branchesAtivas.join('<br>') : 'Nenhuma') + '</p></div>';
-
-  // Changes since last review
-  if (d.changesSinceLastReview && d.changesSinceLastReview.length > 0) {
-    const changesHtml = d.changesSinceLastReview.map(c => '<div style="padding:6px 10px;background:var(--green-bg);border-left:3px solid var(--green);border-radius:0 6px 6px 0;margin-bottom:6px;font-size:12px">' + c + '</div>').join('');
-    const section = document.createElement('div');
-    section.className = 'section';
-    section.innerHTML = '<div class="section-title">Mudancas desde ultima revisao</div><div class="card"><div class="card-body">' + changesHtml + '</div></div>';
-    document.getElementById('inconsistenciesSection').before(section);
-  }
+  document.getElementById("alertTabs").innerHTML = tabsH;
+  document.getElementById("alertPanels").innerHTML = panelsH;
 
   // Inconsistencies
-  if (d.inconsistencias.length === 0) {
-    document.getElementById('inconsistenciesSection').style.display = 'none';
-  } else {
-    document.getElementById('inconsistenciesBody').innerHTML = d.inconsistencias.map(i => '<div class="inconsistency">' + i + '</div>').join('');
-  }
+  document.getElementById("inconsistCount").textContent = D.inconsistencias.length + " items";
+  document.getElementById("inconsistBody").innerHTML =
+    '<table class="mod-table"><thead><tr><th>Tipo</th><th>Descricao</th></tr></thead><tbody>' +
+    D.inconsistencias.map(x => '<tr><td><span class="badge badge-orange">' + x.tipo + '</span></td><td style="font-size:12px;">' + x.desc + '</td></tr>').join("") +
+    '</tbody></table>';
 
   // Recommendations
-  document.getElementById('recoBody').innerHTML = d.recomendacoes.map((r, i) => '<div class="reco"><div class="reco-num">' + (i+1) + '</div><div><strong style="color:' + (r.prioridade === 'P0' ? 'var(--red)' : 'var(--yellow)') + '">[' + r.prioridade + ']</strong> ' + r.texto + '</div></div>').join('');
+  document.getElementById("recoBody").innerHTML = D.recomendacoes.map((r, i) =>
+    '<div class="reco"><div class="reco-num">' + (i + 1) + '</div><div><strong style="color:' + (r.prioridade === "P0" ? "var(--red)" : "var(--yellow)") + ';">[' + r.prioridade + ']</strong> ' + r.texto + '</div></div>'
+  ).join("");
 
-  // Footer
-  document.getElementById('footerText').innerHTML = 'Storm Shield Enterprise &mdash; Squad Dashboard &mdash; Atualizado ' + new Date(d.lastUpdated).toLocaleDateString('pt-BR') + ' por ' + d.updatedBy + '<br>Fontes: Git, GitHub Actions, Excel Gerencial, .claude/agents/';
+  // Backlog
+  document.getElementById("backlogBadge").textContent = D.backlog.length + " proximas";
+  const prioBadge = { P0: "badge-red", P1: "badge-yellow", P2: "badge-muted" };
+  document.getElementById("backlogBody").innerHTML =
+    '<table class="mod-table"><thead><tr><th>ID</th><th>Task</th><th>Fase</th><th>Prio</th><th>Nota</th></tr></thead><tbody>' +
+    D.backlog.map(b =>
+      '<tr><td style="font-weight:600;color:var(--accent2);">' + b.id + '</td><td>' + b.task + '</td><td><span class="badge badge-blue">' + b.fase + '</span></td><td><span class="badge ' + (prioBadge[b.prio] || "badge-muted") + '">' + b.prio + '</span></td><td style="font-size:11px;color:var(--text2);">' + (b.nota || "") + '</td></tr>'
+    ).join("") +
+    '</tbody></table>';
 }
 
 function switchTab(el, idx) {
-  el.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.querySelector('.tab-panel[data-panel="' + idx + '"]').classList.add('active');
+  el.parentElement.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  el.classList.add("active");
+  document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+  document.querySelector('.tab-panel[data-panel="' + idx + '"]').classList.add("active");
 }
 
-document.addEventListener('DOMContentLoaded', render);
+render();
 </script>
 </body>
 </html>
