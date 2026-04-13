@@ -397,12 +397,14 @@ storm-shield-enterprise/
 - [x] CI pipeline (lint + test + build) + staging deploy (Fly.io, Vercel, Neon)
 - [x] Tenant provisioning script (cria schema + seed data)
 - [x] RBAC guard + PlanGuard no backend
-- [x] 272 testes unitários passando (20 test suites)
+- [x] 293 testes unitários passando (21 test suites)
 - [x] StorageService (S3/R2) para upload de fotos e documentos
 - [x] Consent Records (LGPD/CCPA) com RLS
 - [x] Contractors module (CRUD + payments + 1099 tracking)
 - [x] Accounting GL module (Chart of Accounts + Journal Entries + Fiscal Periods)
 - [x] Fixed Assets module (FAM) — 4-method depreciation, auto JE, batch execution, disposal
+- [x] Accounting Reports (P&L, Balance Sheet, Trial Balance) — ReportsService, 3 endpoints, 4 frontend pages
+- [x] Financial trend chart integrado no dashboard (/financial via useFinancialDashboard)
 - [ ] 80%+ test coverage nos services (meta em progresso)
 
 **Critérios de aceite:**
