@@ -7,6 +7,8 @@ import { AccountingService } from './accounting.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { AccountQueryDto } from './dto/account-query.dto';
+import { ReportsService } from './reports/reports.service';
+import { TrialBalanceQueryDto, ProfitLossQueryDto, BalanceSheetQueryDto } from './reports/reports.dto';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { TenantGuard } from '../../common/guards/tenant.guard';
 import { RbacGuard } from '../../common/guards/rbac.guard';
@@ -19,7 +21,10 @@ import { RequirePermissions } from '../../common/decorators/permissions.decorato
 @UseGuards(AuthGuard, TenantGuard, RbacGuard, PlanGuard)
 @Controller('accounting')
 export class AccountingController {
-  constructor(private readonly accountingService: AccountingService) {}
+  constructor(
+    private readonly accountingService: AccountingService,
+    private readonly reportsService: ReportsService,
+  ) {}
 
   @Get('accounts')
   @ApiOperation({ summary: 'List chart of accounts with pagination and filters' })
@@ -87,5 +92,43 @@ export class AccountingController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.accountingService.remove(tenantId, id);
+  }
+
+  // ── Reports ──────────────────────────────────────────────────────────────
+
+  @Get('reports/trial-balance')
+  @ApiOperation({ summary: 'Trial Balance — all accounts with debit/credit totals and net balance' })
+  @ApiResponse({ status: 200, description: 'Trial balance report' })
+  @RequirePermissions('accounting:read:list')
+  @RequirePlanFeature('accounting')
+  getTrialBalance(
+    @CurrentTenant() tenantId: string,
+    @Query() query: TrialBalanceQueryDto,
+  ) {
+    return this.reportsService.getTrialBalance(tenantId, query);
+  }
+
+  @Get('reports/profit-loss')
+  @ApiOperation({ summary: 'Profit & Loss — revenue vs expenses for a date range' })
+  @ApiResponse({ status: 200, description: 'P&L report' })
+  @RequirePermissions('accounting:read:list')
+  @RequirePlanFeature('accounting')
+  getProfitLoss(
+    @CurrentTenant() tenantId: string,
+    @Query() query: ProfitLossQueryDto,
+  ) {
+    return this.reportsService.getProfitLoss(tenantId, query);
+  }
+
+  @Get('reports/balance-sheet')
+  @ApiOperation({ summary: 'Balance Sheet — assets, liabilities, equity as of a date' })
+  @ApiResponse({ status: 200, description: 'Balance sheet report' })
+  @RequirePermissions('accounting:read:list')
+  @RequirePlanFeature('accounting')
+  getBalanceSheet(
+    @CurrentTenant() tenantId: string,
+    @Query() query: BalanceSheetQueryDto,
+  ) {
+    return this.reportsService.getBalanceSheet(tenantId, query);
   }
 }

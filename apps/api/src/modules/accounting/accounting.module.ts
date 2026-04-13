@@ -5,10 +5,11 @@ import { FiscalPeriodsController } from './fiscal-periods/fiscal-periods.control
 import { FiscalPeriodsService } from './fiscal-periods/fiscal-periods.service';
 import { JournalEntriesController } from './journal-entries/journal-entries.controller';
 import { JournalEntriesService } from './journal-entries/journal-entries.service';
+import { ReportsService } from './reports/reports.service';
 
 @Module({
   controllers: [AccountingController, FiscalPeriodsController, JournalEntriesController],
-  providers: [AccountingService, FiscalPeriodsService, JournalEntriesService],
-  exports: [AccountingService, FiscalPeriodsService, JournalEntriesService],
+  providers: [AccountingService, FiscalPeriodsService, JournalEntriesService, ReportsService],
+  exports: [AccountingService, FiscalPeriodsService, JournalEntriesService, ReportsService],
 })
 export class AccountingModule {}
