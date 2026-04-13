@@ -71,7 +71,7 @@ storm-shield-enterprise/
 - [x] Status workflow endpoints with transition validation for estimates and service orders
 - [x] **StorageService** — S3/R2 file upload with signed URLs, local dev fallback
 - [x] **Customer consent** module for LGPD/CCPA compliance (migration 006)
-- [x] **Unit tests: 272 tests across 20 suites** — all passing (customers, vehicles, estimates, financial, users, insurance, contractors, accounting, journal-entries, fiscal-periods, fixed-assets, depreciation, disposal, asset-categories, auth, tenants, consent, storage, tenant-db)
+- [x] **Unit tests: 293 tests across 21 suites** — all passing (customers, vehicles, estimates, financial, users, insurance, contractors, accounting, journal-entries, fiscal-periods, fixed-assets, depreciation, disposal, asset-categories, auth, tenants, consent, storage, tenant-db, accounting-reports)
 
 ### Frontend (Next.js) — 8 Full CRUD Modules
 - [x] App Router with Clerk auth middleware
@@ -83,7 +83,8 @@ storm-shield-enterprise/
 - [x] **Vehicles** — list (search, sort by year/created, condition badges, **customer name column**), create/edit with searchable customer select, detail with **photo gallery** (upload/delete)
 - [x] **Estimates** — list (status filter, color-coded badges, **customer name column**), create with searchable customer/vehicle selects + dynamic line items, detail with line items table + **document upload** + **status timeline** + workflow actions
 - [x] **Service Orders** — list (7-status filter), create/edit, detail with status workflow timeline
-- [x] **Financial** — summary cards (real API data), transaction list with inline create, type/category filters, **income vs expenses trend chart** (recharts)
+- [x] **Financial** — summary cards (real API data), transaction list with inline create, type/category filters, **income vs expenses trend chart** (recharts, via `/financial/dashboard`)
+- [x] **Accounting Reports** — `/accounting/reports` hub + **Trial Balance** (as-of date), **Profit & Loss** (date range), **Balance Sheet** (assets / liabilities / equity) — imbalance warnings, responsive layout
 - [x] **Insurance** — list (DRP filter), create/edit, detail with payment terms
 - [x] **Dashboard** — real-time metrics (customers, open estimates [sent], active SOs, **monthly revenue**), quick actions, **financial trend chart**, **recent activity feed**
 - [x] **Settings** — Clerk account/org info, system version display
@@ -187,6 +188,7 @@ All endpoints require Clerk JWT + tenant context. Swagger docs at `/docs` when r
 | Users | `GET/POST /users`, `GET/PUT/DELETE /users/:id`, `POST /users/:id/roles`, `DELETE /users/:id/roles/:roleId` |
 | Contractors | `GET/POST /contractors`, `GET/PUT/DELETE /contractors/:id`, `GET/POST /contractors/:id/payments` |
 | Accounting | `GET/POST /accounting/accounts`, `GET/PUT/DELETE /accounting/accounts/:id`, `GET /accounting/accounts/tree` |
+| Accounting Reports | `GET /accounting/reports/trial-balance`, `GET /accounting/reports/profit-loss`, `GET /accounting/reports/balance-sheet` |
 | Journal Entries | `GET/POST /accounting/journal-entries`, `GET /.../:id`, `POST /.../:id/post`, `POST /.../:id/reverse` |
 | Fiscal Periods | `GET/POST /accounting/fiscal-periods`, `GET /.../:id`, `POST /.../:id/close`, `POST /.../:id/reopen` |
 | Fixed Assets | `GET/POST /fixed-assets`, `GET/PUT/DELETE /fixed-assets/:id`, `GET /.../:id/depreciation`, `GET /.../:id/schedule`, `POST /.../depreciation/execute`, `POST /.../depreciation/batch`, `POST /.../:id/dispose`, `GET /.../disposals/all` |
@@ -196,9 +198,9 @@ All endpoints require Clerk JWT + tenant context. Swagger docs at `/docs` when r
 
 | Phase | Focus | Status |
 |---|---|---|
-| 1 — MVP | CRM, Vehicles, Estimates, Service Orders, Financial | **~95%** (CI green · 272 tests · staging infra ready · 12 modules · 95 endpoints · photo/doc upload · consent module) |
+| 1 — MVP | CRM, Vehicles, Estimates, Service Orders, Financial | **~95%** (CI green · 293 tests · staging infra ready · 12 modules · 98 endpoints · photo/doc upload · consent module) |
 | 2 — AI + Integrations | OCR, bank integration (Plaid), n8n automations | Planned |
-| 3 — Accounting + FAM | General Ledger, Fixed Assets, Depreciation, Reports | **~75%** (GL + FAM backend complete · 11 migrations · depreciation engine · auto JE · disposal workflow · reports pending) |
+| 3 — Accounting + FAM | General Ledger, Fixed Assets, Depreciation, Reports | **~88%** (GL + FAM + Reports complete · P&L · Balance Sheet · Trial Balance · 4 frontend pages · 1 task remaining: COA/JE frontend) |
 | 4 — Tax Compliance | Sales Tax, 1099-NEC, LGPD/CCPA, QuickBooks export | Planned |
 | 5 — Mobile | React Native app for technicians | Planned |
 | 6 — Rental + Analytics | Vehicle rental, demand forecasting, dashboards | Planned |
