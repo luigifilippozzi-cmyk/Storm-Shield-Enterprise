@@ -31,7 +31,7 @@ Subscription plan enforcement via `PlanGuard` (feature gating) + `PlanLimitsInte
 ```
 storm-shield-enterprise/
 ├── apps/
-│   ├── api/              # NestJS backend (15 domain modules)
+│   ├── api/              # NestJS backend (12 domain modules, 95 endpoints)
 │   ├── web/              # Next.js frontend
 │   └── mobile/           # React Native (Phase 5)
 ├── packages/
@@ -52,10 +52,10 @@ storm-shield-enterprise/
 - [x] RBAC guard with granular `module:action:resource` permissions
 - [x] Plan enforcement (feature gating + resource limits)
 - [x] Tenant status check (blocks suspended/cancelled)
-- [x] PostgreSQL migrations (000–005): public schema, IAM, CRM, estimates, financial, RLS
-- [x] Seed data: roles/permissions, chart of accounts (US GAAP), asset categories
+- [x] PostgreSQL migrations (000–010): public schema, IAM, CRM, estimates, financial, RLS, consent, GL, journal entries, FAM tables, FAM hardening
+- [x] Seed data: roles/permissions, chart of accounts (US GAAP), asset categories, MACRS percentages
 - [x] Tenant provisioning CLI script
-- [x] 7 complete modules with DTOs, pagination, search, filters, Swagger docs:
+- [x] 12 complete modules with DTOs, pagination, search, filters, Swagger docs:
   - **Customers** — search (ILIKE), type/source filters, sort whitelist
   - **Vehicles** — search (make/model/VIN/plate), customer filter, **photo upload/delete** (S3/R2)
   - **Estimates** — nested line items, status workflow (draft→sent→approved/rejected→converted), draft-only edit/delete, **document upload/delete**
@@ -63,11 +63,15 @@ storm-shield-enterprise/
   - **Financial** — transactions CRUD, summary aggregation, dashboard (monthly trends, category breakdowns)
   - **Insurance** — DRP filter, search (name/code/email)
   - **Users** — search, status/role filters, role assignment/removal, transactional create with role
+  - **Contractors** — CRUD, payments tracking, 1099-NEC generation
+  - **Accounting (GL)** — chart of accounts (CRUD + tree), journal entries (create/post/reverse), fiscal periods (open/close/lock)
+  - **Fixed Assets (FAM)** — asset categories with GL linking, CRUD assets, 4-method depreciation engine (straight-line, declining balance, sum-of-years, MACRS), single + batch execution with auto journal entries, asset disposal with gain/loss JE
+  - **Auth** — Clerk JWT validation service
+  - **Tenants** — tenant provisioning and management
 - [x] Status workflow endpoints with transition validation for estimates and service orders
-- [x] 8 additional modules scaffolded for Phase 2+ (accounting, fixed-assets, contractors, inventory, rental, notifications, auth, tenants)
 - [x] **StorageService** — S3/R2 file upload with signed URLs, local dev fallback
 - [x] **Customer consent** module for LGPD/CCPA compliance (migration 006)
-- [x] **Unit tests: 66 tests across 5 services** (customers, vehicles, estimates, financial, users) — all passing
+- [x] **Unit tests: 272 tests across 20 suites** — all passing (customers, vehicles, estimates, financial, users, insurance, contractors, accounting, journal-entries, fiscal-periods, fixed-assets, depreciation, disposal, asset-categories, auth, tenants, consent, storage, tenant-db)
 
 ### Frontend (Next.js) — 8 Full CRUD Modules
 - [x] App Router with Clerk auth middleware
@@ -181,14 +185,20 @@ All endpoints require Clerk JWT + tenant context. Swagger docs at `/docs` when r
 | Financial | `GET /financial/summary`, `GET /financial/dashboard`, `GET/POST /financial/transactions`, `GET/PUT/DELETE /financial/transactions/:id` |
 | Insurance | `GET/POST /insurance`, `GET/PUT/DELETE /insurance/:id` |
 | Users | `GET/POST /users`, `GET/PUT/DELETE /users/:id`, `POST /users/:id/roles`, `DELETE /users/:id/roles/:roleId` |
+| Contractors | `GET/POST /contractors`, `GET/PUT/DELETE /contractors/:id`, `GET/POST /contractors/:id/payments` |
+| Accounting | `GET/POST /accounting/accounts`, `GET/PUT/DELETE /accounting/accounts/:id`, `GET /accounting/accounts/tree` |
+| Journal Entries | `GET/POST /accounting/journal-entries`, `GET /.../:id`, `POST /.../:id/post`, `POST /.../:id/reverse` |
+| Fiscal Periods | `GET/POST /accounting/fiscal-periods`, `GET /.../:id`, `POST /.../:id/close`, `POST /.../:id/reopen` |
+| Fixed Assets | `GET/POST /fixed-assets`, `GET/PUT/DELETE /fixed-assets/:id`, `GET /.../:id/depreciation`, `GET /.../:id/schedule`, `POST /.../depreciation/execute`, `POST /.../depreciation/batch`, `POST /.../:id/dispose`, `GET /.../disposals/all` |
+| Asset Categories | `GET/POST /fixed-assets/categories`, `GET/PUT /fixed-assets/categories/:id` |
 
 ## Roadmap
 
 | Phase | Focus | Status |
 |---|---|---|
-| 1 — MVP | CRM, Vehicles, Estimates, Service Orders, Financial | **~90%** (CI green · 66 tests · staging infra ready · all P0 closed · photo/doc upload · consent module · 4 remaining P2 polish items) |
+| 1 — MVP | CRM, Vehicles, Estimates, Service Orders, Financial | **~95%** (CI green · 272 tests · staging infra ready · 12 modules · 95 endpoints · photo/doc upload · consent module) |
 | 2 — AI + Integrations | OCR, bank integration (Plaid), n8n automations | Planned |
-| 3 — Accounting + FAM | General Ledger, Fixed Assets, Depreciation, Reports | Planned |
+| 3 — Accounting + FAM | General Ledger, Fixed Assets, Depreciation, Reports | **~75%** (GL + FAM backend complete · 11 migrations · depreciation engine · auto JE · disposal workflow · reports pending) |
 | 4 — Tax Compliance | Sales Tax, 1099-NEC, LGPD/CCPA, QuickBooks export | Planned |
 | 5 — Mobile | React Native app for technicians | Planned |
 | 6 — Rental + Analytics | Vehicle rental, demand forecasting, dashboards | Planned |
