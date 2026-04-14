@@ -37,7 +37,7 @@ CREATE INDEX IF NOT EXISTS idx_fp_tenant_dates ON fiscal_periods(tenant_id, star
 DROP TRIGGER IF EXISTS trg_fp_updated_at ON fiscal_periods;
 CREATE TRIGGER trg_fp_updated_at
   BEFORE UPDATE ON fiscal_periods
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 ALTER TABLE fiscal_periods ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS fp_tenant_isolation ON fiscal_periods;
@@ -78,7 +78,7 @@ CREATE INDEX IF NOT EXISTS idx_je_reference ON journal_entries(reference_type, r
 DROP TRIGGER IF EXISTS trg_je_updated_at ON journal_entries;
 CREATE TRIGGER trg_je_updated_at
   BEFORE UPDATE ON journal_entries
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 ALTER TABLE journal_entries ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS je_tenant_isolation ON journal_entries;

@@ -44,11 +44,11 @@ CREATE INDEX IF NOT EXISTS idx_coa_parent_id ON chart_of_accounts(parent_id);
 CREATE INDEX IF NOT EXISTS idx_coa_deleted_at ON chart_of_accounts(deleted_at) WHERE deleted_at IS NULL;
 
 -- ── 4. Auto-update updated_at trigger ──────────────────────────
--- Reuses the update_updated_at() function created in migration 000.
+-- Reuses the update_updated_at_column() function created in migration 000.
 DROP TRIGGER IF EXISTS trg_coa_updated_at ON chart_of_accounts;
 CREATE TRIGGER trg_coa_updated_at
   BEFORE UPDATE ON chart_of_accounts
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ── 5. Row Level Security ──────────────────────────────────────
 ALTER TABLE chart_of_accounts ENABLE ROW LEVEL SECURITY;
