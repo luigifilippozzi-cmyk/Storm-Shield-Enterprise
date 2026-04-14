@@ -220,4 +220,180 @@ describe('EstimatesService', () => {
       await expect(service.remove(TENANT_ID, ESTIMATE_ID)).rejects.toThrow(NotFoundException);
     });
   });
+
+  describe('findAll — filters', () => {
+    const setupPaginated = (data: any[] = []) => {
+      knex._chain.count.mockReturnValueOnce([{ count: String(data.length) }]);
+      knex._chain.offset.mockReturnValueOnce(data);
+    };
+
+    it('should apply search filter', async () => {
+      setupPaginated([]);
+      await service.findAll(TENANT_ID, { search: 'EST-001', page: 1, limit: 20 });
+      expect(knex._chain.where).toHaveBeenCalledWith(expect.any(Function));
+    });
+
+    it('should apply customer_id filter', async () => {
+      setupPaginated([]);
+      await service.findAll(TENANT_ID, { customer_id: 'cust-1', page: 1, limit: 20 });
+      expect(knex._chain.where).toHaveBeenCalledWith('estimates.customer_id', 'cust-1');
+    });
+
+    it('should apply vehicle_id filter', async () => {
+      setupPaginated([]);
+      await service.findAll(TENANT_ID, { vehicle_id: 'veh-1', page: 1, limit: 20 });
+      expect(knex._chain.where).toHaveBeenCalledWith('estimates.vehicle_id', 'veh-1');
+    });
+
+    it('should apply date_from filter', async () => {
+      setupPaginated([]);
+      const from = '2024-01-01';
+      await service.findAll(TENANT_ID, { date_from: from, page: 1, limit: 20 });
+      expect(knex._chain.where).toHaveBeenCalledWith('estimates.created_at', '>=', from);
+    });
+
+    it('should apply date_to filter', async () => {
+      setupPaginated([]);
+      const to = '2024-12-31';
+      await service.findAll(TENANT_ID, { date_to: to, page: 1, limit: 20 });
+      expect(knex._chain.where).toHaveBeenCalledWith('estimates.created_at', '<=', to);
+    });
+  });
+
+  describe('update — with lines', () => {
+    it('should replace lines when provided', async () => {
+      const mockEstimate = { id: ESTIMATE_ID, status: 'draft' };
+      knex._chain.first.mockReturnValueOnce(mockEstimate);
+      knex._chain.returning.mockReturnValueOnce([{ ...mockEstimate, subtotal: 200 }]);
+
+      const result = await service.update(TENANT_ID, ESTIMATE_ID, {
+        lines: [
+          { line_type: 'labor', description: 'Paint', quantity: 2, unit_price: 100, is_taxable: true, sort_order: 1 },
+        ],
+      } as any);
+
+      expect(result.subtotal).toBe(200);
+      expect(knex._trx).toHaveBeenCalledWith('estimate_lines');
+    });
+  });
+
+  describe('attachDocument', () => {
+    const makeFile = (mimetype = 'application/pdf', size = 1024): Express.Multer.File =>
+      ({
+        mimetype,
+        size,
+        originalname: 'doc.pdf',
+        buffer: Buffer.from('data'),
+      } as any);
+
+    it('should attach a valid document', async () => {
+      const mockEstimate = { id: ESTIMATE_ID };
+      const mockDoc = { id: 'doc-1', file_name: 'doc.pdf' };
+      knex._chain.first.mockReturnValueOnce(mockEstimate);
+      knex._chain.returning.mockReturnValueOnce([mockDoc]);
+
+      const result = await service.attachDocument(TENANT_ID, ESTIMATE_ID, 'user-1', makeFile());
+
+      expect(result).toEqual(mockDoc);
+    });
+
+    it('should reject invalid file type', async () => {
+      await expect(
+        service.attachDocument(TENANT_ID, ESTIMATE_ID, 'user-1', makeFile('video/mp4')),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should reject file exceeding 25MB', async () => {
+      await expect(
+        service.attachDocument(TENANT_ID, ESTIMATE_ID, 'user-1', makeFile('application/pdf', 26 * 1024 * 1024)),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw NotFoundException when estimate not found', async () => {
+      knex._chain.first.mockReturnValueOnce(null);
+      await expect(
+        service.attachDocument(TENANT_ID, ESTIMATE_ID, 'user-1', makeFile()),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should support image/jpeg and image/png types', async () => {
+      for (const type of ['image/jpeg', 'image/png', 'image/webp']) {
+        knex._chain.first.mockReturnValueOnce({ id: ESTIMATE_ID });
+        knex._chain.returning.mockReturnValueOnce([{ id: 'doc-1' }]);
+        await expect(
+          service.attachDocument(TENANT_ID, ESTIMATE_ID, 'user-1', makeFile(type)),
+        ).resolves.toBeDefined();
+      }
+    });
+  });
+
+  describe('deleteDocument', () => {
+    it('should delete an existing document', async () => {
+      knex._chain.first.mockReturnValueOnce({ id: 'doc-1', storage_key: 'key/doc.pdf' });
+
+      const result = await service.deleteDocument(TENANT_ID, ESTIMATE_ID, 'doc-1');
+
+      expect(result).toEqual({ deleted: true });
+    });
+
+    it('should throw NotFoundException when document not found', async () => {
+      knex._chain.first.mockReturnValueOnce(null);
+
+      await expect(
+        service.deleteDocument(TENANT_ID, ESTIMATE_ID, 'doc-1'),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('getDocuments', () => {
+    it('should return documents for an estimate', async () => {
+      const mockDocs = [{ id: 'doc-1', file_name: 'photo.pdf' }];
+      knex._chain.orderBy.mockReturnValueOnce(mockDocs);
+
+      const result = await service.getDocuments(TENANT_ID, ESTIMATE_ID);
+
+      expect(result).toEqual(mockDocs);
+    });
+  });
+
+  describe('getSupplements', () => {
+    it('should return supplements for an estimate', async () => {
+      const mockSupps = [{ id: 'supp-1', reason: 'Additional damage' }];
+      knex._chain.orderBy.mockReturnValueOnce(mockSupps);
+
+      const result = await service.getSupplements(TENANT_ID, ESTIMATE_ID);
+
+      expect(result).toEqual(mockSupps);
+    });
+  });
+
+  describe('createSupplement', () => {
+    it('should create a supplement', async () => {
+      const mockEstimate = { id: ESTIMATE_ID };
+      const mockCount = [{ count: '2' }];
+      const mockSupplement = { id: 'supp-1', supplement_number: 3, reason: 'Extra damage' };
+
+      knex._chain.first.mockReturnValueOnce(mockEstimate);
+      knex._chain.count.mockReturnValueOnce(mockCount);
+      knex._chain.returning.mockReturnValueOnce([mockSupplement]);
+
+      const result = await service.createSupplement(TENANT_ID, ESTIMATE_ID, 'user-1', {
+        reason: 'Extra damage',
+        amount: 500,
+      } as any);
+
+      expect(result).toEqual(mockSupplement);
+      expect(knex._chain.insert).toHaveBeenCalledWith(
+        expect.objectContaining({ supplement_number: 3, status: 'draft' }),
+      );
+    });
+
+    it('should throw NotFoundException when estimate not found', async () => {
+      knex._chain.first.mockReturnValueOnce(null);
+
+      await expect(
+        service.createSupplement(TENANT_ID, ESTIMATE_ID, 'user-1', { reason: 'test', amount: 100 } as any),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
 });

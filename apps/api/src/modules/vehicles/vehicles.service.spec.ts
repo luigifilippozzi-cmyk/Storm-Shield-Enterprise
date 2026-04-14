@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { VehiclesService } from './vehicles.service';
 import { TenantDatabaseService } from '../../config/tenant-database.service';
 import { StorageService } from '../../common/services/storage.service';
@@ -156,6 +156,135 @@ describe('VehiclesService', () => {
       knex._chain.update.mockReturnValueOnce(0);
 
       await expect(service.remove(TENANT_ID, VEHICLE_ID)).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('findAll — filters', () => {
+    const setupPaginated = (data: any[] = []) => {
+      knex._chain.count.mockReturnValueOnce([{ count: String(data.length) }]);
+      knex._chain.offset.mockReturnValueOnce(data);
+    };
+
+    it('should apply search filter', async () => {
+      setupPaginated([]);
+      await service.findAll(TENANT_ID, { search: 'Honda', page: 1, limit: 20 });
+      expect(knex._chain.where).toHaveBeenCalledWith(expect.any(Function));
+    });
+
+    it('should apply condition filter', async () => {
+      setupPaginated([]);
+      await service.findAll(TENANT_ID, { condition: 'good', page: 1, limit: 20 } as any);
+      expect(knex._chain.where).toHaveBeenCalledWith('vehicles.condition', 'good');
+    });
+
+    it('should use fallback sort column for invalid sort_by', async () => {
+      setupPaginated([]);
+      await service.findAll(TENANT_ID, { sort_by: 'invalid_col', page: 1, limit: 20 } as any);
+      expect(knex._chain.orderBy).toHaveBeenCalledWith('vehicles.created_at', expect.any(String));
+    });
+  });
+
+  describe('uploadPhoto', () => {
+    const makeFile = (mimetype = 'image/jpeg', size = 1024): Express.Multer.File =>
+      ({
+        mimetype,
+        size,
+        originalname: 'photo.jpg',
+        buffer: Buffer.from('img'),
+      } as any);
+
+    let storageService: any;
+
+    beforeEach(async () => {
+      storageService = { upload: jest.fn().mockResolvedValue({ url: 'https://cdn.example.com/photo.jpg' }), delete: jest.fn(), generateKey: jest.fn().mockReturnValue('key') };
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          VehiclesService,
+          { provide: TenantDatabaseService, useValue: { getConnection: jest.fn().mockResolvedValue(knex) } },
+          { provide: StorageService, useValue: storageService },
+        ],
+      }).compile();
+      service = module.get<VehiclesService>(VehiclesService);
+    });
+
+    it('should upload a valid photo', async () => {
+      const mockVehicle = { id: VEHICLE_ID };
+      const mockPhoto = { id: 'photo-1', file_name: 'photo.jpg' };
+      knex._chain.first.mockReturnValueOnce(mockVehicle);
+      knex._chain.returning.mockReturnValueOnce([mockPhoto]);
+
+      const result = await service.uploadPhoto(TENANT_ID, VEHICLE_ID, 'user-1', makeFile());
+
+      expect(result).toEqual({ ...mockPhoto, url: 'https://cdn.example.com/photo.jpg' });
+    });
+
+    it('should reject invalid file type', async () => {
+      await expect(
+        service.uploadPhoto(TENANT_ID, VEHICLE_ID, 'user-1', makeFile('application/pdf')),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should reject file exceeding 10MB', async () => {
+      await expect(
+        service.uploadPhoto(TENANT_ID, VEHICLE_ID, 'user-1', makeFile('image/jpeg', 11 * 1024 * 1024)),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw NotFoundException when vehicle not found', async () => {
+      knex._chain.first.mockReturnValueOnce(null);
+      await expect(
+        service.uploadPhoto(TENANT_ID, VEHICLE_ID, 'user-1', makeFile()),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should support image/png and image/webp types', async () => {
+      for (const type of ['image/png', 'image/webp']) {
+        knex._chain.first.mockReturnValueOnce({ id: VEHICLE_ID });
+        knex._chain.returning.mockReturnValueOnce([{ id: 'photo-1' }]);
+        await expect(
+          service.uploadPhoto(TENANT_ID, VEHICLE_ID, 'user-1', makeFile(type)),
+        ).resolves.toBeDefined();
+      }
+    });
+
+    it('should use provided photoType and description', async () => {
+      knex._chain.first.mockReturnValueOnce({ id: VEHICLE_ID });
+      knex._chain.returning.mockReturnValueOnce([{ id: 'photo-1' }]);
+
+      await service.uploadPhoto(TENANT_ID, VEHICLE_ID, 'user-1', makeFile(), 'damage', 'Front bumper dent');
+
+      expect(knex._chain.insert).toHaveBeenCalledWith(
+        expect.objectContaining({ photo_type: 'damage', description: 'Front bumper dent' }),
+      );
+    });
+  });
+
+  describe('deletePhoto', () => {
+    it('should delete an existing photo', async () => {
+      knex._chain.first.mockReturnValueOnce({ id: 'photo-1', storage_key: 'key/photo.jpg' });
+
+      const result = await service.deletePhoto(TENANT_ID, VEHICLE_ID, 'photo-1');
+
+      expect(result).toEqual({ deleted: true });
+    });
+
+    it('should throw NotFoundException when photo not found', async () => {
+      knex._chain.first.mockReturnValueOnce(null);
+
+      await expect(
+        service.deletePhoto(TENANT_ID, VEHICLE_ID, 'photo-1'),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('getPhotos', () => {
+    it('should return photos for a vehicle', async () => {
+      const mockPhotos = [{ id: 'photo-1', file_name: 'front.jpg' }];
+      knex._chain.orderBy.mockReturnValueOnce(mockPhotos);
+
+      const result = await service.getPhotos(TENANT_ID, VEHICLE_ID);
+
+      expect(result).toEqual(mockPhotos);
     });
   });
 });
