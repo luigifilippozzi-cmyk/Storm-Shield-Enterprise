@@ -223,8 +223,8 @@ CREATE POLICY ad_tenant_isolation ON asset_disposals
 
 CREATE TRIGGER trg_asset_categories_updated_at
   BEFORE UPDATE ON asset_categories
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER trg_fixed_assets_updated_at
   BEFORE UPDATE ON fixed_assets
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
