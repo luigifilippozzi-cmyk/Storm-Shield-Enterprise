@@ -28,6 +28,11 @@ RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nestjs
 COPY --from=builder --chown=nestjs:nodejs /app/apps/api/dist ./dist
 COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
+# Copy compiled shared packages so pnpm workspace symlinks resolve at runtime
+COPY --from=builder --chown=nestjs:nodejs /app/packages/shared-types/dist ./packages/shared-types/dist
+COPY --from=builder --chown=nestjs:nodejs /app/packages/shared-types/package.json ./packages/shared-types/package.json
+COPY --from=builder --chown=nestjs:nodejs /app/packages/shared-utils/dist ./packages/shared-utils/dist
+COPY --from=builder --chown=nestjs:nodejs /app/packages/shared-utils/package.json ./packages/shared-utils/package.json
 USER nestjs
 EXPOSE 3001
 CMD ["node", "dist/main"]
