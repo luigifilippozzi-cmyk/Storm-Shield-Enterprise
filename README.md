@@ -43,6 +43,22 @@ storm-shield-enterprise/
 └── n8n/                  # Automation workflow exports
 ```
 
+## Strategy & Governance
+
+Before contributing or proposing changes, consult these artifacts in order:
+
+| Document | Role | When to read |
+|---|---|---|
+| [`docs/strategy/BUSSOLA_PRODUTO_SSE.md`](docs/strategy/BUSSOLA_PRODUTO_SSE.md) | Product compass — ICP, 4 personas, gaps, positioning vs NetSuite, design principles | Before proposing any RF or UX redesign |
+| [`CLAUDE.md`](CLAUDE.md) | Technical bootstrap — stack, migrations, 14 inviolable rules | Before touching code |
+| [`docs/process/HANDOFF_PROTOCOL.md`](docs/process/HANDOFF_PROTOCOL.md) | Operational protocol — agent ownership, task templates, lifecycle | Before delegating or consuming tasks across agents |
+| [`docs/decisions/`](docs/decisions/) | Architecture Decision Records (9 to date) | When context on historical technical choices is needed |
+| [`docs/README.md`](docs/README.md) | Documentation index | To navigate `docs/` |
+
+**Positioning:** SSE is a "simpler + cheaper + purpose-built" alternative to NetSuite/Mitchell/CCC, targeted at body shops with 5–15 employees in the US. Success metric: **# active tenants + activation rate** (not feature parity). See Bússola §1 for the full target/anti-target definition.
+
+**Personas served:** Owner-Operator, Estimator, Technician, Accountant. Each with a distinct landing page and horizon. See Bússola §2.
+
 ## Current Status — Phase 1 MVP (~90% complete)
 
 ### Backend (NestJS API)
