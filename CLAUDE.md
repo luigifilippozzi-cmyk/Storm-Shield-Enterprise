@@ -621,3 +621,7 @@ docker build -f infra/docker/api.Dockerfile -t sse-api .
 12. **Sempre** usar `KNEX_ADMIN_CONNECTION` apenas para migrations, provisioning e operações cross-tenant
 13. **Sempre** adicionar RLS policy ao criar novas tabelas com `tenant_id`
 14. **Sempre** considerar plan enforcement ao adicionar novos módulos (`@RequirePlanFeature` + atualizar `PLAN_FEATURES`)
+15. **Sempre** consultar `docs/strategy/BUSSOLA_PRODUTO_SSE.md` antes de decisões de priorização, escopo de RF ou redesenho de UX — a Bússola é a camada estratégica acima deste CLAUDE.md (ver ADR-009)
+16. **Sempre** linkar a persona primária servida (ref. Bússola §2) e o gap fechado (ref. Bússola §4) na descrição de PRs que criam tela nova ou alteram navegação
+17. **Sempre** seguir o protocolo de handoff `docs/process/HANDOFF_PROTOCOL.md` ao passar tarefas entre agentes — escrever no arquivo correto, usar template canônico (§4 do protocolo), respeitar ciclo de vida (§7)
+18. **Sempre** operar conforme `docs/process/OPERATING_MODEL_v2.md` — atores, cadência, rituais e métricas oficiais (ver ADR-010)
