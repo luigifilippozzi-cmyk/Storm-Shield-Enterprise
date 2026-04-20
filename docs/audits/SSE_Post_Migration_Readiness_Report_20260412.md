@@ -4,6 +4,14 @@
 **Author:** PM Agent (Cowork session)
 **Requested by:** Luigi Filippozzi (Product Owner)
 
+> **🗄️ STATUS: HISTÓRICO (superseded 2026-04-20)** — Este relatório cobre o estado **pós-migração OneDrive → C:\Dev** em 12/abr. As métricas (17 PRs, 66 testes, 11 módulos, 6 ADRs) refletem aquele ponto no tempo.
+>
+> **Documento vigente de prontidão:** [`SSE_GoNoGo_Fase1_MVP_20260420.md`](./SSE_GoNoGo_Fase1_MVP_20260420.md) — snapshot 20/abr com recomendação **CONDITIONAL-GO** para encerrar Fase 1 MVP.
+>
+> **Plano de testes UI companheiro:** [`SSE_Plano_Testes_UI_Fase1_20260420.md`](./SSE_Plano_Testes_UI_Fase1_20260420.md).
+>
+> Este arquivo permanece preservado como audit trail da migração — **não atualizar**.
+
 ---
 
 ## 1. Migration Summary
