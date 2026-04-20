@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TenantsService } from './tenants.service';
 import { KNEX_ADMIN_CONNECTION } from '../../config/database.module';
+import { ActivationEventsService } from '../admin/activation/activation.service';
 
 const mockKnex = () => {
   const chain: any = {};
@@ -33,6 +34,7 @@ describe('TenantsService', () => {
       providers: [
         TenantsService,
         { provide: KNEX_ADMIN_CONNECTION, useValue: knex },
+        { provide: ActivationEventsService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
       ],
     }).compile();
     service = module.get<TenantsService>(TenantsService);

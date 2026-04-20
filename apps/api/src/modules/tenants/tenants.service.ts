@@ -2,10 +2,14 @@ import { Injectable, Inject } from '@nestjs/common';
 import { Knex } from 'knex';
 import { KNEX_ADMIN_CONNECTION } from '../../config/database.module';
 import { generateId } from '@sse/shared-utils';
+import { ActivationEventsService } from '../admin/activation/activation.service';
 
 @Injectable()
 export class TenantsService {
-  constructor(@Inject(KNEX_ADMIN_CONNECTION) private readonly knex: Knex) {}
+  constructor(
+    @Inject(KNEX_ADMIN_CONNECTION) private readonly knex: Knex,
+    private readonly activationEvents: ActivationEventsService,
+  ) {}
 
   async create(data: any) {
     const id = generateId();
@@ -26,6 +30,8 @@ export class TenantsService {
 
     // Create tenant schema
     await this.knex.raw(`CREATE SCHEMA IF NOT EXISTS "${schemaName}"`);
+
+    await this.activationEvents.record(id, 'tenant_created');
 
     return tenant;
   }

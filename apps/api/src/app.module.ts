@@ -12,6 +12,7 @@ import { FinancialModule } from './modules/financial/financial.module';
 import { ContractorsModule } from './modules/contractors/contractors.module';
 import { AccountingModule } from './modules/accounting/accounting.module';
 import { FixedAssetsModule } from './modules/fixed-assets/fixed-assets.module';
+import { AdminModule } from './modules/admin/admin.module';
 import { DatabaseModule } from './config/database.module';
 import { RedisModule } from './config/redis.module';
 import { CommonModule } from './common/common.module';
@@ -40,6 +41,7 @@ import { HealthController } from './health.controller';
     ContractorsModule,
     AccountingModule,
     FixedAssetsModule,
+    AdminModule,
   ],
 })
 export class AppModule implements NestModule {

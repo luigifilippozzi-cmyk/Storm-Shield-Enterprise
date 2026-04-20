@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { CustomersService } from './customers.service';
 import { TenantDatabaseService } from '../../config/tenant-database.service';
+import { ActivationEventsService } from '../admin/activation/activation.service';
 
 const mockKnex = () => {
   const chain: any = {};
@@ -37,6 +38,7 @@ describe('CustomersService', () => {
       providers: [
         CustomersService,
         { provide: TenantDatabaseService, useValue: { getConnection: jest.fn().mockResolvedValue(knex) } },
+        { provide: ActivationEventsService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
       ],
     }).compile();
     service = module.get<CustomersService>(CustomersService);

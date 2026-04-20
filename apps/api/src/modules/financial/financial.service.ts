@@ -4,6 +4,7 @@ import { generateId } from '@sse/shared-utils';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { QueryTransactionDto } from './dto/query-transaction.dto';
+import { ActivationEventsService } from '../admin/activation/activation.service';
 
 export interface PaginatedResult<T> {
   data: T[];
@@ -17,7 +18,10 @@ export interface PaginatedResult<T> {
 
 @Injectable()
 export class FinancialService {
-  constructor(private readonly tenantDb: TenantDatabaseService) {}
+  constructor(
+    private readonly tenantDb: TenantDatabaseService,
+    private readonly activationEvents: ActivationEventsService,
+  ) {}
 
   async findAll(tenantId: string, query: QueryTransactionDto): Promise<PaginatedResult<any>> {
     const knex = await this.tenantDb.getConnection();
@@ -75,6 +79,7 @@ export class FinancialService {
 
   async create(tenantId: string, dto: CreateTransactionDto) {
     const knex = await this.tenantDb.getConnection();
+    const isFirst = !(await knex('financial_transactions').where({ tenant_id: tenantId, deleted_at: null }).first());
     const [record] = await knex('financial_transactions')
       .insert({
         id: generateId(),
@@ -82,6 +87,7 @@ export class FinancialService {
         ...dto,
       })
       .returning('*');
+    if (isFirst) await this.activationEvents.record(tenantId, 'first_financial_transaction_created');
     return record;
   }
 
