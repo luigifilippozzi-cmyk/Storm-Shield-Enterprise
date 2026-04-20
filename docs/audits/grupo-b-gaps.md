@@ -2,7 +2,7 @@
 
 > **Data:** 2026-04-05 (atualizado 2026-04-07)
 > **Base:** `main` @ `83c0691` (Phase 1 MVP ~92% complete)
-> **Spec de referencia:** `docs/PROMPT_CLAUDE_CODE_FASE1.md` secao Grupo B
+> **Spec de referencia:** `docs/.archive/prompts-historicos/PROMPT_CLAUDE_CODE_FASE1.md` secao Grupo B (arquivado em 2026-04-19)
 > **Autor:** Agente 3 (Claude Code)
 > **Atualizacao:** Review de documentacao (2026-04-07)
 

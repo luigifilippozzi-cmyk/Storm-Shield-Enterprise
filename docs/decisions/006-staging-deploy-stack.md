@@ -66,7 +66,7 @@ Migrar uma ou mais camadas para AWS quando:
 
 ## Implementação
 
-Ver `docs/PROMPT_CLAUDE_CODE_DEPLOY_STAGING.md` (Grupo 0) — executado pelo Agente 1
+Ver `docs/.archive/prompts-historicos/PROMPT_CLAUDE_CODE_DEPLOY_STAGING.md` (Grupo 0, arquivado 2026-04-19) — executado pelo Agente 1
 em `feature/SSE-000-deploy-staging`.
 
 Credenciais: `.credentials-staging.env` (gitignored) + GitHub Secrets.
