@@ -3,6 +3,7 @@ import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { EstimatesService } from './estimates.service';
 import { TenantDatabaseService } from '../../config/tenant-database.service';
 import { StorageService } from '../../common/services/storage.service';
+import { ActivationEventsService } from '../admin/activation/activation.service';
 
 const mockKnex = () => {
   const chain: any = {};
@@ -47,6 +48,7 @@ describe('EstimatesService', () => {
         EstimatesService,
         { provide: TenantDatabaseService, useValue: { getConnection: jest.fn().mockResolvedValue(knex) } },
         { provide: StorageService, useValue: { upload: jest.fn(), delete: jest.fn(), generateKey: jest.fn().mockReturnValue('key') } },
+        { provide: ActivationEventsService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
       ],
     }).compile();
     service = module.get<EstimatesService>(EstimatesService);

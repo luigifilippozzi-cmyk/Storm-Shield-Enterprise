@@ -7,6 +7,7 @@ import { UpdateEstimateDto } from './dto/update-estimate.dto';
 import { QueryEstimateDto } from './dto/query-estimate.dto';
 import { UpdateEstimateStatusDto } from './dto/update-status.dto';
 import { CreateSupplementDto } from './dto/create-supplement.dto';
+import { ActivationEventsService } from '../admin/activation/activation.service';
 
 const ALLOWED_DOC_TYPES = [
   'application/pdf',
@@ -42,6 +43,7 @@ export class EstimatesService {
   constructor(
     private readonly tenantDb: TenantDatabaseService,
     private readonly storageService: StorageService,
+    private readonly activationEvents: ActivationEventsService,
   ) {}
 
   async findAll(tenantId: string, query: QueryEstimateDto): Promise<PaginatedResult<any>> {
@@ -116,6 +118,7 @@ export class EstimatesService {
   async create(tenantId: string, dto: CreateEstimateDto) {
     const knex = await this.tenantDb.getConnection();
     const { lines, ...estimateData } = dto;
+    const isFirst = !(await knex('estimates').where({ tenant_id: tenantId, deleted_at: null }).first());
 
     return knex.transaction(async (trx) => {
       let subtotal = 0;
@@ -148,6 +151,7 @@ export class EstimatesService {
         await trx('estimate_lines').insert(lineRecords);
       }
 
+      if (isFirst) await this.activationEvents.record(tenantId, 'first_estimate_created');
       return estimate;
     });
   }

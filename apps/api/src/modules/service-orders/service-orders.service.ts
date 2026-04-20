@@ -5,6 +5,7 @@ import { CreateServiceOrderDto } from './dto/create-service-order.dto';
 import { UpdateServiceOrderDto } from './dto/update-service-order.dto';
 import { QueryServiceOrderDto } from './dto/query-service-order.dto';
 import { UpdateServiceOrderStatusDto } from './dto/update-status.dto';
+import { ActivationEventsService } from '../admin/activation/activation.service';
 
 export interface PaginatedResult<T> {
   data: T[];
@@ -28,7 +29,10 @@ const ALLOWED_STATUS_TRANSITIONS: Record<string, string[]> = {
 
 @Injectable()
 export class ServiceOrdersService {
-  constructor(private readonly tenantDb: TenantDatabaseService) {}
+  constructor(
+    private readonly tenantDb: TenantDatabaseService,
+    private readonly activationEvents: ActivationEventsService,
+  ) {}
 
   async findAll(tenantId: string, query: QueryServiceOrderDto): Promise<PaginatedResult<any>> {
     const knex = await this.tenantDb.getConnection();
@@ -95,6 +99,7 @@ export class ServiceOrdersService {
 
   async create(tenantId: string, dto: CreateServiceOrderDto) {
     const knex = await this.tenantDb.getConnection();
+    const isFirst = !(await knex('service_orders').where({ tenant_id: tenantId, deleted_at: null }).first());
     const [record] = await knex('service_orders')
       .insert({
         id: generateId(),
@@ -103,6 +108,7 @@ export class ServiceOrdersService {
         status: 'pending',
       })
       .returning('*');
+    if (isFirst) await this.activationEvents.record(tenantId, 'first_service_order_created');
     return record;
   }
 

@@ -5,6 +5,7 @@ import { generateId } from '@sse/shared-utils';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { QueryVehicleDto } from './dto/query-vehicle.dto';
+import { ActivationEventsService } from '../admin/activation/activation.service';
 
 export interface PaginatedResult<T> {
   data: T[];
@@ -24,6 +25,7 @@ export class VehiclesService {
   constructor(
     private readonly tenantDb: TenantDatabaseService,
     private readonly storageService: StorageService,
+    private readonly activationEvents: ActivationEventsService,
   ) {}
 
   async findAll(tenantId: string, query: QueryVehicleDto): Promise<PaginatedResult<any>> {
@@ -92,6 +94,7 @@ export class VehiclesService {
 
   async create(tenantId: string, dto: CreateVehicleDto) {
     const knex = await this.tenantDb.getConnection();
+    const isFirst = !(await knex('vehicles').where({ tenant_id: tenantId, deleted_at: null }).first());
     const [record] = await knex('vehicles')
       .insert({
         id: generateId(),
@@ -99,6 +102,7 @@ export class VehiclesService {
         ...dto,
       })
       .returning('*');
+    if (isFirst) await this.activationEvents.record(tenantId, 'first_vehicle_created');
     return record;
   }
 

@@ -17,11 +17,12 @@ type: project
 
 **Origin:** PO
 **Priority:** P0
-**Status:** PENDING
+**Status:** COMPLETED
 **Created:** 2026-04-17
-**Claimed:** —
-**Branch:** `feature/SSE-XXX-rf-003-activation-tracking`
-**PR:** —
+**Claimed:** 2026-04-20
+**Completed:** 2026-04-20
+**Branch:** `feature/SSE-048-rf-003-activation-tracking`
+**PR:** #33 (pending merge)
 
 ### Objetivo
 Implementar RF-003 conforme spec em `docs/strategy/RF_BACKLOG.md` — tabela `activation_events`, service de emissão, hooks nos 6 services principais, dashboard interno em `/admin/activation`.
@@ -694,14 +695,15 @@ N/A (governança).
 
 ---
 
-## T-20260412-3 — Fechar Fases 1A e 3 (tasks rápidas: T-008, T-009, T-032)
+## T-20260412-3 — Fechar Fases 1A e 3 (tasks rápidas: T-008, T-009)
 
 **Origin:** PM
 **Priority:** P1
 **Status:** PENDING
+**Note:** T-032 (Reports) já concluída em PR #24 (2026-04-13). Apenas T-008 + T-009 pendentes.
 **Created:** 2026-04-12
 **Claimed:** —
-**Branch:** `feature/SSE-040-cleanup-and-reports`
+**Branch:** —
 **PR:** —
 
 ### Objetivo

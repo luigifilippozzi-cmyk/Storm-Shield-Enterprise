@@ -287,18 +287,18 @@ const D = {
   lastUpdated: "2026-04-20 (Dev Manager)",
   updatedBy: "Dev Manager",
   health: "yellow",
-  healthText: "RF-001 CONCLUIDO (Gap 1 fechado) — 5 PRs merged (#27-#31), 343 testes, 36 pages, security fix critico no AuthGuard (cross-tenant leak). Deploy API Fly.io ainda RED (bloqueante T-019). PRs abertos: 0.",
+  healthText: "RF-003 CONCLUIDO (Gap 8 fechado) — migration 013 + admin module + 6 hooks + dashboard /admin/activation. PR #33 aberto. 350 testes, 23 suites. Deploy API Fly.io ainda RED (T-20260412-1 BLOCKED). Proximo P0: RF-002.",
   activeFase: "2",
   kpis: {
-    backendModules: 12,
-    controllers: 15,
-    endpoints: 99,
-    frontendPages: 36,
-    specFiles: 22,
-    tests: 343,
-    migrations: 11,
+    backendModules: 13,
+    controllers: 16,
+    endpoints: 102,
+    frontendPages: 37,
+    specFiles: 23,
+    tests: 350,
+    migrations: 12,
     excelTotal: 36,
-    excelDone: 29
+    excelDone: 30
   },
   agents: [
     { name: "PM Agent", role: "Status Diario + Metricas", color: "var(--blue)", bg: "var(--blue-bg)", icon: "clipboard", status: "active", statusText: "Revisao 2026-04-19", stats: [["Frequencia","Diario"],["Escopo","Read-only"],["Output","Relatorio + Dashboard"]] },
@@ -309,6 +309,9 @@ const D = {
     { name: "frontend-reviewer", role: "Next.js + shadcn/ui", color: "var(--cyan)", bg: "rgba(6,182,212,.12)", icon: "layout", status: "active", statusText: "Build verde 36 rotas (RF-001 DONE)", stats: [["Framework","Next.js 15 + React 19"],["Pages","36 paginas"],["Trigger","UI/component changes"]] }
   ],
   activity: [
+    { time: "Abr 20", color: "var(--green)", msg: "<strong>Dev Manager</strong> sessao autonoma — RF-003 CONCLUIDO (Gap 8 fechado): migration 013 + AdminModule + 6 hooks + dashboard /admin/activation. PR #33 aberto. 350 testes (23 suites).", tag: "dm" },
+    { time: "Abr 20", color: "var(--blue)", msg: "<strong>PM Agent</strong> revisao diaria — Deploy API FAILURE confirmado 10:14Z (post Docker fixes Abr 19, T-20260412-1 BLOCKED). CI+Deploy Staging+Web verdes. 31 PRs merged. Regras 15-18 OK. Proximos P0: RF-002 + RF-003.", tag: "pm" },
+    { time: "Abr 20", color: "var(--accent2)", msg: "<strong>PR #32</strong> docs: promote _staging agent files, clean up untracked PO session files, .gitignore _staging/", tag: "merge" },
     { time: "Abr 20", color: "var(--green)", msg: "<strong>Dev Manager</strong> sessao autonoma — RF-001 concluido (Gap 1 fechado), security fix AuthGuard, 5 PRs merged (#27-#31), 343 testes, 36 pages", tag: "dm" },
     { time: "Abr 20", color: "var(--accent2)", msg: "<strong>PR #31</strong> feat(auth,web): RF-001 — landing por persona + 4 workspaces + workspace switcher + sidebar dinamica", tag: "merge" },
     { time: "Abr 20", color: "var(--accent2)", msg: "<strong>PR #30</strong> docs: GitHub issue templates com secao Bussola persona/gap", tag: "merge" },
@@ -342,14 +345,15 @@ const D = {
     { name: "accounting", files: 20, spec: true, controller: true, endpoints: 15 },
     { name: "fixed-assets", files: 18, spec: true, controller: true, endpoints: 15 },
     { name: "auth", files: 6, spec: true, controller: true, endpoints: 1 },
-    { name: "tenants", files: 4, spec: true, controller: false, endpoints: 0 }
+    { name: "tenants", files: 4, spec: true, controller: false, endpoints: 0 },
+    { name: "admin/activation", files: 5, spec: true, controller: true, endpoints: 3 }
   ],
   pipeline: [
     { label: "CI", desc: "Lint + Test + Build (GitHub Actions)", status: "green", date: "2026-04-20" },
     { label: "Deploy Staging", desc: "Workflow geral (triggered on push main) — SUCCESS", status: "green", date: "2026-04-20" },
-    { label: "Deploy API", desc: "Fly.io — FAILURE persiste apos secrets + Docker fix. Investigar causa raiz. Bloqueia T-019.", status: "red", date: "2026-04-14" },
+    { label: "Deploy API", desc: "Fly.io — FAILURE confirmado 10:14Z em 2026-04-20 (pos Docker fixes Abr 19). Causa raiz nao identificada. Bloqueia T-019.", status: "red", date: "2026-04-20" },
     { label: "Deploy Web", desc: "Vercel — SUCCESS (PR #31 preview verde)", status: "green", date: "2026-04-20" },
-    { label: "PRs Abertos", desc: "Nenhum PR pendente — 30 total merged", status: "green", date: "2026-04-20" }
+    { label: "PRs Abertos", desc: "Nenhum PR pendente — 31 total merged (ultimo: #32 docs governance)", status: "green", date: "2026-04-20" }
   ],
   alertas: {
     bloqueantes: [
@@ -361,21 +365,23 @@ const D = {
       { titulo: "Coverage < 80% em todos os services", desc: "82% atingido apenas em estimates + vehicles. Outros services nao verificados.", acao: "pnpm --filter @sse/api test -- --coverage (verificar todos)" }
     ],
     proximos7: [
-      { titulo: "T-20260417-11: RF-002 Setup Wizard (P0)", desc: "Wizard de onboarding de 5 passos — Gap 3 da Bussola. Depende de RF-001 (concluido). Complexidade L." },
-      { titulo: "T-20260417-12: RF-003 Activation Tracking (P0)", desc: "Tabela activation_events + hooks nos 6 services + dashboard /admin/activation — Gap 8." },
-      { titulo: "T-008 + T-009: Enum cleanup + date validation (P1)", desc: "Fechar Fase 1A (8/10 → 10/10). Tasks rapidas (<1h)." }
+      { titulo: "T-20260417-11: RF-002 Setup Wizard (P0)", desc: "Wizard de onboarding de 5 passos — Gap 3 da Bussola. Deps RF-001+RF-003 satisfeitas. Complexidade L — avaliar quebra em sub-RFs." },
+      { titulo: "T-008 + T-009: Enum cleanup + date validation (P1)", desc: "Fechar Fase 1A (8/10 → 10/10). Tasks rapidas (<1h)." },
+      { titulo: "Investigar Deploy API Fly.io (P0-infra)", desc: "T-20260412-1 BLOCKED — checar logs do run mais recente, fly.toml, DATABASE_URL_UNPOOLED." }
     ]
   },
   inconsistencias: [
+    { tipo: "T-20260412-3 (dm_queue)", desc: "RESOLVIDO: titulo e nota atualizados — T-032 concluida, apenas T-008+T-009 pendentes." },
     { tipo: "Insurance", desc: "8 files + spec no repo mas sem task explicita no Excel — considerar adicionar task retroativa" },
     { tipo: "T-020/T-021/T-022", desc: "Marcadas Backlog no Excel mas ja implementadas e funcionando" },
     { tipo: "T-032", desc: "Marcada Backlog no Excel mas Reports (P&L, Balance Sheet, Trial Balance) existem no repo — backend + 4 frontend pages" },
-    { tipo: "RF-001 (T-20260417-10)", desc: "CONCLUIDO em 2026-04-20 — PR #31 merged. Gap 1 da Bussola fechado." }
+    { tipo: "RF-001 (T-20260417-10)", desc: "CONCLUIDO em 2026-04-20 — PR #31 merged. Gap 1 da Bussola fechado." },
+    { tipo: "RF-003 (T-20260417-12)", desc: "CONCLUIDO em 2026-04-20 — PR #33 aberto. Gap 8 da Bussola fechado." }
   ],
   recomendacoes: [
-    { prioridade: "P0", texto: "RF-002 (Setup Wizard) — proximo P0 da Bussola. Dependencia de RF-001 satisfeita. DM iniciar na proxima sessao." },
-    { prioridade: "P0", texto: "RF-003 (Activation Tracking) — pode ser paralelizado com RF-002. Migration + service + hooks sao independentes do wizard." },
-    { prioridade: "P0", texto: "Deploy API Fly.io: investigar causa raiz — secrets configurados mas falha persiste. Checar logs Fly.io, variaveis de ambiente, fly.toml." },
+    { prioridade: "P0", texto: "RF-002 (Setup Wizard) — unico P0 restante da Bussola. RF-001 e RF-003 concluidos. Complexidade L — considerar quebra em sub-RFs (wizard-core + sample-data + events)." },
+    { prioridade: "P0", texto: "Deploy API Fly.io: investigar causa raiz — secrets + Docker fix aplicados mas falha persiste. Checar logs Fly.io, fly.toml, DATABASE_URL_UNPOOLED." },
+    { prioridade: "P1", texto: "T-008 + T-009: enum cleanup + date validation — tasks rapidas (<1h), fecham Fase 1A (8/10 → 10/10)." },
     { prioridade: "P1", texto: "T-008 + T-009: enums duplicados e validacao de datas — fechar Fase 1A (8/10 → 10/10). Tasks rapidas (<1h)." }
   ],
   backlog: [

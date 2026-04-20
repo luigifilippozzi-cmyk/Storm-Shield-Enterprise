@@ -10,6 +10,56 @@ type: project
 
 ---
 
+## Sessão 2026-04-20 — PO Cowork (Relatório de Prontidão + Plano de Testes UI)
+
+**Contexto:** Luigi pediu atualização do relatório de prontidão (antigo `SSE_Post_Migration_Readiness_Report_20260412.md`, desatualizado) e do plano de testes, incluindo UI com dados fictícios. Escopo alinhado via AskUserQuestion antes da execução.
+
+### Decisões de produto
+
+1. **Readiness report reescrito como Go/No-Go Fase 1 MVP** — não mais um snapshot pós-migração, mas um documento de decisão com recomendação explícita (`CONDITIONAL-GO`) e condição de reversão (revisitar 2026-05-05 com critérios C1/C2/C3 objetivos). Doc de 12/abr preservado como histórico com header de supersede.
+   - *Condição de reversão:* se C1 (deploy API) + C2 (RF-002 wizard) ambos falharem em 2026-05-05 → regredir para `NO-GO` e realocar squad para infra/wizard sem novos features.
+2. **Plano de testes UI cobre 4 categorias complementares** — Seed demo (A), E2E Playwright (B), QA manual (C), Smoke pós-deploy (D). Todos os 12 módulos ativos, 3 diferidos marcados N/A Fase 1.
+3. **Dados fictícios centralizados no tenant "Acme Auto Body, LLC"** — 7 users (1 por role), 25 customers, 40 vehicles, 35 estimates com mix de status, 22 SOs, 150 transactions, 8 fixed assets. EINs/placas/VINs usam ranges não-alocados para evitar colisão com dados reais.
+4. **Playwright escolhido sobre Cypress** para E2E — justificativa: maturidade mobile emulation (prepara Gap 2 Bússola futuro). Admite ADR se DM divergir.
+5. **Smoke isolado do seed demo** — usuário `smoke@sse-internal.test` em tenant `smoke-tenant` vazio, não Acme. Isola regressão causada por seed vs. código.
+
+### Artefatos produzidos
+
+| Artefato | Localização | Tamanho |
+|---|---|---|
+| Relatório Go/No-Go Fase 1 MVP (novo) | `docs/audits/SSE_GoNoGo_Fase1_MVP_20260420.md` | ~12.6 KB |
+| Plano de Testes UI Fase 1 (novo) | `docs/audits/SSE_Plano_Testes_UI_Fase1_20260420.md` | ~23 KB |
+| Header de supersede adicionado | `docs/audits/SSE_Post_Migration_Readiness_Report_20260412.md` | +7 linhas |
+
+### Issues criadas / PRs revisados / Bloqueios
+
+- Issues criadas: 0 (PO-only session)
+- PRs revisados: 0
+- Bloqueios identificados: **T-20260412-1 Deploy API permanece BLOCKED** — é o bloqueio existencial para executar categorias B/C/D do plano de testes. Categoria A (seed) pode avançar em paralelo.
+
+### Alinhamento Bússola
+
+- **Persona primária tocada:** todas as 4 (Owner, Estimator, Technician, Accountant) — plano de testes UI define roteiro por persona
+- **Gaps referenciados:** Gap 1 (landing persona — RF-001 parcial), Gap 3 (onboarding — RF-002 pendente), Gap 4 (cockpit Owner — parcial), Gap 2 e 5 mencionados como escopo negativo Fase 1
+
+### Handoffs DM derivados (não registrados ainda — requer aprovação Luigi)
+
+Lista sugerida para registro em `.auto-memory/dm_queue.md` em sessão subsequente:
+
+| ID sugerido | Subject | Prioridade | Dependência |
+|---|---|---|---|
+| T-20260420-A | Criar script seed Acme Auto Body | P1 | Nenhuma |
+| T-20260420-B | Scaffolding Playwright + 2 specs piloto | P1 | T-20260412-1 resolvido |
+| T-20260420-C | Specs Playwright módulos 3-12 | P2 | T-20260420-B |
+| T-20260420-D | Smoke test CI wiring | P2 | T-20260412-1 resolvido |
+| T-20260420-QA | Execução QA manual com PO | P1 | A + T-20260412-1 |
+
+### Próxima sessão PO
+
+**Foco:** revisar com Luigi se os handoffs T-20260420-A..QA devem ir ao dm_queue.md agora ou aguardar evolução de T-20260412-1. Se deploy API desbloquear até lá, promover para P0 de execução.
+
+---
+
 ## Sessão 2026-04-17 — PO Cowork (parte 6 — Rollback de duplicatas e consolidação de handoff)
 
 **Contexto:** PO Assistant iniciou sessão para consolidar governança (Bússola, Operating Model, HANDOFF_PROTOCOL, release cadence) sem ler `.auto-memory/MEMORY.md` local. Criou 8 patches de duplicatas lossy de artefatos canônicos pré-existentes. Luigi detectou no review e autorizou rollback R1–R5.
