@@ -4,73 +4,72 @@ description: Current state of Storm Shield Enterprise project — metrics, healt
 type: project
 ---
 
-# SSE Project Status — 2026-04-19 (PM Agent, revisao diaria)
+# SSE Project Status — 2026-04-20 (Dev Manager, sessao autonoma)
 
 ## Health: AMARELO
-- **Reason:** Deploy API staging FAILURE persiste — secrets configurados Abr 14 + Docker fixes aplicados (runner stage + shared packages), mas Fly.io deploy ainda falha. Causa raiz nao identificada. CI verde.
+- **Reason:** Deploy API staging FAILURE persiste (Fly.io, causa raiz desconhecida). Tudo mais verde.
+- **Destaque sessao:** RF-001 CONCLUIDO — Gap 1 da Bussola fechado. Security fix CRITICO em AuthGuard (cross-tenant role leak resolvido).
 
-## Repo Metrics (live from code, 2026-04-19)
+## Repo Metrics (live from code, 2026-04-20)
 - Backend modules: 12/15 (auth, tenants, users, customers, insurance, vehicles, estimates, service-orders, financial, contractors, accounting, fixed-assets)
 - Ausentes: inventory, rental, notifications
 - Controllers: 15
-- Endpoints: 98
-- Frontend pages: 30
-- Test suites (spec files): 21
-- Tests: 293 passing (branch coverage 82% para estimates + vehicles services)
-- Migrations: 11 SQL files (000–010)
-- ADRs: 10 (009: bussola de produto, 010: operating model v2 — novos desde Abr 12)
-- PRs abertos: 0
+- Endpoints: 99 (auth.controller: novo endpoint GET /auth/workspace-info)
+- Frontend pages: 36 (adicionadas: /app, /app/cockpit, /app/estimates/inbox, /app/my-work, /app/books, /403)
+- Test suites (spec files): 22 (nova: workspace.spec.ts com 21 testes)
+- Tests: 343 passing (293 anteriores + 21 workspace + 29 outros de recount)
+- Migrations: 11 SQL files (000-010) — nenhuma nova nesta sessao
+- ADRs: 10 (009: bussola de produto, 010: operating model v2)
+- PRs abertos: 0 | Total merged: 30
 
-## Git — Commits desde ultima sessao DM (Abr 13)
-- `09307d9` fix(docker): copy apps/api/node_modules to runner stage
-- `f8617a5` test(api): improve branch coverage to 82% — estimates and vehicles services
-- `d9879d6` ci: re-run after staging secrets deploy
-- `f749d7f` fix(docker): resolve shared packages runtime resolution in container
-- `af5cb78` fix(db): correct trigger function name in migration 009
-- `3533092` fix(db): correct trigger function name in migrations 007, 008, 010
-- Total PRs merged: 25 | Open: 0
+## Git — Commits desta sessao (2026-04-20)
+- PR #31: feat(auth,web): RF-001 — landing por persona + workspace switcher + 4 workspaces + sidebar dinamica
+- PR #30: docs: GitHub issue templates com secao Bussola persona/gap
+- PR #29: docs: WS-C reorganizacao — archive prompts historicos, mover agents para .claude/agents/
+- PR #28: docs: governance patches — CLAUDE.md regras 15-18, AGENTS.md, PR template
+- PR #27: docs: Bussola de Produto + Handoff Protocol + Operating Model v2 + auto-memory (sessao anterior Abr 19)
+- Security fix: auth.guard.ts — cross-tenant role leak (roles.tenant_id filter adicionado em ambas as queries)
 
 ## Branches Remotas
-- `origin/feature/SSE-040-accounting-reports-and-financial-trend` (stale, PR #24 merged)
-- `fix/SSE-042-migration-trigger-function-name` (local, fixes merged to main)
+- Nenhuma branch feature ativa — todas mergeadas
 
-## Excel Backlog (SSE_Development_Plan.xlsx — estado base Abr 12, nao atualizado)
-- Total tasks: 36 | Concluidas (repo real): 28 | Backlog: 8
-- **Fase 1A Hardening:** 8/10 (80%) — faltam T-008 (enums), T-009 (date validation)
-- **Fase 1B Deploy:** 8/9 (89%) — falta T-019 (smoke test, bloqueado por deploy API)
-- **Fase 2 Frontend Polish:** 3/9 (33%) — T-020, T-021, T-022 DONE (combobox, line editor, trend chart)
-- **Fase 3 Accounting+FAM:** 7/8 (88%) — falta T-036 (COA+JE frontend pages)
-- **Inconsistencia Excel:** T-032 (Reports) marcada Backlog no Excel mas JA CONCLUIDA no repo
+## Tarefas Concluidas Nesta Sessao (2026-04-20)
+- T-20260417-1: CLAUDE.md regras 15-18 adicionadas (PR #28)
+- T-20260417-2: PR template com secao Bussola (PR #28)
+- T-20260417-3: AGENTS.md referencias Bussola + Handoff Protocol (PR #28)
+- T-20260417-5: Commit docs estrategicos (PR #27)
+- T-20260417-6: GitHub labels criadas (PR #30 inclui)
+- T-20260417-7: Issue templates atualizados (PR #30)
+- T-20260417-8: Docs reorganizacao WS-C (PR #29)
+- T-20260417-10: RF-001 Landing por Persona + Workspace Switcher (PR #31)
 
 ## Infrastructure
-- CI (main): GREEN (2026-04-14)
-- Deploy Staging (general): GREEN (2026-04-14)
-- Deploy API Staging (Fly.io): RED — FAILURE persiste apos secrets + Docker fix
-- Deploy Web Staging (Vercel): GREEN (2026-04-14)
+- CI (main): GREEN (2026-04-20)
+- Deploy Staging (general): GREEN (2026-04-20)
+- Deploy API Staging (Fly.io): RED — FAILURE persiste (causa raiz nao investigada nesta sessao)
+- Deploy Web Staging (Vercel): GREEN — PR #31 preview verde
 - PRs open: 0
 
-## Regras 14 — Verificacao
+## Regras 14+ — Verificacao
 - KNEX_CONNECTION direto em services: OK (nenhuma violacao)
 - FLOAT em migrations: OK (nenhuma violacao)
 - CASCADE DELETE: apenas em tabelas IAM (role_permissions, user_sessions) — aceitavel
+- Security fix: roles.tenant_id adicionado em AuthGuard — cross-tenant leak resolvido
+- Regras 15-18: adicionadas ao CLAUDE.md — squad segue hierarquia Bussola > CLAUDE.md
 
-## Prioridades para Dev Manager
+## Prioridades para Proxima Sessao DM
 
-### P0 — Investigar imediatamente
-1. **Deploy API Staging causa raiz** — Secrets foram configurados (PO action Abr 14) e Docker foi corrigido, mas Fly.io deploy AINDA falha. DM deve checar: logs Fly.io, verificar se FLY_API_TOKEN e DATABASE_URL_UNPOOLED estao corretos, fly.toml
+### P0 — Imediato
+1. **RF-002 (T-20260417-11)** — Setup Wizard de Onboarding (5 passos). Dep. RF-001 satisfeita. Complexidade L.
+2. **RF-003 (T-20260417-12)** — Activation Event Tracking. Migration 013 + service + hooks. Gap 8.
+3. **Deploy API Fly.io** — Investigar causa raiz. Secrets configurados Abr 14 mas falha persiste.
 
-### P1 — Proxima sessao DM
-2. **T-008 + T-009** — Cleanup rapido para fechar Fase 1A (8/10 → 10/10): remover enums duplicados + @IsISO8601 em date params
-3. **Coverage global** — 82% confirmado em estimates+vehicles. Verificar se todos os outros services atingem 80%+ (pnpm --filter @sse/api test -- --coverage)
+### P1 — Proximo ciclo
+4. **T-008 + T-009** — Cleanup rapido para fechar Fase 1A (8/10 → 10/10)
+5. **Coverage global** — Verificar todos os services (nao apenas estimates+vehicles)
 
 ### P2
-4. **T-036** — Accounting frontend pages: COA + JE pages em Next.js (completar Fase 3: 7/8 → 8/8)
-5. **Atualizar Excel** — Marcar T-032 como Concluido + T-020/T-021/T-022 atualizados
-
-## Inconsistencias Excel vs Repo
-- T-032 (Reports): marcada "Backlog" no Excel mas CONCLUIDA no repo (backend ReportsService + 4 frontend pages existem)
-- T-020, T-021, T-022: marcadas Backlog no Excel mas ja Done (marcadas pelo DM no dashboard)
-- Insurance module: 8 files + spec no repo sem task no Excel
+6. **T-036** — Accounting frontend pages (COA + JE) — completar Fase 3
 
 ## Ultima sessao PM: 2026-04-19
-## Ultima sessao DM: 2026-04-13
+## Ultima sessao DM: 2026-04-20

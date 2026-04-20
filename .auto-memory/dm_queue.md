@@ -120,11 +120,11 @@ Gap 3 (Bússola §4).
 
 **Origin:** PO
 **Priority:** P0
-**Status:** PENDING
+**Status:** COMPLETED
 **Created:** 2026-04-17
-**Claimed:** —
-**Branch:** `feature/SSE-XXX-rf-001-landing-por-persona`
-**PR:** —
+**Completed:** 2026-04-20
+**Branch:** `feature/SSE-044-rf-001-landing-por-persona` (deleted)
+**PR:** #31 (merged)
 
 ### Objetivo
 Implementar RF-001 conforme spec em `docs/strategy/RF_BACKLOG.md` — 4 workspaces (`/app/cockpit`, `/app/estimates/inbox`, `/app/my-work`, `/app/books`), redirect inteligente no `/app`, workspace switcher, sidebar dinâmica.
@@ -178,11 +178,11 @@ Slot reservado caso surja tarefa entre T-20260417-8 e T-20260417-10. Pode ser us
 
 **Origin:** PO
 **Priority:** P1
-**Status:** PENDING
+**Status:** COMPLETED
 **Created:** 2026-04-17
-**Claimed:** —
-**Branch:** `docs/SSE-XXX-reorg-docs-ws-c`
-**PR:** —
+**Completed:** 2026-04-20
+**Branch:** deleted
+**PR:** #29 (merged)
 
 ### Objetivo
 Executar os moves/deletes físicos decididos pelo PO na sessão WS-C (2026-04-17), limpando a "flat" de `docs/` e consolidando prompts de agentes em `.claude/agents/`. Doc-only PR — nenhum código alterado.
@@ -290,11 +290,11 @@ N/A.
 
 **Origin:** PO
 **Priority:** P2
-**Status:** PENDING
+**Status:** COMPLETED
 **Created:** 2026-04-17
-**Claimed:** —
+**Completed:** 2026-04-20
 **Branch:** —
-**PR:** —
+**PR:** #30 (merged)
 
 ### Objetivo
 Atualizar os 3 issue templates do GitHub (`bug_report.md`, `feature_request.md`, `task.md`) com seção "Persona servida + gap fechado" alinhada com a Bússola.
@@ -340,11 +340,11 @@ N/A (governança).
 
 **Origin:** PO
 **Priority:** P2
-**Status:** PENDING
+**Status:** COMPLETED
 **Created:** 2026-04-17
-**Claimed:** —
+**Completed:** 2026-04-20
 **Branch:** —
-**PR:** —
+**PR:** #30 (labels via gh label create)
 
 ### Objetivo
 Criar e padronizar labels GitHub para suportar priorização e análise alinhadas com a Bússola.
@@ -404,11 +404,11 @@ N/A.
 
 **Origin:** PO
 **Priority:** P1
-**Status:** PENDING
-**Created:** 2026-04-17 (atualizada em WS-C com novos arquivos)
-**Claimed:** —
-**Branch:** `docs/SSE-XXX-bussola-handoff-and-docs-reorg`
-**PR:** —
+**Status:** COMPLETED
+**Created:** 2026-04-17
+**Completed:** 2026-04-19
+**Branch:** deleted
+**PR:** #27 (merged)
 
 ### Objetivo
 Levar ao repositório remoto (via PR único) todos os documentos novos/alterados criados nas 3 partes da sessão PO de 2026-04-17 (WS-A: Bússola; WS-B: Handoff Protocol; WS-C: docs index + README patch).
@@ -545,11 +545,11 @@ Nenhum diretamente — prepara o fechamento de Gap 1, 3 e 8.
 
 **Origin:** PO
 **Priority:** P2
-**Status:** PENDING
+**Status:** COMPLETED
 **Created:** 2026-04-17
-**Claimed:** —
-**Branch:** `docs/SSE-XXX-agents-md-bussola-and-handoff`
-**PR:** —
+**Completed:** 2026-04-20
+**Branch:** deleted
+**PR:** #28 (merged)
 
 ### Objetivo
 Garantir que DM e subagentes tenham visibilidade de dois novos artefatos: a Bússola (estratégica) e o Handoff Protocol (operacional).
@@ -601,11 +601,11 @@ N/A.
 
 **Origin:** PO
 **Priority:** P2
-**Status:** PENDING
+**Status:** COMPLETED
 **Created:** 2026-04-17
-**Claimed:** —
-**Branch:** `docs/SSE-XXX-pr-template-bussola`
-**PR:** —
+**Completed:** 2026-04-20
+**Branch:** deleted
+**PR:** #28 (merged)
 
 ### Objetivo
 Forçar que todo PR referencie persona servida e gap fechado, conforme ADR-009.
@@ -647,15 +647,15 @@ N/A (governança).
 
 ---
 
-## T-20260417-1 — Patch CLAUDE.md §10 adicionando regras 15 e 16
+## T-20260417-1 — Patch CLAUDE.md §10 adicionando regras 15-18
 
 **Origin:** PO
 **Priority:** P1
-**Status:** PENDING
+**Status:** COMPLETED
 **Created:** 2026-04-17
-**Claimed:** —
-**Branch:** `docs/SSE-XXX-claude-md-adota-bussola`
-**PR:** —
+**Completed:** 2026-04-20
+**Branch:** deleted
+**PR:** #28 (merged)
 
 ### Objetivo
 Adicionar 2 novas regras ao CLAUDE.md §10 para referenciar a Bússola e o Handoff Protocol.

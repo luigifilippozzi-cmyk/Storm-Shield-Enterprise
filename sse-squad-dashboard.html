@@ -284,51 +284,50 @@
 <script>
 // <!--METRICS_START-->
 const D = {
-  lastUpdated: "2026-04-13 (Dev Manager)",
+  lastUpdated: "2026-04-20 (Dev Manager)",
   updatedBy: "Dev Manager",
   health: "yellow",
-  healthText: "Deploy API staging FAILURE (secrets ausentes — PO action) — CI verde, 293 testes passando, 24 PRs merged, T-022+T-032 concluidos, Fase 3 Accounting 7/8",
+  healthText: "RF-001 CONCLUIDO (Gap 1 fechado) — 5 PRs merged (#27-#31), 343 testes, 36 pages, security fix critico no AuthGuard (cross-tenant leak). Deploy API Fly.io ainda RED (bloqueante T-019). PRs abertos: 0.",
   activeFase: "2",
   kpis: {
     backendModules: 12,
     controllers: 15,
-    endpoints: 98,
-    frontendPages: 30,
-    specFiles: 21,
-    tests: 293,
+    endpoints: 99,
+    frontendPages: 36,
+    specFiles: 22,
+    tests: 343,
     migrations: 11,
     excelTotal: 36,
-    excelDone: 28
+    excelDone: 29
   },
   agents: [
-    { name: "PM Agent", role: "Status Diario + Metricas", color: "var(--blue)", bg: "var(--blue-bg)", icon: "clipboard", status: "standby", statusText: "Standby", stats: [["Frequencia","Diario"],["Escopo","Read-only"],["Output","Relatorio + Dashboard"]] },
-    { name: "Dev Manager", role: "Implementacao + Orquestracao", color: "var(--accent2)", bg: "var(--teal-bg)", icon: "gear", status: "active", statusText: "Sessao 2026-04-13", stats: [["Autoridade","Execucao tecnica"],["Subagentes","3 acionados"],["Git","PR #24 merged"]] },
-    { name: "test-runner", role: "Jest + Coverage", color: "var(--green)", bg: "var(--green-bg)", icon: "check", status: "active", statusText: "PASS 293 tests", stats: [["Framework","Jest + ts-jest"],["Specs","21 test suites"],["Trigger","Sempre pre-PR"]] },
-    { name: "security-reviewer", role: "RLS + XSS + Auth", color: "var(--red)", bg: "var(--red-bg)", icon: "shield", status: "active", statusText: "PASS (2 critical fixes)", stats: [["Foco","tenant_id, RLS, AES"],["Checks","OWASP Top 10"],["Trigger","auth/db changes"]] },
-    { name: "db-reviewer", role: "Migrations + Schema", color: "var(--purple)", bg: "var(--purple-bg)", icon: "database", status: "active", statusText: "PASS (col names fixed)", stats: [["Foco","RLS, indexes, FK"],["Migrations","11 SQL files"],["Trigger","Schema changes"]] },
-    { name: "frontend-reviewer", role: "Next.js + shadcn/ui", color: "var(--cyan)", bg: "rgba(6,182,212,.12)", icon: "layout", status: "active", statusText: "Build verde 30 rotas", stats: [["Framework","Next.js 15 + React 19"],["Pages","30 paginas"],["Trigger","UI/component changes"]] }
+    { name: "PM Agent", role: "Status Diario + Metricas", color: "var(--blue)", bg: "var(--blue-bg)", icon: "clipboard", status: "active", statusText: "Revisao 2026-04-19", stats: [["Frequencia","Diario"],["Escopo","Read-only"],["Output","Relatorio + Dashboard"]] },
+    { name: "Dev Manager", role: "Implementacao + Orquestracao", color: "var(--accent2)", bg: "var(--teal-bg)", icon: "gear", status: "active", statusText: "Sessao 2026-04-20 — 5 PRs merged", stats: [["Autoridade","Execucao tecnica"],["Subagentes","4 acionados"],["Git","PR #31 merged (RF-001)"]] },
+    { name: "test-runner", role: "Jest + Coverage", color: "var(--green)", bg: "var(--green-bg)", icon: "check", status: "active", statusText: "343 testes, 22 suites — GREEN", stats: [["Framework","Jest + ts-jest"],["Specs","22 test suites"],["Trigger","Sempre pre-PR"]] },
+    { name: "security-reviewer", role: "RLS + XSS + Auth", color: "var(--red)", bg: "var(--red-bg)", icon: "shield", status: "active", statusText: "CRITICAL FIX: AuthGuard cross-tenant leak", stats: [["Foco","tenant_id, RLS, AES"],["Checks","OWASP Top 10"],["Trigger","auth/db changes"]] },
+    { name: "db-reviewer", role: "Migrations + Schema", color: "var(--purple)", bg: "var(--purple-bg)", icon: "database", status: "active", statusText: "Trigger fix (007-010)", stats: [["Foco","RLS, indexes, FK"],["Migrations","11 SQL files"],["Trigger","Schema changes"]] },
+    { name: "frontend-reviewer", role: "Next.js + shadcn/ui", color: "var(--cyan)", bg: "rgba(6,182,212,.12)", icon: "layout", status: "active", statusText: "Build verde 36 rotas (RF-001 DONE)", stats: [["Framework","Next.js 15 + React 19"],["Pages","36 paginas"],["Trigger","UI/component changes"]] }
   ],
   activity: [
+    { time: "Abr 20", color: "var(--green)", msg: "<strong>Dev Manager</strong> sessao autonoma — RF-001 concluido (Gap 1 fechado), security fix AuthGuard, 5 PRs merged (#27-#31), 343 testes, 36 pages", tag: "dm" },
+    { time: "Abr 20", color: "var(--accent2)", msg: "<strong>PR #31</strong> feat(auth,web): RF-001 — landing por persona + 4 workspaces + workspace switcher + sidebar dinamica", tag: "merge" },
+    { time: "Abr 20", color: "var(--accent2)", msg: "<strong>PR #30</strong> docs: GitHub issue templates com secao Bussola persona/gap", tag: "merge" },
+    { time: "Abr 20", color: "var(--accent2)", msg: "<strong>PR #29</strong> docs: WS-C reorganizacao — prompts historicos arquivados, agents movidos para .claude/agents/", tag: "merge" },
+    { time: "Abr 20", color: "var(--accent2)", msg: "<strong>PR #28</strong> docs: governance patches — CLAUDE.md regras 15-18, AGENTS.md, PR template com Bussola", tag: "merge" },
+    { time: "Abr 19", color: "var(--accent2)", msg: "<strong>PR #27</strong> docs: Bussola de Produto + Handoff Protocol + Operating Model v2 + auto-memory", tag: "merge" },
+    { time: "Abr 19", color: "var(--blue)", msg: "<strong>PM Agent</strong> revisao diaria — Docker fixes Abr 14 + secrets configurados mas API deploy persiste falhando. 10 ADRs. 293 testes.", tag: "pm" },
+    { time: "Abr 14", color: "var(--orange)", msg: "<strong>fix(docker)</strong> copy apps/api/node_modules to runner stage (corrects runtime failure)", tag: "fix" },
+    { time: "Abr 14", color: "var(--green)", msg: "<strong>test(api)</strong> branch coverage 82% — estimates.service + vehicles.service melhorados", tag: "ci" },
+    { time: "Abr 14", color: "var(--purple)", msg: "<strong>fix(db)</strong> trigger function name corrigido em migrations 007, 008, 009, 010", tag: "fix" },
     { time: "Abr 13", color: "var(--green)", msg: "<strong>Dev Manager</strong> sessao autonoma — T-022+T-032 concluidos, 3 subagentes, PR #24 merged, 293 testes", tag: "dm" },
     { time: "Abr 13", color: "var(--accent2)", msg: "<strong>PR #24</strong> feat(accounting): P&amp;L, Balance Sheet, Trial Balance reports + financial trend chart", tag: "merge" },
-    { time: "Abr 13", color: "var(--blue)", msg: "<strong>PM Agent</strong> revisao diaria — 11 migrations, 23 PRs merged, Fase 2 nao iniciada, deploy API RED", tag: "pm" },
-    { time: "Abr 13", color: "var(--accent2)", msg: "<strong>PR #23</strong> docs: fix stale migration ref in CLAUDE.md + update dashboard (PRs #20-#22)", tag: "merge" },
-    { time: "Abr 12", color: "var(--accent2)", msg: "<strong>PR #22</strong> docs: sync project documentation (README, CLAUDE.md, AGENTS.md, ADR-008)", tag: "merge" },
-    { time: "Abr 12", color: "var(--accent2)", msg: "<strong>PR #21</strong> fix(db): FAM migration hardening — NOT NULL + idempotent RLS", tag: "merge" },
-    { time: "Abr 12", color: "var(--accent2)", msg: "<strong>PR #20</strong> fix(fixed-assets): security review — tenant_id in queries + status removal from DTO", tag: "merge" },
     { time: "Abr 12", color: "var(--accent2)", msg: "<strong>PR #19</strong> feat(fixed-assets): FAM module — 4 services, 18 files, 48 tests, migration 009", tag: "merge" },
-    { time: "Abr 12", color: "var(--accent2)", msg: "<strong>PR #18</strong> fix(build): Windows symlink fix + Jest deprecated globals migration", tag: "merge" },
-    { time: "Abr 12", color: "var(--green)", msg: "<strong>Dev Manager</strong> sessao autonoma — 3 subagentes, 5 PRs merged, branches cleaned, docs synced", tag: "dm" },
-    { time: "Abr 12", color: "var(--green)", msg: "<strong>CI</strong> workflows SUCCESS em main (CI + Deploy Staging + Pages)", tag: "ci" },
-    { time: "Abr 12", color: "var(--purple)", msg: "<strong>ADR-007</strong> agent squad architecture criado em docs/decisions/", tag: "docs" },
-    { time: "Abr 12", color: "var(--orange)", msg: "<strong>Fix</strong> null byte corruption removida de 105 files (OneDrive artifact)", tag: "fix" },
-    { time: "Abr 12", color: "var(--accent2)", msg: "<strong>PR #17</strong> post-migration cleanup — .gitattributes, .gitignore, CRLF normalization", tag: "merge" },
-    { time: "Abr 10", color: "var(--accent2)", msg: "<strong>PR #16</strong> OneDrive rescue — uncommitted work migrado para C:\\Dev", tag: "merge" }
+    { time: "Abr 12", color: "var(--green)", msg: "<strong>Dev Manager</strong> sessao autonoma — 3 subagentes, 5 PRs merged, branches cleaned, docs synced", tag: "dm" }
   ],
   fases: [
-    { id: "1A", nome: "Hardening & Tests", total: 10, done: 8, saude: "green", desc: "Jest config + 7 unit test suites + error handler DONE. Faltam: T-008, T-009" },
-    { id: "1B", nome: "Deploy Staging", total: 9, done: 8, saude: "yellow", desc: "Fly.io, Redis, migrations, health, GH Actions, Neon, Vercel DONE. Falta: T-019 smoke test (bloqueado por secrets)" },
-    { id: "2", nome: "Frontend Polish", total: 9, done: 3, saude: "green", desc: "T-020 (vehicle combobox), T-021 (estimate line editor), T-022 (financial trend chart) DONE. 6 tasks restantes." },
+    { id: "1A", nome: "Hardening & Tests", total: 10, done: 8, saude: "green", desc: "Jest config + 7 unit test suites + error handler DONE. Coverage 82% para estimates+vehicles. Faltam: T-008 (enums), T-009 (date validation)." },
+    { id: "1B", nome: "Deploy Staging", total: 9, done: 8, saude: "yellow", desc: "Fly.io, Redis, migrations, health, GH Actions, Neon, Vercel DONE. Secrets configurados Abr 14 mas Deploy API ainda falha. T-019 smoke test bloqueado — investigar causa raiz." },
+    { id: "2", nome: "Frontend Polish", total: 9, done: 4, saude: "green", desc: "T-020 (vehicle combobox), T-021 (estimate line editor), T-022 (financial trend chart) DONE. RF-001 (workspace routing + 4 workspaces) DONE — Gap 1 fechado. 5 tasks P1/P2 restantes." },
     { id: "3", nome: "Accounting & FAM", total: 8, done: 7, saude: "green", desc: "COA + JE + Fiscal Periods + FAM + Reports (P&L, Balance Sheet, Trial Balance) DONE. Falta apenas T-036 (frontend pages COA/JE)." }
   ],
   modules: [
@@ -342,44 +341,49 @@ const D = {
     { name: "insurance", files: 8, spec: true, controller: true, endpoints: 6 },
     { name: "accounting", files: 20, spec: true, controller: true, endpoints: 15 },
     { name: "fixed-assets", files: 18, spec: true, controller: true, endpoints: 15 },
-    { name: "auth", files: 4, spec: true, controller: false, endpoints: 0 },
+    { name: "auth", files: 6, spec: true, controller: true, endpoints: 1 },
     { name: "tenants", files: 4, spec: true, controller: false, endpoints: 0 }
   ],
   pipeline: [
-    { label: "CI", desc: "Lint + Test + Build (GitHub Actions)", status: "green", date: "2026-04-13" },
-    { label: "Deploy Staging", desc: "Workflow geral (triggered on push main)", status: "green", date: "2026-04-13" },
-    { label: "Deploy API", desc: "Fly.io — FAILURE (secrets ausentes — PO action needed)", status: "red", date: "2026-04-13" },
-    { label: "Deploy Web", desc: "Vercel — SUCCESS", status: "green", date: "2026-04-13" },
-    { label: "PRs Abertos", desc: "Nenhum PR pendente", status: "green", date: "2026-04-13" }
+    { label: "CI", desc: "Lint + Test + Build (GitHub Actions)", status: "green", date: "2026-04-20" },
+    { label: "Deploy Staging", desc: "Workflow geral (triggered on push main) — SUCCESS", status: "green", date: "2026-04-20" },
+    { label: "Deploy API", desc: "Fly.io — FAILURE persiste apos secrets + Docker fix. Investigar causa raiz. Bloqueia T-019.", status: "red", date: "2026-04-14" },
+    { label: "Deploy Web", desc: "Vercel — SUCCESS (PR #31 preview verde)", status: "green", date: "2026-04-20" },
+    { label: "PRs Abertos", desc: "Nenhum PR pendente — 30 total merged", status: "green", date: "2026-04-20" }
   ],
   alertas: {
     bloqueantes: [
-      { titulo: "GitHub Secrets nao configurados", desc: "FLY_API_TOKEN, DATABASE_URL_UNPOOLED ausentes. Deploy API staging FALHANDO.", acao: "PO registrar em github.com/settings/secrets" },
-      { titulo: "Deploy API Staging: FAILURE", desc: "Ultimo run 2026-04-13 falhou. T-019 (smoke test) bloqueado.", acao: "Registrar secrets + re-run workflow" }
+      { titulo: "Deploy API Staging: FAILURE persiste", desc: "Secrets configurados Abr 14 e Docker fixes aplicados mas Fly.io deploy ainda falha. Causa nao identificada. T-019 bloqueado.", acao: "DM investigar logs do Fly.io — verificar se FLY_API_TOKEN e DATABASE_URL_UNPOOLED estao corretos" }
     ],
     overdue: [],
     emRisco: [
-      { titulo: "T-019: Smoke test staging", desc: "Depende de deploy API funcionar. Unica task restante de Fase 1B.", acao: "Registrar secrets primeiro" }
+      { titulo: "T-019: Smoke test staging", desc: "Bloqueado por Deploy API failure. Unica task restante da Fase 1B.", acao: "Investigar causa raiz deploy API (nao apenas secrets)" },
+      { titulo: "Coverage < 80% em todos os services", desc: "82% atingido apenas em estimates + vehicles. Outros services nao verificados.", acao: "pnpm --filter @sse/api test -- --coverage (verificar todos)" }
     ],
     proximos7: [
-      { titulo: "T-008: Remove duplicate enums from DTOs", desc: "P1 cleanup — usar @sse/shared-types. Pode ser feito imediatamente." },
-      { titulo: "T-009: Add @IsISO8601 validation to date params", desc: "P1 cleanup — financial, estimates date filters." },
-      { titulo: "T-036: Accounting frontend pages", desc: "P2 — COA, JE, reports pages em Next.js. Completar Fase 3." }
+      { titulo: "T-20260417-11: RF-002 Setup Wizard (P0)", desc: "Wizard de onboarding de 5 passos — Gap 3 da Bussola. Depende de RF-001 (concluido). Complexidade L." },
+      { titulo: "T-20260417-12: RF-003 Activation Tracking (P0)", desc: "Tabela activation_events + hooks nos 6 services + dashboard /admin/activation — Gap 8." },
+      { titulo: "T-008 + T-009: Enum cleanup + date validation (P1)", desc: "Fechar Fase 1A (8/10 → 10/10). Tasks rapidas (<1h)." }
     ]
   },
   inconsistencias: [
     { tipo: "Insurance", desc: "8 files + spec no repo mas sem task explicita no Excel — considerar adicionar task retroativa" },
-    { tipo: "T-020/T-021", desc: "Tarefas marcadas como Backlog no Excel, mas implementacao ja existia no repo antes desta sessao — marcadas como Done agora" }
+    { tipo: "T-020/T-021/T-022", desc: "Marcadas Backlog no Excel mas ja implementadas e funcionando" },
+    { tipo: "T-032", desc: "Marcada Backlog no Excel mas Reports (P&L, Balance Sheet, Trial Balance) existem no repo — backend + 4 frontend pages" },
+    { tipo: "RF-001 (T-20260417-10)", desc: "CONCLUIDO em 2026-04-20 — PR #31 merged. Gap 1 da Bussola fechado." }
   ],
   recomendacoes: [
-    { prioridade: "P0", texto: "Registrar GitHub Secrets (FLY_API_TOKEN, DATABASE_URL_UNPOOLED) para desbloquear deploy API staging e T-019 smoke test." },
-    { prioridade: "P1", texto: "T-008 + T-009: Cleanup tasks de Fase 1A — enums duplicados e validacao de datas. Fechar Fase 1A (8/10 → 10/10)." },
-    { prioridade: "P2", texto: "T-036: Accounting frontend pages (COA + JE) — finaliza Fase 3 (7/8 → 8/8)." }
+    { prioridade: "P0", texto: "RF-002 (Setup Wizard) — proximo P0 da Bussola. Dependencia de RF-001 satisfeita. DM iniciar na proxima sessao." },
+    { prioridade: "P0", texto: "RF-003 (Activation Tracking) — pode ser paralelizado com RF-002. Migration + service + hooks sao independentes do wizard." },
+    { prioridade: "P0", texto: "Deploy API Fly.io: investigar causa raiz — secrets configurados mas falha persiste. Checar logs Fly.io, variaveis de ambiente, fly.toml." },
+    { prioridade: "P1", texto: "T-008 + T-009: enums duplicados e validacao de datas — fechar Fase 1A (8/10 → 10/10). Tasks rapidas (<1h)." }
   ],
   backlog: [
+    { id: "RF-002", task: "Setup Wizard de Onboarding (5 passos)", fase: "2", prio: "P0", status: "Pendente", nota: "Gap 3 Bussola. Dep: RF-001 DONE." },
+    { id: "RF-003", task: "Activation Event Tracking", fase: "2", prio: "P0", status: "Pendente", nota: "Gap 8 Bussola. Migration 013." },
     { id: "T-008", task: "Remove duplicate enums from DTOs", fase: "1A", prio: "P1", status: "Backlog", nota: "Usar @sse/shared-types" },
     { id: "T-009", task: "Add @IsISO8601 validation to date params", fase: "1A", prio: "P1", status: "Backlog", nota: "financial, estimates" },
-    { id: "T-019", task: "Smoke test staging deploy end-to-end", fase: "1B", prio: "P1", status: "Bloqueado", nota: "Depende de secrets + deploy API (PO action)" },
+    { id: "T-019", task: "Smoke test staging deploy end-to-end", fase: "1B", prio: "P1", status: "Bloqueado", nota: "Deploy API falha — investigar causa raiz" },
     { id: "T-036", task: "Accounting frontend pages (COA + JE)", fase: "3", prio: "P2", status: "Backlog", nota: "Completar Fase 3 accounting" }
   ]
 };
