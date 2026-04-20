@@ -26,20 +26,38 @@ git log --oneline -10               # últimos commits
 
 ---
 
-## 2. Fontes de Instrução (ordem de prioridade)
+## 2. Documentos de Referência Obrigatórios
 
-| # | Arquivo | Quando usar |
-|---|---|---|
-| 1 | `CLAUDE.md` | Arquitetura, stack, 14 regras obrigatórias, convenções universais |
-| 2 | `.auto-memory/MEMORY.md` | Persistent memory — project status, priorities, session history |
-| 3 | `sse-squad-dashboard.html` | Squad dashboard — live metrics, pipeline, alerts |
-| 4 | `docs/decisions/NNN-*.md` | ADRs — justificativas arquiteturais |
-| 5 | `docs/architecture/*.docx` | Especificações de BD e requisitos funcionais |
-| 6 | Mensagem do Luigi | Supraordena os acima em caso de conflito |
+Todo agente do squad deve consultar estes artefatos antes de iniciar trabalho:
+
+1. **`docs/strategy/BUSSOLA_PRODUTO_SSE.md`** — Bússola de Produto. Camada estratégica. Informa priorização, personas, princípios de design. Ver ADR-009 para autoridade.
+2. **`docs/process/HANDOFF_PROTOCOL.md`** — Protocolo de Handoff. Camada operacional. Informa ownership de arquivos em `.auto-memory/`, templates, ciclo de vida de tarefas, cadência.
+3. **`docs/process/OPERATING_MODEL_v2.md`** — Operating Model. Informa atores, cadência oficial, rituais (rotação mensal, revisões trimestrais), métricas oficiais (lead time, # BLOCKED/semana). Ver ADR-010 para autoridade.
+4. **`CLAUDE.md`** — Convenções técnicas. Stack, migrations, regras invioláveis (regras 1–18).
+5. **ADRs em `docs/decisions/`** — decisões arquiteturais históricas (001–010).
+
+Em caso de ambiguidade entre documentos, a hierarquia é:
+- Decisão estratégica: Bússola > CLAUDE.md
+- Decisão operacional: Handoff Protocol > Operating Model v2 > convenções implícitas
+- Decisão técnica: ADRs específicas > CLAUDE.md > convenções do módulo
 
 ---
 
-## 3. Regras Inegociáveis (resumo das 14 regras do CLAUDE.md)
+## 4. Fontes de Instrução (ordem de prioridade)
+
+| # | Arquivo | Quando usar |
+|---|---|---|
+| 1 | `docs/strategy/BUSSOLA_PRODUTO_SSE.md` | Camada estratégica — personas, gaps, priorização |
+| 2 | `CLAUDE.md` | Arquitetura, stack, 18 regras obrigatórias, convenções universais |
+| 3 | `.auto-memory/MEMORY.md` | Persistent memory — project status, priorities, session history |
+| 4 | `sse-squad-dashboard.html` | Squad dashboard — live metrics, pipeline, alerts |
+| 5 | `docs/decisions/NNN-*.md` | ADRs — justificativas arquiteturais |
+| 6 | `docs/architecture/*.docx` | Especificações de BD e requisitos funcionais |
+| 7 | Mensagem do Luigi | Supraordena os acima em caso de conflito |
+
+---
+
+## 5. Regras Inegociáveis (resumo das 18 regras do CLAUDE.md)
 
 1. Nunca commitar em `main` direto — sempre feature branch
 2. Sempre `tenant_id` em queries + RLS como 2ª camada
@@ -55,10 +73,14 @@ git log --oneline -10               # últimos commits
 12. Nunca modificar `Leading Practices_Brazil_*.docx` (referência Oracle)
 13. Mudança arquitetural → atualizar `CLAUDE.md` + criar ADR em `docs/decisions/`
 14. `tenant_id` e `schema_name` nunca expostos em responses para o cliente final
+15. Consultar Bússola antes de decisões de priorização, escopo de RF ou redesenho de UX (ver ADR-009)
+16. Linkar persona + gap fechado na descrição de PRs com tela nova ou mudança de navegação
+17. Seguir `docs/process/HANDOFF_PROTOCOL.md` ao passar tarefas entre agentes
+18. Operar conforme `docs/process/OPERATING_MODEL_v2.md` — atores, cadência, rituais, métricas
 
 ---
 
-## 4. Fluxo de Trabalho por Tarefa
+## 6. Fluxo de Trabalho por Tarefa
 
 ```
 1. git pull origin main
@@ -74,7 +96,7 @@ git log --oneline -10               # últimos commits
 
 ---
 
-## 5. Coordenação com Outros Agentes
+## 7. Coordenação com Outros Agentes
 
 Há outro(s) agente(s) trabalhando neste repo simultaneamente.
 
@@ -85,7 +107,7 @@ Há outro(s) agente(s) trabalhando neste repo simultaneamente.
 
 ---
 
-## 6. Checklist Final de PR
+## 8. Checklist Final de PR
 
 - [ ] Branch criada a partir de `main` atualizada
 - [ ] Commits em formato Conventional Commits
@@ -99,7 +121,7 @@ Há outro(s) agente(s) trabalhando neste repo simultaneamente.
 
 ---
 
-## 7. Quando Pedir Ajuda ao Luigi
+## 9. Quando Pedir Ajuda ao Luigi
 
 - Conflito de merge não trivial
 - Dúvida sobre regra de negócio (consultar requisitos funcionais primeiro)
@@ -109,7 +131,7 @@ Há outro(s) agente(s) trabalhando neste repo simultaneamente.
 
 ---
 
-## 8. Referências Rápidas
+## 10. Referências Rápidas
 
 - **Padrão de referência (copy this pattern):** `apps/api/src/modules/customers/`
 - **Frontend pattern:** `apps/web/src/app/(dashboard)/customers/`
@@ -117,4 +139,8 @@ Há outro(s) agente(s) trabalhando neste repo simultaneamente.
 - **Tenant provisioning:** `apps/api/src/database/tenant-provisioning.ts`
 - **Planilha de tarefas:** `docs/architecture/SSE_Development_Plan.xlsx`
 - **FAM reference SQL:** `docs/sql/001_fam_tables.sql`, `002_fam_seed_data.sql`, `003_fam_depreciation_functions.sql`
-- **ADRs:** `docs/decisions/001-*.md` through `008-*.md`
+- **ADRs:** `docs/decisions/001-*.md` through `010-*.md`
+- **Bússola de Produto:** `docs/strategy/BUSSOLA_PRODUTO_SSE.md`
+- **RF Backlog:** `docs/strategy/RF_BACKLOG.md`
+- **Handoff Protocol:** `docs/process/HANDOFF_PROTOCOL.md`
+- **Operating Model v2:** `docs/process/OPERATING_MODEL_v2.md`
