@@ -65,3 +65,6 @@ docs/architecture/SSE_Roadmap_Detalhado*
 
 # Migration artifacts (not for repo)
 _migration-logs/
+
+# Staging area for agent skill files (PO local workspace — not source-controlled)
+_staging/
