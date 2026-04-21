@@ -97,4 +97,14 @@ export class InsuranceService {
     if (!updated) throw new NotFoundException('Insurance company not found');
     return { deleted: true };
   }
+
+  getSeedList() {
+    return [
+      { name: 'State Farm', code: 'STATE_FARM', phone: '800-732-5246', is_drp: false },
+      { name: 'Geico', code: 'GEICO', phone: '800-841-3000', is_drp: false },
+      { name: 'Progressive', code: 'PROGRESSIVE', phone: '800-776-4737', is_drp: false },
+      { name: 'Allstate', code: 'ALLSTATE', phone: '800-255-7828', is_drp: false },
+      { name: 'USAA', code: 'USAA', phone: '800-531-8722', is_drp: false },
+    ];
+  }
 }
