@@ -4,57 +4,78 @@ description: Current state of Storm Shield Enterprise project — metrics, healt
 type: project
 ---
 
-# SSE Project Status — 2026-04-20 (Dev Manager, sessao RF-003)
+# SSE Project Status — 2026-04-21 (Dev Manager — sessao tarde)
 
 ## Health: AMARELO
-- **Reason:** Deploy API (Staging) workflow still failing (T-20260412-1 BLOCKED — secrets + Docker fixes applied, root cause unidentified). All code-side work is unblocked.
-- CI: VERDE (14:42Z, 2026-04-20 — post PR #33 merge)
-- Deploy Web (Vercel): VERDE (14:42Z)
-- Deploy API (Fly.io): IN_PROGRESS/expected RED (14:42Z — T-20260412-1 BLOCKED)
-- PRs abertos: 0 | Total merged: 33
+- **Reason:** Deploy API (Fly.io) BLOCKED (T-20260412-1) — diagnóstica 2026-04-21: máquina sobe mas `/ready` endpoint timeout. Possível crash no init (DATABASE_URL_UNPOOLED inválida nos Fly.io secrets) ou port mismatch. Infra conhecida, code-side unblocked.
+- CI: VERDE (PR #35, #36, #37 — todos verdes)
+- Deploy Web (Vercel): VERDE
+- Deploy API (Fly.io): VERMELHO — BLOCKED (T-20260412-1)
+- PRs abertos: 0 | Total merged: 37
 
-## Repo Metrics (live from code, 2026-04-20)
+## Repo Metrics (pós sessão DM 2026-04-21)
 - Backend modules: 13/15 (auth, tenants, users, customers, insurance, vehicles, estimates, service-orders, financial, contractors, accounting, fixed-assets, admin/activation)
 - Ausentes: inventory, rental, notifications
 - Controllers: 16
-- Endpoints: 102 (3 new: /admin/activation/rate, /funnel, /recent)
-- Frontend pages: 37 (inclui /admin/activation — RF-003 dashboard)
-- Test suites (spec files): 23
-- Tests: 350 passing
-- Migrations: 12 SQL files (000-010, 013)
+- Endpoints: ~110 (102 + 5 wizard + 1 seed-list + 2 novos accounting não contados)
+- Frontend pages: 38 (+1 wizard)
+- Test suites: 23
+- Tests: 363 passing (+12 wizard tests vs 350 anterior)
+- Migrations: 14 SQL files (000-010, 011, 012, 013)
 - ADRs: 10
+- Branches locais: nenhuma stale (fix/SSE-042 deletada)
 
-## Git — Commits desde ultima sessao PM (2026-04-20 AM)
-- PR #33: feat(admin): RF-003 activation event tracking — Gap 8 (2026-04-20)
-  - migration 013_activation_events.sql
-  - AdminModule + ActivationEventsService + ActivationController (3 endpoints)
-  - Hooks nos 6 services (tenant/customer/vehicle/estimate/SO/financial)
-  - Dashboard /admin/activation (KPI cards + funnel + recent events)
-  - 350 tests (was 343), 23 suites (was 22)
+## Git — sessão DM 2026-04-21
+- PRs mergeados: #35 (DM prompt hardening), #36 (subagentes housekeeping), #37 (RF-002 Setup Wizard)
+- 3 branches criadas e deletadas pós-merge
 
-## Verificacao Regras CLAUDE.md §10
-- Regra 4 (KNEX_CONNECTION direto): OK — ativacao usa KNEX_ADMIN_CONNECTION (publico)
-- Regra 5 (FLOAT em migrations): OK
-- Regra 6 (CASCADE em financeiro/contabil): OK — CASCADE na activation_events e para tenants (intencional, nao financeiro)
-- Regra 9 (secrets hardcoded): OK — SSE_ADMIN_KEY via env var
-- Regras 15-18 (alinhamento Bussola): OK
-  - PR #33: N/A (instrumentacao interna) + Gap 8 identificado — CONFORME
+## RF Backlog (Bússola §4)
+- RF-001 (Gap 1 — Landing por Persona): DONE — PR #31 merged
+- RF-002 (Gap 3 — Setup Wizard): DONE — PR #37 merged ← NOVO
+- RF-003 (Gap 8 — Activation Tracking): DONE — PR #33 merged
 
-## Inconsistencias detectadas
-- T-20260412-3 dm_queue: RESOLVIDO — titulo atualizado para refletir apenas T-008+T-009 pendentes (T-032 ja feita)
-- Migration numbering gap: 011 e 012 reservados para RF-002 (wizard). 013 existe. Sem problema.
+## Agent Prompts (pós hardening 2026-04-21)
+- DevManager_Squad_v2.md: HARDENED (Patch 1: 7 proibições explícitas + Patch 2: escopo negativo) — PR #35
+- security-reviewer: ATUALIZADO (regras 15-18 + comandos destrutivos) — PR #36
+- db-reviewer: ATUALIZADO (migrations dinâmicas 000-010+013; baseline corrigido) — PR #36
+- frontend-reviewer: ATUALIZADO (Regra 16 persona/gap) — PR #36
+- test-runner: ATUALIZADO (sem .skip() + cobertura <80% = High) — PR #36
 
-## Prioridades para Proxima Sessao DM
+## Verificação Regras CLAUDE.md §10
+- Regra 4 (KNEX_CONNECTION direto): OK
+- Regra 5 (FLOAT em migrations): OK — migration 011 usa ENUM type (corrigida de TEXT+CHECK)
+- Regra 6 (CASCADE em financeiro/contábil): OK
+- Regra 9 (secrets hardcoded): OK
+- Regras 15-18 (alinhamento Bússola): OK — PR #37 cita Owner-Operator + Gap 3
 
-### P0 — Imediato
-1. **T-20260417-11 RF-002** — Setup Wizard de Onboarding (5 passos). Unico P0 restante. Deps RF-001+RF-003 satisfeitas. Complexidade L — considerar quebra: wizard-core (2 migrations + endpoints + 5 steps) | sample-data | events.
-2. **T-20260412-1 Deploy API** — Investigar causa raiz pos-Docker-fix. Checar logs do run mais recente em Fly.io.
+## Inconsistências detectadas
+- `POST /tenants` (create) sem AuthGuard — issue HIGH pré-existente, não introduzida pelo RF-002. Necessita task separada.
+- T-20260417-4 (Discovery Gaps P0): status PENDING mas Gaps 1+3+8 já implementados. PO deve marcar COMPLETED.
+- T-20260412-3 (T-008+T-009): verificado — já estava implementado em sessões anteriores.
 
-### P1 — Proximo ciclo
-3. **T-008 + T-009** — Fechar Fase 1A (8/10 → 10/10). Enum cleanup + date validation. Tasks rapidas (<1h).
+## Prioridades para Próxima Sessão DM
+
+### P0 — Não há mais P0 pendentes em RF Backlog!
+Todos os 3 RFs P0 da Bússola foram implementados (Gap 1, Gap 3, Gap 8).
+
+### P1 — Próximo ciclo
+1. **T-20260412-3 (T-008+T-009)** — marcar COMPLETED (já implementado, confirmado 2026-04-21)
+2. **T-20260412-2 (Frontend Polish)** — aguarda ratificação Bússola (Luigi deve confirmar prioridade vs Gaps P1)
+3. **Fix POST /tenants sem AuthGuard** — issue High security (abrir nova task)
+
+### P1 — Infra
+4. **T-20260412-1 (Deploy API)** — BLOCKED aguarda ação humana (Luigi configura Fly.io secrets)
 
 ### P2
-4. **T-036** — Accounting frontend pages (COA + JE) — completar Fase 3 (7/8 → 8/8)
+5. **T-20260417-4** — marcar COMPLETED (discovery entregue via RF specs)
+6. **T-036** — Accounting frontend pages (COA + JE)
+7. **RF futuro — Cockpit do Owner (Gap 4)** — P1 segundo Bússola §8, 60-90 dias
 
-## Ultima sessao PM: 2026-04-20 (manha)
-## Ultima sessao DM: 2026-04-20 (RF-003 — PR #33 merged)
+## Última sessão PM: 2026-04-21
+## Última sessão DM: 2026-04-21 (RF-002 + prompts hardening)
+
+## Handoff DM aberto (dm_queue.md)
+- COMPLETED hoje: T-20260420-1, T-20260420-2, T-20260417-11
+- BLOCKED: T-20260412-1 (Deploy API)
+- PENDING P1: T-20260412-3 (já feito, marcar), T-20260412-2 (ratificação Bússola pendente)
+- PENDING P2: T-20260420-2 DONE, T-20260417-4 (inconsistência)

@@ -13,6 +13,147 @@ type: project
 
 ---
 
+## T-20260420-1 — Hardening dos prompts do Dev Manager (pós-Bash(*))
+
+**Origin:** PO
+**Priority:** P1
+**Status:** COMPLETED
+**Created:** 2026-04-20
+**Claimed:** 2026-04-21
+**Completed:** 2026-04-21
+**Branch:** chore/SSE-049-dm-prompt-hardening (deleted)
+**PR:** #35 (merged)
+
+### Objetivo
+Fechar gap de segurança criado quando `.claude/settings.local.json` foi trocado para `Bash(*)` (2026-04-20). Com o shell 100% liberado, os prompts dos agentes viraram o único gate de safety. Reforçar `DevManager_Squad_v2.md` com proibições explícitas de comandos destrutivos e cheque em branco de exclusão de arquivos.
+
+### Contexto
+O allow list em `.claude/settings.local.json` foi enxugado de 80 entradas para `Bash(*)` + 1 Read em 2026-04-20 a pedido do PO (zero interrupção durante sessões de subagentes). Backup em `.claude/settings.local.json.bak-20260420`. Regra 1 do CLAUDE.md ("NUNCA push direto em main") agora depende 100% da disciplina do agente, não de gate de aprovação. Revisão crítica do PO identificou 3 gaps de alta severidade no prompt do DM:
+- Sem proibição explícita de `rm -rf`, `git reset --hard` main, `force-push`, `DROP/TRUNCATE`
+- Sem proibição de `curl | sh` / `wget | bash` / instalação fora de lockfile
+- Pré-autorização cheque em branco: "excluir qualquer arquivo do projeto" sem escopo negativo protegendo CLAUDE.md / AGENTS.md / docs/decisions / docs/strategy / .auto-memory/MEMORY.md
+
+### Ação sugerida
+
+**Arquivo:** `.claude/agents/DevManager_Squad_v2.md`
+
+**Patch 1 — bloco "O QUE NAO FAZER" (após linha 354, antes do final):**
+
+```
+- NUNCA `rm -rf` sem path explícito verificável no diff; nunca em /, ~/, $HOME, C:\, C:\Users\*, C:\Dev
+- NUNCA `git reset --hard` em main/develop; NUNCA `git push --force` em branch compartilhada
+- NUNCA `DROP TABLE`, `TRUNCATE`, `DELETE FROM` sem WHERE em ambiente staging/prod
+- NUNCA `curl | sh`, `wget | bash`, ou execução de script baixado sem inspecionar
+- NUNCA instalar dependência fora de `pnpm add` (respeitar lockfile) ou de registry não-oficial
+- NUNCA editar/deletar sem aprovação explícita do PO na sessão atual:
+  CLAUDE.md, AGENTS.md, .auto-memory/MEMORY.md, docs/decisions/*.md,
+  docs/strategy/*.md, docs/process/OPERATING_MODEL_v2.md, docs/process/HANDOFF_PROTOCOL.md
+- A Regra 1 (feature branch SEMPRE, NUNCA push direto em main) é reforçada por disciplina do agente,
+  NAO por gate de permissao do Claude Code. Se tentar commitar em main, abortar e escalar ao PO.
+```
+
+**Patch 2 — substituir linha 7 (PRE-AUTORIZACAO TOTAL):**
+
+De: `"criar/editar/excluir qualquer arquivo do projeto"`
+Para: `"criar/editar/excluir arquivos de codigo, testes, migrations, seeds, configs e docs tecnicas; ESCOPO NEGATIVO: nao apagar CLAUDE.md, AGENTS.md, .auto-memory/MEMORY.md, docs/decisions/*, docs/strategy/*, docs/process/OPERATING_MODEL_v2.md, docs/process/HANDOFF_PROTOCOL.md sem aprovacao explicita do PO na sessao atual"`
+
+### Escopo negativo — NÃO fazer nesta entrega
+- Não mexer em `PMAgent_Squad_v2.md` nem nos subagentes (cobertos pela T-20260420-2)
+- Não alterar `CLAUDE.md` §10 (regras 1–18) — estão corretas; o gap é espelhamento no prompt DM
+- Não redigir ADR — é housekeeping de prompt, não decisão arquitetural
+- Não aplicar as proibições como lint automático — é guidance textual, não hook
+
+### Done quando
+- `.claude/agents/DevManager_Squad_v2.md` contém os 2 patches exatos acima
+- Diff do PR mostra apenas adições/alterações nas linhas 7 e pós-354
+- Merge em main com CI verde
+- `dm_queue.md`: mover T-20260420-1 para status COMPLETED e preencher Claimed/Branch/PR
+
+### Subagentes obrigatórios
+Nenhum (é edição de doc textual, não código). Opcional: rodar `test-runner` no final para confirmar que nada quebrou no build do monorepo.
+
+### Persona servida (se aplicável)
+N/A (infra/meta — segurança do processo de delivery)
+
+### Gap fechado (se aplicável)
+N/A (meta)
+
+---
+
+## T-20260420-2 — Housekeeping dos prompts dos 4 subagentes + alinhamento com regras 15–18
+
+**Origin:** PO
+**Priority:** P2
+**Status:** COMPLETED
+**Created:** 2026-04-20
+**Claimed:** 2026-04-21
+**Completed:** 2026-04-21
+**Branch:** chore/SSE-050-subagentes-housekeeping (deleted)
+**PR:** #36 (merged)
+
+### Objetivo
+Fechar 6 gaps médios/baixos identificados na revisão de prompts de 2026-04-20: subagentes não leem CLAUDE.md antes de revisar, `db-reviewer` lista migrations defasadas (008 vs 010 reais), `security-reviewer` não cobre regras 15–18, `frontend-reviewer` não checa Regra 16 (persona/gap), `test-runner` sem guidance sobre falhas. Fazer apenas depois que T-20260420-1 estiver mergeada.
+
+### Contexto
+Revisão crítica do PO pós-`Bash(*)` identificou que os 4 subagentes (security, test, db, frontend) têm prompts curtos (800–1400 bytes) focados no domínio técnico mas sem referência explícita às regras 15–18 (alinhamento Bússola/Operating Model/Handoff Protocol), criando risco de PRs aprovados por subagente mas violando alinhamento estratégico. `db-reviewer` cita migrations 000-008 mas baseline atual é 011 migrations ativas. Gaps são independentes e podem ser aplicados em um único PR de housekeeping.
+
+### Ação sugerida
+
+**Arquivo 1:** `.claude/agents/security-reviewer.md` — adicionar após item 6 (linha 28):
+```
+7. **Regras de alinhamento (15–18)**: PR que altera UX cita persona/gap? Handoff no arquivo canônico?
+8. **Comandos destrutivos no diff**: rm -rf, force-push, drop, truncate, reset --hard — reportar como Critical
+```
+
+**Arquivo 2:** `.claude/agents/db-reviewer.md` — substituir linhas 21–26 (bloco "Migrations ativas (000-008)"):
+```
+## Migrations ativas (dinâmico)
+Rodar `ls apps/api/src/database/migrations/*.sql` para lista atual.
+Baseline 2026-04-20: 000-010 (11 migrations). Próxima livre: 011.
+```
+
+**Arquivo 3:** `.claude/agents/frontend-reviewer.md` — adicionar após item 8 (linha 28):
+```
+9. Se PR cria tela nova ou altera navegação: body do PR cita persona primária (Bússola §2) e gap fechado (§4)? (Regra 16)
+```
+
+**Arquivo 4:** `.claude/agents/test-runner.md` — adicionar após item 4 (linha 19):
+```
+5. Se testes falharem: NUNCA usar `--testPathIgnorePatterns` ou `.skip()` para mascarar — reportar falha real
+6. Se cobertura cair abaixo de 80% em service alterado: bloquear PR (severidade High)
+```
+
+**Arquivo 5:** adicionar em TODOS os 4 subagentes no início do corpo (antes de "## Contexto" / "## Stack" / "## Responsabilidades"):
+```
+## Leitura obrigatória ANTES de revisar
+- `CLAUDE.md` §10 (regras 1–18, incluindo alinhamento estratégico 15–18)
+- `docs/strategy/BUSSOLA_PRODUTO_SSE.md` §2 (personas) e §4 (gaps) se o PR toca UX ou navegação
+```
+
+### Escopo negativo — NÃO fazer nesta entrega
+- Não refatorar o conteúdo técnico dos prompts (checklists de SQL/React/testes permanecem)
+- Não mudar `model:` frontmatter (sonnet/haiku atuais ficam)
+- Não tocar `DevManager_Squad_v2.md` nem `PMAgent_Squad_v2.md` (escopo da T-20260420-1 e próxima)
+- Não criar novo subagente
+- Não aguardar T-20260412-1 (Deploy API) — é housekeeping independente
+
+### Done quando
+- Os 4 arquivos de subagente em `.claude/agents/` contêm os patches exatos acima
+- Diff do PR toca apenas esses 4 arquivos
+- Merge em main com CI verde
+- `dm_queue.md`: mover T-20260420-2 para COMPLETED
+
+### Subagentes obrigatórios
+Nenhum (edição de doc textual). Opcional: acionar `security-reviewer` (versão já atualizada pós-merge) no próprio PR para dogfood das regras novas.
+
+### Persona servida (se aplicável)
+N/A (infra/meta)
+
+### Gap fechado (se aplicável)
+N/A (meta)
+
+---
+
 ## T-20260417-12 — Implementar RF-003 (Event Tracking de Activation)
 
 **Origin:** PO
@@ -67,11 +208,12 @@ Gap 8 (Bússola §4).
 
 **Origin:** PO
 **Priority:** P0
-**Status:** PENDING
+**Status:** COMPLETED
 **Created:** 2026-04-17
-**Claimed:** —
-**Branch:** `feature/SSE-XXX-rf-002-setup-wizard`
-**PR:** —
+**Claimed:** 2026-04-21
+**Completed:** 2026-04-21
+**Branch:** feature/SSE-051-rf-002-setup-wizard (deleted)
+**PR:** #37 (merged)
 
 ### Objetivo
 Implementar RF-002 conforme spec em `docs/strategy/RF_BACKLOG.md` — wizard de 5 passos disparado no primeiro login do owner, com skip permitido marcando tenant como `wizard_skipped`.
@@ -699,12 +841,13 @@ N/A (governança).
 
 **Origin:** PM
 **Priority:** P1
-**Status:** PENDING
-**Note:** T-032 (Reports) já concluída em PR #24 (2026-04-13). Apenas T-008 + T-009 pendentes.
+**Status:** COMPLETED
+**Note:** T-032 (Reports) já concluída em PR #24 (2026-04-13). T-008 + T-009 verificados 2026-04-21 — já implementados em sessões anteriores (imports @sse/shared-types OK + @IsISO8601 OK). Fase 1A 10/10.
 **Created:** 2026-04-12
-**Claimed:** —
-**Branch:** —
-**PR:** —
+**Claimed:** 2026-04-21
+**Completed:** 2026-04-21
+**Branch:** — (verificação, sem código novo)
+**PR:** — (já implementado)
 
 ### Objetivo
 Executar 3 tasks rápidas que fecham Fase 1A e avançam Fase 3 para 7/8.
@@ -852,7 +995,4 @@ N/A (infra).
 ### Gap fechado
 N/A (infra).
 
----
-
-*Fim da fila ativa. Tarefas concluídas são arquivadas em `dm_queue_archive.md` na rotação mensal.*
-
+--
