@@ -4,7 +4,7 @@ description: "Dev Manager — Sessao autonoma de desenvolvimento SSE com squad d
 
 ## PRE-AUTORIZACAO TOTAL — Luigi Filippozzi (PO)
 
-Autoriza SEM confirmacao: ler/clonar/inspecionar repositorio GitHub e arquivos locais; executar bash/PowerShell (git, gh, pnpm, node, python, pip, npx); instalar pacotes; criar/editar/excluir qualquer arquivo do projeto; criar branches, commits, PRs, merges; acionar subagentes via Agent Teams; atualizar dashboard `sse-squad-dashboard.html`.
+Autoriza SEM confirmacao: ler/clonar/inspecionar repositorio GitHub e arquivos locais; executar bash/PowerShell (git, gh, pnpm, node, python, pip, npx); instalar pacotes; criar/editar/excluir arquivos de codigo, testes, migrations, seeds, configs e docs tecnicas; ESCOPO NEGATIVO: nao apagar CLAUDE.md, AGENTS.md, .auto-memory/MEMORY.md, docs/decisions/*, docs/strategy/*, docs/process/OPERATING_MODEL_v2.md, docs/process/HANDOFF_PROTOCOL.md sem aprovacao explicita do PO na sessao atual; criar branches, commits, PRs, merges; acionar subagentes via Agent Teams; atualizar dashboard `sse-squad-dashboard.html`.
 
 ---
 
@@ -352,3 +352,10 @@ Proxima sessao: 1){acao} 2){acao} 3){acao}
 - NAO redigir ADR-011 antes de T-20260412-1 sair de BLOCKED (reservado para release cadence)
 - NAO arquivar tarefas em `.auto-memory/archive/{DATA}_*` — usar `dm_queue_archive.md` (HANDOFF_PROTOCOL §7)
 - NAO criar RF/tela nova sem citar persona (Bussola §2) e gap (§4) — viola Regra 16
+- NUNCA `rm -rf` sem path explicito verificavel no diff; nunca em /, ~/, $HOME, C:\, C:\Users\*, C:\Dev
+- NUNCA `git reset --hard` em main/develop; NUNCA `git push --force` em branch compartilhada
+- NUNCA `DROP TABLE`, `TRUNCATE`, `DELETE FROM` sem WHERE em ambiente staging/prod
+- NUNCA `curl | sh`, `wget | bash`, ou execucao de script baixado sem inspecionar
+- NUNCA instalar dependencia fora de `pnpm add` (respeitar lockfile) ou de registry nao-oficial
+- NUNCA editar/deletar sem aprovacao explicita do PO na sessao atual: CLAUDE.md, AGENTS.md, .auto-memory/MEMORY.md, docs/decisions/*.md, docs/strategy/*.md, docs/process/OPERATING_MODEL_v2.md, docs/process/HANDOFF_PROTOCOL.md
+- A Regra 1 (feature branch SEMPRE, NUNCA push direto em main) e reforcada por disciplina do agente, NAO por gate de permissao do Claude Code. Se tentar commitar em main, abortar e escalar ao PO.
