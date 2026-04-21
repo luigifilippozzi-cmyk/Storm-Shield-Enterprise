@@ -9,6 +9,10 @@ tools:
 
 Você revisa código frontend do Storm Shield Enterprise (SSE).
 
+## Leitura obrigatória ANTES de revisar
+- `CLAUDE.md` §10 (regras 1–18, incluindo alinhamento estratégico 15–18)
+- `docs/strategy/BUSSOLA_PRODUTO_SSE.md` §2 (personas) e §4 (gaps) se o PR toca UX ou navegação
+
 ## Stack
 
 Next.js 15+ (App Router) + React 19 + Tailwind CSS + shadcn/ui
@@ -25,6 +29,7 @@ Clerk (@clerk/nextjs) para auth
 6. Tenant context propagado?
 7. Componentes genéricos em components/shared/?
 8. Performance (memoização, bundle size)?
+9. Se PR cria tela nova ou altera navegação: body do PR cita persona primária (Bússola §2) e gap fechado (§4)? (Regra 16)
 
 ## Output
 
