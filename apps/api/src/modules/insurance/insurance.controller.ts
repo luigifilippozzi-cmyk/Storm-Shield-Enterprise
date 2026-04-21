@@ -18,6 +18,13 @@ import { RequirePermissions } from '../../common/decorators/permissions.decorato
 export class InsuranceController {
   constructor(private readonly insuranceService: InsuranceService) {}
 
+  @Get('seed-list')
+  @ApiOperation({ summary: 'Top 5 US insurance companies — pre-populated for onboarding wizard' })
+  @ApiResponse({ status: 200, description: 'Seed list of common insurers' })
+  getSeedList() {
+    return this.insuranceService.getSeedList();
+  }
+
   @Get()
   @ApiOperation({ summary: 'List insurance companies with pagination and search' })
   @ApiResponse({ status: 200, description: 'Paginated insurance company list' })

@@ -27,14 +27,17 @@ jest.mock('@sse/shared-utils', () => ({
 describe('TenantsService', () => {
   let service: TenantsService;
   let knex: any;
+  let activationEvents: { record: jest.Mock };
 
   beforeEach(async () => {
     knex = mockKnex();
+    activationEvents = { record: jest.fn().mockResolvedValue(undefined) };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TenantsService,
         { provide: KNEX_ADMIN_CONNECTION, useValue: knex },
-        { provide: ActivationEventsService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
+        { provide: ActivationEventsService, useValue: activationEvents },
       ],
     }).compile();
     service = module.get<TenantsService>(TenantsService);
@@ -129,6 +132,17 @@ describe('TenantsService', () => {
         }),
       );
     });
+
+    it('should emit tenant_created activation event', async () => {
+      knex._chain.returning.mockReturnValueOnce([{ id: '00000000-0000-0000-0000-000000000099' }]);
+
+      await service.create({ name: 'Test', slug: 'test', owner_email: 'test@test.com' });
+
+      expect(activationEvents.record).toHaveBeenCalledWith(
+        '00000000-0000-0000-0000-000000000099',
+        'tenant_created',
+      );
+    });
   });
 
   describe('findOne', () => {
@@ -174,6 +188,118 @@ describe('TenantsService', () => {
       const result = await service.findBySlug('nonexistent');
 
       expect(result).toBeUndefined();
+    });
+  });
+
+  describe('getWizardStatus', () => {
+    it('should return wizard status and completed_at', async () => {
+      knex._chain.first.mockReturnValueOnce({
+        wizard_status: 'completed',
+        wizard_completed_at: '2026-04-21T12:00:00Z',
+      });
+
+      const result = await service.getWizardStatus('tenant-id');
+
+      expect(result).toEqual({
+        wizard_status: 'completed',
+        wizard_completed_at: '2026-04-21T12:00:00Z',
+      });
+    });
+
+    it('should default to pending when tenant not found', async () => {
+      knex._chain.first.mockReturnValueOnce(undefined);
+
+      const result = await service.getWizardStatus('tenant-id');
+
+      expect(result).toEqual({ wizard_status: 'pending', wizard_completed_at: null });
+    });
+  });
+
+  describe('startWizard', () => {
+    it('should emit wizard_started event', async () => {
+      await service.startWizard('tenant-id', 'user-id');
+
+      expect(activationEvents.record).toHaveBeenCalledWith(
+        'tenant-id',
+        'wizard_started',
+        undefined,
+        'user-id',
+      );
+    });
+  });
+
+  describe('recordWizardStep', () => {
+    it.each([
+      [1, 'wizard_step_1_completed'],
+      [2, 'wizard_step_2_completed'],
+      [3, 'wizard_step_3_completed'],
+      [4, 'wizard_step_4_completed'],
+      [5, 'wizard_step_5_completed'],
+    ])('should emit step %i event', async (step, eventType) => {
+      await service.recordWizardStep('tenant-id', step, 'user-id');
+
+      expect(activationEvents.record).toHaveBeenCalledWith(
+        'tenant-id',
+        eventType,
+        undefined,
+        'user-id',
+      );
+    });
+
+    it('should not emit event for invalid step number', async () => {
+      await service.recordWizardStep('tenant-id', 99, 'user-id');
+
+      expect(activationEvents.record).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('completeWizard', () => {
+    it('should update wizard_status to completed and emit event when pending', async () => {
+      knex._chain.first.mockReturnValueOnce({ wizard_status: 'pending', wizard_completed_at: null });
+      knex._chain.update.mockResolvedValueOnce(1);
+
+      const result = await service.completeWizard('tenant-id', 'user-id');
+
+      expect(knex._chain.update).toHaveBeenCalledWith(
+        expect.objectContaining({ wizard_status: 'completed' }),
+      );
+      expect(activationEvents.record).toHaveBeenCalledWith(
+        'tenant-id',
+        'wizard_completed',
+        undefined,
+        'user-id',
+      );
+      expect(result.wizard_status).toBe('completed');
+      expect(result.wizard_completed_at).toBeTruthy();
+    });
+
+    it('should be idempotent — not re-emit event if already completed', async () => {
+      knex._chain.first.mockReturnValueOnce({
+        wizard_status: 'completed',
+        wizard_completed_at: '2026-04-21T12:00:00Z',
+      });
+
+      const result = await service.completeWizard('tenant-id', 'user-id');
+
+      expect(activationEvents.record).not.toHaveBeenCalled();
+      expect(result.wizard_status).toBe('completed');
+    });
+  });
+
+  describe('skipWizard', () => {
+    it('should update wizard_status to skipped and emit event', async () => {
+      knex._chain.update.mockResolvedValueOnce(1);
+
+      const result = await service.skipWizard('tenant-id', 'user-id');
+
+      expect(knex._chain.update).toHaveBeenCalledWith({ wizard_status: 'skipped' });
+      expect(activationEvents.record).toHaveBeenCalledWith(
+        'tenant-id',
+        'wizard_skipped',
+        undefined,
+        'user-id',
+      );
+      expect(result).toEqual({ wizard_status: 'skipped', wizard_completed_at: null });
     });
   });
 });
