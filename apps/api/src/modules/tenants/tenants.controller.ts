@@ -14,6 +14,8 @@ export class TenantsController {
   constructor(private readonly tenantsService: TenantsService) {}
 
   @Post()
+  @UseGuards(AuthGuard)
+  @ApiOperation({ summary: 'Provision a new tenant (requires authenticated Clerk user)' })
   create(@Body() body: any) {
     return this.tenantsService.create(body);
   }
