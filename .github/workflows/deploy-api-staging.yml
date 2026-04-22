@@ -95,8 +95,8 @@ jobs:
           echo "=== Machine status ==="
           flyctl machine list --app sse-api-staging 2>&1 || true
           echo ""
-          echo "=== Last 60 log lines ==="
-          flyctl logs --app sse-api-staging -n 60 2>&1 || true
+          echo "=== Last app logs ==="
+          flyctl logs --app sse-api-staging --no-tail 2>&1 || true
 
       - name: Fail if smoke test failed
         if: steps.smoke.outcome == 'failure'
