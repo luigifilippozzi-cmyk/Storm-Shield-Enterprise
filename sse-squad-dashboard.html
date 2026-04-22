@@ -284,61 +284,57 @@
 <script>
 // <!--METRICS_START-->
 const D = {
-  lastUpdated: "2026-04-21 (Dev Manager — sessao tarde)",
-  updatedBy: "Dev Manager",
-  health: "yellow",
-  healthText: "RF-002 (Setup Wizard, Gap 3) CONCLUIDO — PR #37 merged. Todos 3 RFs P0 da Bussola entregues. Deploy API T-20260412-1 BLOCKED — DIAGNOSTICA: maquina Fly.io deploya (good state + DNS verified) mas /ready endpoint timeout. Possivel DATABASE_URL_UNPOOLED invalida nos Fly.io secrets ou port mismatch. Aguarda acao humana (Luigi).",
+  lastUpdated: "2026-04-22 (DM Agent — T-20260421-10 COMPLETED)",
+  updatedBy: "DM Agent",
+  health: "green",
+  healthText: "VERDE. Deploy API live pela primeira vez: /health retorna {status:ok} em staging (tentativa 1, ~7s). Maquina 1/1 checks. T-20260421-10 COMPLETED — 9 dias de bloqueio resolvidos. 4 causas raiz corrigidas: (1) ESM barrel .js, (2) Dockerfile missing shared-utils/node_modules, (3) CJS circular import DB tokens, (4) AuthModule nao global. ADR-011 redigido. /ready 503 esperado (DATABASE_URL+REDIS_URL ausentes nos Fly secrets — acao Luigi).",
   activeFase: "2",
   kpis: {
     backendModules: 13,
     controllers: 16,
-    endpoints: 110,
+    endpoints: 108,
     frontendPages: 38,
     specFiles: 23,
     tests: 363,
     migrations: 14,
+    adrs: 12,
     excelTotal: 36,
     excelDone: 30
   },
   agents: [
-    { name: "PM Agent", role: "Status Diario + Metricas", color: "var(--blue)", bg: "var(--blue-bg)", icon: "clipboard", status: "active", statusText: "Revisao 2026-04-21 manha", stats: [["Frequencia","Diario"],["Escopo","Read-only"],["Output","Relatorio + Dashboard"]] },
-    { name: "Dev Manager", role: "Implementacao + Orquestracao", color: "var(--accent2)", bg: "var(--teal-bg)", icon: "gear", status: "active", statusText: "Sessao 2026-04-21 tarde — RF-002 DONE + prompts hardened (PRs #35 #36 #37)", stats: [["Autoridade","Execucao tecnica"],["Subagentes","4 acionados"],["Git","PRs #35 #36 #37 merged"]] },
-    { name: "test-runner", role: "Jest + Coverage", color: "var(--green)", bg: "var(--green-bg)", icon: "check", status: "active", statusText: "363 testes, 23 suites — GREEN", stats: [["Framework","Jest + ts-jest"],["Specs","23 test suites"],["Trigger","Sempre pre-PR"]] },
-    { name: "security-reviewer", role: "RLS + XSS + Auth", color: "var(--red)", bg: "var(--red-bg)", icon: "shield", status: "active", statusText: "HARDENED — regras 15-18 + comandos destrutivos adicionados", stats: [["Foco","tenant_id, RLS, AES"],["Checks","OWASP Top 10 + regras 15-18"],["Trigger","auth/db changes"]] },
-    { name: "db-reviewer", role: "Migrations + Schema", color: "var(--purple)", bg: "var(--purple-bg)", icon: "database", status: "active", statusText: "Baseline atualizado — 000-010+013, dinamico via ls", stats: [["Foco","RLS, indexes, FK"],["Migrations","14 SQL files"],["Trigger","Schema changes"]] },
-    { name: "frontend-reviewer", role: "Next.js + shadcn/ui", color: "var(--cyan)", bg: "rgba(6,182,212,.12)", icon: "layout", status: "active", statusText: "Build verde 38 rotas (RF-001+RF-002 DONE)", stats: [["Framework","Next.js 15 + React 19"],["Pages","38 paginas"],["Trigger","UI/component changes"]] }
+    { name: "PM Agent", role: "Status Diario + Metricas", color: "var(--blue)", bg: "var(--blue-bg)", icon: "clipboard", status: "active", statusText: "Revisao 2026-04-21 noite — dados frescos pos-sessao PO noite parte 3", stats: [["Frequencia","Diario"],["Escopo","Read-only"],["Output","Relatorio + Dashboard"]] },
+    { name: "Dev Manager", role: "Implementacao + Orquestracao", color: "var(--accent2)", bg: "var(--teal-bg)", icon: "gear", status: "active", statusText: "Sessao 2026-04-22 — T-20260421-10 COMPLETED: 4 crashes corrigidos, Deploy API VERDE pela primeira vez. ADR-011 redigido.", stats: [["Autoridade","Execucao tecnica"],["Subagentes","4 configurados"],["Git","commits diretos em main (hotfix series)"]] },
+    { name: "test-runner", role: "Jest + Coverage", color: "var(--green)", bg: "var(--green-bg)", icon: "check", status: "active", statusText: "363 testes, 23 suites — GREEN (CI 2026-04-21 13:28Z success)", stats: [["Framework","Jest + ts-jest"],["Specs","23 test suites"],["Trigger","Sempre pre-PR"]] },
+    { name: "security-reviewer", role: "RLS + XSS + Auth", color: "var(--red)", bg: "var(--red-bg)", icon: "shield", status: "active", statusText: "HARDENED — regras 15-18 + comandos destrutivos. PR #38 fix AuthGuard validado.", stats: [["Foco","tenant_id, RLS, AES"],["Checks","OWASP Top 10 + regras 15-18"],["Trigger","auth/db changes"]] },
+    { name: "db-reviewer", role: "Migrations + Schema", color: "var(--purple)", bg: "var(--purple-bg)", icon: "database", status: "active", statusText: "Baseline atualizado — 000-013 (14 SQL files), dinamico via ls", stats: [["Foco","RLS, indexes, FK"],["Migrations","14 SQL files"],["Trigger","Schema changes"]] },
+    { name: "frontend-reviewer", role: "Next.js + shadcn/ui", color: "var(--cyan)", bg: "rgba(6,182,212,.12)", icon: "layout", status: "active", statusText: "38 rotas (RF-001+RF-002+RF-003 DONE). Expansao PV/PUX pendente (T-20260421-7).", stats: [["Framework","Next.js 15 + React 19"],["Pages","38 paginas"],["Trigger","UI/component changes"]] }
   ],
   activity: [
+    { time: "Abr 22", color: "var(--green)", msg: "<strong>Dev Manager</strong> T-20260421-10 COMPLETED — Deploy API VERDE pela primeira vez. 4 crashes corrigidos: (1) ESM barrels .js, (2) Dockerfile missing shared-utils/node_modules, (3) CJS circular import KNEX tokens, (4) AuthModule @Global. ADR-011 redigido. /health {status:ok} tentativa 1.", tag: "dm" },
+    { time: "Abr 21", color: "var(--blue)", msg: "<strong>PM Agent</strong> revisao noite completa — causa real deploy API identificada (ESM bug, nao secrets). T-20260421-10 (P0) criada. PR #38 merged (AuthGuard fix). ADR-012 Accepted. Bussola v1.1. RF-004..007 APPROVED. 9 novas tasks DM (T-20260421-1..9). Regras 1-18: OK.", tag: "pm" },
+    { time: "Abr 21", color: "var(--accent2)", msg: "<strong>PR #38</strong> fix(tenants): add AuthGuard to POST /tenants endpoint (SSE-052) — HIGH security fix. 38 PRs total merged.", tag: "merge" },
+    { time: "Abr 21", color: "var(--orange)", msg: "<strong>ADR-012 Accepted</strong> — Incorporacao parcial de padroes NetSuite a Bussola v1.1. 4 RFs aprovados (RF-004..007). 11 ADRs total. ADR-011 reservado (Release Cadence).", tag: "fix" },
+    { time: "Abr 21", color: "var(--purple)", msg: "<strong>Bussola v1.1</strong> — §5 +7 linhas Simplificamos, §6 novo P8 offline-first, §7 Workspace+Cmd+K obrigatorio, §8 +5 RFs, §9 10 decisoes datadas.", tag: "fix" },
     { time: "Abr 21", color: "var(--green)", msg: "<strong>Dev Manager</strong> sessao autonoma tarde — 4 tasks concluidas (T-20260420-1/2, T-20260417-11, T-20260412-3 verificada). PRs #35 (DM hardening), #36 (subagentes housekeeping), #37 (RF-002 Setup Wizard) mergeados. 363 testes (+13). Todos 3 RFs P0 da Bussola DONE.", tag: "dm" },
     { time: "Abr 21", color: "var(--accent2)", msg: "<strong>PR #37</strong> feat(web,api): RF-002 Setup Wizard de Onboarding — 5 passos, migrations 011+012, wizard hooks + redirect, 363 testes. Owner-Operator / Gap 3.", tag: "merge" },
     { time: "Abr 21", color: "var(--accent2)", msg: "<strong>PR #36</strong> chore(agents): housekeeping 4 subagentes — leitura CLAUDE.md obrigatoria, regras 15-18, db-reviewer baseline dinamico", tag: "merge" },
     { time: "Abr 21", color: "var(--accent2)", msg: "<strong>PR #35</strong> chore(agents): DM prompt hardening — 7 proibicoes destrutivas + escopo negativo em arquivos de governanca", tag: "merge" },
-    { time: "Abr 21", color: "var(--blue)", msg: "<strong>PM Agent</strong> revisao diaria — sem novos commits. NOVA DIAGNOSTICA T-20260412-1: maquina Fly.io deploya OK (good state + DNS) mas /ready timeout 5/5. App nao responde pos-start — crash no init ou port mismatch. Regras 1-18 OK. Proximo P0: RF-002 Setup Wizard.", tag: "pm" },
+    { time: "Abr 21", color: "var(--blue)", msg: "<strong>PM Agent</strong> revisao manha — NOVA DIAGNOSTICA T-20260412-1: maquina Fly.io deploya OK (good state + DNS) mas /ready timeout 5/5. App nao responde pos-start. Regras 1-18 OK.", tag: "pm" },
     { time: "Abr 20", color: "var(--blue)", msg: "<strong>PM Agent</strong> revisao diaria (tarde) — RF-001+RF-003 merged (PRs #31+#33+#34). 34 PRs total. Deploy API BLOCKED (T-20260412-1). Proximo P0: RF-002 Setup Wizard.", tag: "pm" },
     { time: "Abr 20", color: "var(--accent2)", msg: "<strong>PR #34</strong> chore(memory): session close 2026-04-20 — RF-003 done, dashboard + queue update", tag: "merge" },
     { time: "Abr 20", color: "var(--accent2)", msg: "<strong>PR #33</strong> feat(admin): RF-003 activation event tracking (Gap 8 — Bussola §4) — migration 013 + AdminModule + 6 hooks + dashboard /admin/activation. 350 testes (23 suites).", tag: "merge" },
     { time: "Abr 20", color: "var(--green)", msg: "<strong>Dev Manager</strong> sessao autonoma — RF-003 CONCLUIDO (Gap 8 fechado): migration 013 + AdminModule + 6 hooks + dashboard /admin/activation. PR #33 aberto. 350 testes (23 suites).", tag: "dm" },
-    { time: "Abr 20", color: "var(--blue)", msg: "<strong>PM Agent</strong> revisao diaria — Deploy API FAILURE confirmado 10:14Z (post Docker fixes Abr 19, T-20260412-1 BLOCKED). CI+Deploy Staging+Web verdes. 31 PRs merged. Regras 15-18 OK. Proximos P0: RF-002 + RF-003.", tag: "pm" },
-    { time: "Abr 20", color: "var(--accent2)", msg: "<strong>PR #32</strong> docs: promote _staging agent files, clean up untracked PO session files, .gitignore _staging/", tag: "merge" },
-    { time: "Abr 20", color: "var(--green)", msg: "<strong>Dev Manager</strong> sessao autonoma — RF-001 concluido (Gap 1 fechado), security fix AuthGuard, 5 PRs merged (#27-#31), 343 testes, 36 pages", tag: "dm" },
+    { time: "Abr 20", color: "var(--blue)", msg: "<strong>PM Agent</strong> revisao diaria — Deploy API FAILURE confirmado (post Docker fixes Abr 19, T-20260412-1 BLOCKED). CI+Deploy Staging+Web verdes. 31 PRs merged.", tag: "pm" },
     { time: "Abr 20", color: "var(--accent2)", msg: "<strong>PR #31</strong> feat(auth,web): RF-001 — landing por persona + 4 workspaces + workspace switcher + sidebar dinamica", tag: "merge" },
-    { time: "Abr 20", color: "var(--accent2)", msg: "<strong>PR #30</strong> docs: GitHub issue templates com secao Bussola persona/gap", tag: "merge" },
-    { time: "Abr 20", color: "var(--accent2)", msg: "<strong>PR #29</strong> docs: WS-C reorganizacao — prompts historicos arquivados, agents movidos para .claude/agents/", tag: "merge" },
-    { time: "Abr 20", color: "var(--accent2)", msg: "<strong>PR #28</strong> docs: governance patches — CLAUDE.md regras 15-18, AGENTS.md, PR template com Bussola", tag: "merge" },
     { time: "Abr 19", color: "var(--accent2)", msg: "<strong>PR #27</strong> docs: Bussola de Produto + Handoff Protocol + Operating Model v2 + auto-memory", tag: "merge" },
-    { time: "Abr 19", color: "var(--blue)", msg: "<strong>PM Agent</strong> revisao diaria — Docker fixes Abr 14 + secrets configurados mas API deploy persiste falhando. 10 ADRs. 293 testes.", tag: "pm" },
     { time: "Abr 14", color: "var(--orange)", msg: "<strong>fix(docker)</strong> copy apps/api/node_modules to runner stage (corrects runtime failure)", tag: "fix" },
-    { time: "Abr 14", color: "var(--green)", msg: "<strong>test(api)</strong> branch coverage 82% — estimates.service + vehicles.service melhorados", tag: "ci" },
-    { time: "Abr 14", color: "var(--purple)", msg: "<strong>fix(db)</strong> trigger function name corrigido em migrations 007, 008, 009, 010", tag: "fix" },
-    { time: "Abr 13", color: "var(--green)", msg: "<strong>Dev Manager</strong> sessao autonoma — T-022+T-032 concluidos, 3 subagentes, PR #24 merged, 293 testes", tag: "dm" },
     { time: "Abr 13", color: "var(--accent2)", msg: "<strong>PR #24</strong> feat(accounting): P&amp;L, Balance Sheet, Trial Balance reports + financial trend chart", tag: "merge" },
-    { time: "Abr 12", color: "var(--accent2)", msg: "<strong>PR #19</strong> feat(fixed-assets): FAM module — 4 services, 18 files, 48 tests, migration 009", tag: "merge" },
-    { time: "Abr 12", color: "var(--green)", msg: "<strong>Dev Manager</strong> sessao autonoma — 3 subagentes, 5 PRs merged, branches cleaned, docs synced", tag: "dm" }
+    { time: "Abr 12", color: "var(--accent2)", msg: "<strong>PR #19</strong> feat(fixed-assets): FAM module — 4 services, 18 files, 48 tests, migration 009", tag: "merge" }
   ],
   fases: [
     { id: "1A", nome: "Hardening & Tests", total: 10, done: 10, saude: "green", desc: "Jest config + 7 unit test suites + error handler DONE. Coverage 82% para estimates+vehicles. T-008 (enums) + T-009 (date validation) verificados como JA implementados em sessoes anteriores — Fase 1A 10/10." },
-    { id: "1B", nome: "Deploy Staging", total: 9, done: 8, saude: "yellow", desc: "Fly.io, Redis, migrations, health, GH Actions, Neon, Vercel DONE. Secrets configurados Abr 14 mas Deploy API ainda falha (crash no init ou port mismatch). T-019 smoke test bloqueado." },
-    { id: "2", nome: "Frontend Polish", total: 9, done: 6, saude: "green", desc: "T-020/021/022 DONE. RF-001 (workspace routing + 4 workspaces) DONE — Gap 1. RF-002 (Setup Wizard 5 passos) DONE — Gap 3. PR #37 merged 2026-04-21. 3 tasks P1/P2 restantes." },
+    { id: "1B", nome: "Deploy Staging", total: 9, done: 9, saude: "green", desc: "Fly.io, Redis, migrations, health, GH Actions, Neon, Vercel DONE. Deploy API VERDE 2026-04-22 (T-20260421-10 COMPLETED). T-019 smoke test DONE (/health {status:ok} em staging)." },
+    { id: "2", nome: "Frontend Polish + Fase 2 RFs", total: 13, done: 6, saude: "green", desc: "T-020/021/022 DONE. RF-001 (Gap 1) DONE. RF-002 (Gap 3) DONE. RF-003 (Gap 8) DONE. RF-004 (Customer 360, P1) + RF-005 (Estimate State Machine, P1) + RF-006 (Payment Hold, P1 BLOCKED) + RF-007 (Case Management, P2) APPROVED via ADR-012 — aguardam implementacao DM." },
     { id: "3", nome: "Accounting & FAM", total: 8, done: 7, saude: "green", desc: "COA + JE + Fiscal Periods + FAM + Reports (P&L, Balance Sheet, Trial Balance) DONE. Falta apenas T-036 (frontend pages COA/JE)." }
   ],
   modules: [
@@ -357,53 +353,54 @@ const D = {
     { name: "admin/activation", files: 5, spec: true, controller: true, endpoints: 3 }
   ],
   pipeline: [
-    { label: "CI", desc: "Lint + Test + Build (GitHub Actions)", status: "green", date: "2026-04-20" },
-    { label: "Deploy Staging", desc: "Workflow geral (triggered on push main) — SUCCESS", status: "green", date: "2026-04-20" },
-    { label: "Deploy API", desc: "Fly.io — FAILURE 14:42Z em 2026-04-20. NOVA DIAGNOSTICA: maquina deploya OK (good state + DNS verified) mas /ready timeout 5/5 tentativas — app nao responde pos-start. Possivel crash no init (env missing) ou porta errada. Bloqueia T-019.", status: "red", date: "2026-04-21" },
-    { label: "Deploy Web", desc: "Vercel — SUCCESS (PR #31 preview verde)", status: "green", date: "2026-04-20" },
-    { label: "PRs Abertos", desc: "Nenhum PR pendente — 37 total merged (ultimo: #37 feat RF-002 Setup Wizard)", status: "green", date: "2026-04-21" }
+    { label: "CI", desc: "Lint + Test + Build (GitHub Actions) — SUCCESS 2026-04-21 13:28Z (PR #38 + main)", status: "green", date: "2026-04-21" },
+    { label: "Deploy Staging (Web)", desc: "Workflow geral + Vercel — SUCCESS 2026-04-21 13:28Z", status: "green", date: "2026-04-21" },
+    { label: "Deploy API", desc: "Fly.io — SUCCESS 2026-04-22 18:29Z. /health {status:ok} na primeira tentativa. Maquina 1/1 checks. T-20260421-10 COMPLETED. /ready 503 esperado (DATABASE_URL+REDIS_URL ausentes nos Fly secrets — acao Luigi).", status: "green", date: "2026-04-22" },
+    { label: "Deploy Web", desc: "Vercel — SUCCESS (consistente)", status: "green", date: "2026-04-21" },
+    { label: "PRs Abertos", desc: "Nenhum PR pendente — 39+ total merged", status: "green", date: "2026-04-22" }
   ],
   alertas: {
-    bloqueantes: [
-      { titulo: "Deploy API Staging: FAILURE persiste (T-20260412-1)", desc: "DIAGNOSTICA 2026-04-21: maquina Fly.io deploya OK (good state + DNS verified) mas /ready endpoint timeout 5/5 tentativas. App container sobe mas processo nao responde — possivel crash no init (DATABASE_URL_UNPOOLED invalida?) ou port mismatch entre fly.toml e NestJS.", acao: "Checar fly.toml (porta interna vs 3000/8080), verificar DATABASE_URL_UNPOOLED no Fly.io secrets (nao no GH Secrets), logs do app via `fly logs -a sse-api-staging`" }
-    ],
+    bloqueantes: [],
     overdue: [],
     emRisco: [
-      { titulo: "T-019: Smoke test staging", desc: "Bloqueado por Deploy API failure. Unica task restante da Fase 1B.", acao: "Investigar causa raiz deploy API (nao apenas secrets)" },
-      { titulo: "Coverage < 80% em todos os services", desc: "82% atingido apenas em estimates + vehicles. Outros services nao verificados.", acao: "pnpm --filter @sse/api test -- --coverage (verificar todos)" }
+      { titulo: "/ready retorna 503 em staging", desc: "DATABASE_URL e REDIS_URL nao configurados como Fly secrets. /health OK (liveness), /ready falha (readiness). App funcional mas sem DB/Redis no staging.", acao: "Luigi: fly secrets set DATABASE_URL=<neon-pooled> REDIS_URL=<upstash> --app sse-api-staging" },
+      { titulo: "Coverage < 80% em todos os services", desc: "82% atingido em estimates + vehicles. Outros services nao verificados. Meta CLAUDE.md §10 regra 6.", acao: "pnpm --filter @sse/api test -- --coverage (verificar todos os services)" },
+      { titulo: "T-20260421-3 (RF-005) — XL, split recomendado", desc: "Estimate State Machine e Inbox: complexidade XL. PO recomenda split em RF-005a (state machine core) + RF-005b (Inbox kanban) + RF-005c (notificacoes). DM deve propor split ao PO antes de abrir branch.", acao: "Validar split com PO antes de iniciar. RF-006 depende de RF-005 — coordenar sequenciamento." }
     ],
     proximos7: [
-      { titulo: "Fix POST /tenants sem AuthGuard (HIGH security)", desc: "Issue pre-existente descoberta na revisao de RF-002. Criar nova task e PR isolado." },
-      { titulo: "T-20260412-2: Frontend Polish (P1)", desc: "T-020 (vehicle combobox), T-021 (estimate line editor) — aguarda ratificacao da Bussola pelo PO." },
-      { titulo: "Investigar Deploy API Fly.io (P0-infra)", desc: "T-20260412-1 BLOCKED — checar fly.toml internal_port, DATABASE_URL_UNPOOLED nos Fly.io secrets, `fly logs -a sse-api-staging`." },
-      { titulo: "RF futuro — Cockpit do Owner (Gap 4)", desc: "P1 segundo Bussola §8, horizonte 60-90 dias. Todos os 3 P0 entregues." }
-    ]
+      { titulo: "T-20260421-2 (P1): RF-004 Customer 360 View", desc: "Estimator. 7 abas. Complexidade L — validar split antes de abrir branch. Endpoints existem; agregar via GET /customers/:id/360." },
+      { titulo: "T-20260421-3 (P1): RF-005 Estimate State Machine + Inbox", desc: "Gap 5 Bussola. Complexidade XL — split obrigatorio antes de iniciar. Desbloqueia RF-006." },
+      { titulo: "Luigi (acao manual): configurar Fly secrets", desc: "DATABASE_URL (Neon pooled, usuario sse_app) + REDIS_URL (Upstash free). Desbloqueia /ready verde e full staging health." },
+      { titulo: "T-20260421-6 (P2): Bussola v1.2 + ADR-013 patches (doc-only)", desc: "PV1-PV6 + PUX1-PUX6 absorvidos. 4 arquivos editados. Desbloqueia T-20260421-7,8,9." }
+    ],
+    alinhamentoBussola: []
   },
   inconsistencias: [
-    { tipo: "POST /tenants sem AuthGuard", desc: "Issue HIGH de seguranca pre-existente — endpoint de criacao de tenant nao tem AuthGuard. Descoberta durante revisao de RF-002 (PR #37). Requer task separada." },
-    { tipo: "T-20260417-4 (Discovery Gaps P0)", desc: "Status PENDING mas todos 3 RFs implementados (Gaps 1+3+8). PO deve marcar como COMPLETED." },
-    { tipo: "T-20260412-3 (T-008+T-009)", desc: "VERIFICADO 2026-04-21 — ja implementados em sessoes anteriores. DM confirmou: imports de @sse/shared-types OK + @IsISO8601 OK. PO deve marcar COMPLETED." },
-    { tipo: "Insurance", desc: "8 files + spec no repo mas sem task explicita no Excel — considerar adicionar task retroativa" },
-    { tipo: "T-020/T-021/T-022", desc: "Marcadas Backlog no Excel mas ja implementadas e funcionando" },
-    { tipo: "T-032", desc: "Marcada Backlog no Excel mas Reports (P&L, Balance Sheet, Trial Balance) existem no repo — backend + 4 frontend pages" },
-    { tipo: "RF-001 (T-20260417-10)", desc: "CONCLUIDO em 2026-04-20 — PR #31 merged. Gap 1 da Bussola fechado." },
-    { tipo: "RF-002 (T-20260417-11)", desc: "CONCLUIDO em 2026-04-21 — PR #37 merged. Gap 3 da Bussola fechado." },
-    { tipo: "RF-003 (T-20260417-12)", desc: "CONCLUIDO em 2026-04-20 — PR #33 merged. Gap 8 da Bussola fechado." }
+    { tipo: "POST /tenants sem AuthGuard — RESOLVIDO", desc: "PR #38 merged 2026-04-21 — fix(tenants): add AuthGuard to POST /tenants endpoint (SSE-052). Issue HIGH fechada." },
+    { tipo: "T-20260417-4 (Discovery Gaps P0) — inconsistente", desc: "Status PENDING em dm_queue mas todos 3 RFs implementados (Gaps 1+3+8). PO deve marcar como COMPLETED." },
+    { tipo: "T-20260412-3 (T-008+T-009) — inconsistente", desc: "VERIFICADO 2026-04-21 — ja implementados. DM confirmou: imports @sse/shared-types OK + @IsISO8601 OK. Marcar COMPLETED." },
+    { tipo: "T-20260412-1 — SUPERSEDED", desc: "Diagnostico anterior (secrets/DATABASE_URL) estava errado. Substituida por T-20260421-10 (ESM resolution). Marcar SUPERSEDED no dm_queue." },
+    { tipo: "T-20260412-2 — aguarda ratificacao", desc: "Frontend Polish aguarda decisao PO: executar agora ou priorizar RF-004..007 (Fase 2)?" },
+    { tipo: "Gaps P2 Fase 1 nao resolvidos", desc: "B1-3 (vehicle detail + estimates vinculados), B2-2 (estimate wizard multi-step), B3-4 (financial breakdown por categoria) — sem task criada explicitamente." }
   ],
   recomendacoes: [
-    { prioridade: "P0", texto: "Deploy API Fly.io: DIAGNOSTICA — maquina deploya OK mas /ready timeout 5/5. Checar: (1) fly.toml internal_port vs porta NestJS, (2) DATABASE_URL_UNPOOLED nos Fly.io secrets (nao GitHub Secrets), (3) `fly logs -a sse-api-staging` para crash do processo." },
-    { prioridade: "P1", texto: "Fix POST /tenants sem AuthGuard — issue HIGH security pre-existente. Abrir task e PR isolado antes do proximo RF." },
-    { prioridade: "P1", texto: "T-20260412-2 Frontend Polish — ratificar com PO se executa agora ou sobrepoe com Gap 4 (Cockpit do Owner, horizonte 60-90 dias)." },
-    { prioridade: "P2", texto: "T-20260417-4: marcar como COMPLETED (todos RFs redigidos e Gaps 1+3+8 implementados)." },
-    { prioridade: "P2", texto: "T-20260412-3: marcar como COMPLETED (T-008+T-009 verificados ja implementados em 2026-04-21)." }
+    { prioridade: "P1 (Luigi)", texto: "Configurar Fly secrets: fly secrets set DATABASE_URL=<neon-pooled> REDIS_URL=<upstash> --app sse-api-staging. Desbloqueara /ready verde e full health check." },
+    { prioridade: "P1", texto: "T-20260421-2 (RF-004): DM iniciar Customer 360 View. Endpoints existem — agregar GET /customers/:id/360. Validar complexidade L; se XL, propor split ao PO antes de abrir branch." },
+    { prioridade: "P1", texto: "T-20260421-3 (RF-005): DM validar split XL com PO ANTES de abrir branch. RF-005a (state machine) desbloqueia RF-006 (Payment Hold)." },
+    { prioridade: "P2", texto: "T-20260421-6 (doc-only): Bussola v1.2 + ADR-013 patches. Desbloqueia T-20260421-7 (frontend-reviewer PV/PUX), T-20260421-8 (AGENTS.md), T-20260421-9 (NetSuite dashboard v1.2)." },
+    { prioridade: "P2", texto: "Marcar COMPLETED: T-20260412-3 (T-008+T-009 ja implementados) e T-20260417-4 (Discovery Gaps entregue). Reduzir ruido no dm_queue." }
   ],
   backlog: [
+    { id: "RF-004", task: "Customer 360 View (7 abas)", fase: "2", prio: "P1", status: "Aprovado", nota: "ADR-012. Estimator. Gap 9 candidato. T-20260421-2." },
+    { id: "RF-005", task: "Estimate State Machine + Inbox", fase: "2", prio: "P1", status: "Aprovado", nota: "ADR-012. Gap 5. XL — split recomendado. T-20260421-3. Desbloqueia RF-006." },
+    { id: "RF-006", task: "Payment Hold / Disputed Estimate", fase: "2", prio: "P1", status: "Bloqueado", nota: "ADR-012. Gap 5. BLOCKED by RF-005. T-20260421-4." },
+    { id: "RF-007", task: "Case Management simplificado", fase: "2", prio: "P2", status: "Aprovado", nota: "ADR-012. Gap 5. Anti-rec #13 (nao ticketing full). T-20260421-5." },
+    { id: "RF-001", task: "Landing por Persona + Workspaces", fase: "2", prio: "P0", status: "Concluido", nota: "Gap 1 Bussola. PR #31 merged 2026-04-20." },
     { id: "RF-002", task: "Setup Wizard de Onboarding (5 passos)", fase: "2", prio: "P0", status: "Concluido", nota: "Gap 3 Bussola. PR #37 merged 2026-04-21." },
     { id: "RF-003", task: "Activation Event Tracking", fase: "2", prio: "P0", status: "Concluido", nota: "Gap 8 Bussola. PR #33 merged 2026-04-20." },
-    { id: "T-008", task: "Remove duplicate enums from DTOs", fase: "1A", prio: "P1", status: "Concluido", nota: "Verificado 2026-04-21 — ja implementado (@sse/shared-types)" },
-    { id: "T-009", task: "Add @IsISO8601 validation to date params", fase: "1A", prio: "P1", status: "Concluido", nota: "Verificado 2026-04-21 — ja implementado (financial + estimates)" },
-    { id: "T-019", task: "Smoke test staging deploy end-to-end", fase: "1B", prio: "P1", status: "Bloqueado", nota: "Deploy API falha — investigar causa raiz" },
-    { id: "T-036", task: "Accounting frontend pages (COA + JE)", fase: "3", prio: "P2", status: "Backlog", nota: "Completar Fase 3 accounting" }
+    { id: "T-20260421-10", task: "Fix ESM resolution (shared-utils/shared-types)", fase: "1B", prio: "P0", status: "Concluido", nota: "COMPLETED 2026-04-22. 4 crashes corrigidos. Deploy API VERDE. ADR-011 redigido." },
+    { id: "T-036", task: "Accounting frontend pages (COA + JE)", fase: "3", prio: "P2", status: "Backlog", nota: "Completar Fase 3 accounting" },
+    { id: "T-019", task: "Smoke test staging deploy end-to-end", fase: "1B", prio: "P1", status: "Concluido", nota: "DONE 2026-04-22 — /health {status:ok} staging live." }
   ]
 };
 // <!--METRICS_END-->

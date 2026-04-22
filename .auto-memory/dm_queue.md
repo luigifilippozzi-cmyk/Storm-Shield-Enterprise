@@ -13,6 +13,586 @@ type: project
 
 ---
 
+## T-20260421-10 — P0 Fix ESM module resolution em shared-utils / shared-types (destrava deploy API)
+
+**Origin:** PO (sessão debug assistido 2026-04-21 noite, parte 3)
+**Priority:** P0
+**Status:** COMPLETED
+**Created:** 2026-04-21
+**Closed:** 2026-04-22
+**Claimed:** DM Agent (sessão 2026-04-22)
+**Branch:** direto em `main` (série de hotfixes)
+**PRs:** #39 (ESM fix), #40 (redis error handler), #41-43 (workflow iterations), commits diretos (Dockerfile + DI fixes)
+**Supersedes:** T-20260412-1 (diagnóstico anterior estava errado — ver Contexto)
+
+### Objetivo
+Destravar o deploy API staging (Fly.io) corrigindo a causa real do crash loop: imports ESM sem extensão `.js` em `packages/shared-utils` e `packages/shared-types`. Após fix, staging volta a responder `/ready` 200 e T-20260412-1 fecha como superseded.
+
+### Contexto (ground truth via logs Fly.io — 2026-04-21 noite)
+
+Diagnóstico anterior (2026-04-21 dia) assumiu "DATABASE_URL_UNPOOLED inválida ou port mismatch". **Errado.** Logs frescos da máquina `6837ee3c513728` mostram o processo Node nunca chega a escutar na porta 3001:
+
+```
+Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/app/packages/shared-utils/dist/uuid'
+imported from /app/packages/shared-utils/dist/index.js
+  code: 'ERR_MODULE_NOT_FOUND',
+  url: 'file:///app/packages/shared-utils/dist/uuid'
+```
+
+Verificado no código:
+- `packages/shared-utils/src/index.ts` → `export * from './uuid';` (sem `.js`)
+- `packages/shared-utils/dist/index.js` → idêntico (TSC não adiciona extensão)
+- `dist/uuid.js` existe como arquivo
+- `tsconfig.base.json` usa `module: "ESNext"` + `moduleResolution: "bundler"` — config pensada para bundler (webpack/vite), **inadequada para Node ESM runtime**
+
+Por que CI/dev passam: ts-jest transpila on-the-fly (não toca `dist/`). Só o Docker runtime (que roda `node apps/api/dist/main`) força esse caminho — e quebra há 9 dias.
+
+O mesmo bug provavelmente afeta `packages/shared-types` (não verificado — DM confirma).
+
+Decisão PO (ADR? provavelmente dispensável se for só config fix): Opção A — adicionar extensões `.js` aos imports dos barrels + trocar `moduleResolution` para `"NodeNext"` (idiomático ESM moderno). Ver `ADR candidato` ao final.
+
+### Ação sugerida
+
+**Escopo mínimo (Opção A — surgical):**
+
+1. Em `packages/shared-utils/src/index.ts` trocar:
+   ```ts
+   export * from './uuid';
+   export * from './currency';
+   export * from './date';
+   export * from './validation';
+   ```
+   Por:
+   ```ts
+   export * from './uuid.js';
+   export * from './currency.js';
+   export * from './date.js';
+   export * from './validation.js';
+   ```
+
+2. Em `packages/shared-types/src/index.ts` — aplicar a mesma correção em todos os `export * from './xxx'` sem extensão. Listar todos antes de editar.
+
+3. Em `tsconfig.base.json`:
+   ```json
+   "module": "NodeNext",
+   "moduleResolution": "NodeNext",
+   ```
+   (de `ESNext` / `bundler`)
+
+4. Se o `apps/api/tsconfig.json` precisar ajuste em consequência (ex: imports internos sem extensão), aplicar mínimo necessário.
+
+5. Rebuild local + verificar dist com `grep "from './.*'" packages/shared-utils/dist/index.js` — todos devem terminar em `.js`.
+
+6. Rodar `pnpm test` — todos os testes devem continuar verdes (293+).
+
+7. Abrir PR `fix(build): ESM module resolution — NodeNext + explicit .js extensions`.
+
+8. Após merge, workflow `Deploy API (Staging)` roda automático. Smoke test `/ready` via `gh run watch`.
+
+9. Validar em staging: `curl https://sse-api-staging.fly.dev/ready` → `200` com `{"db":"up","redis":"up"}`.
+
+10. Marcar T-20260412-1 como COMPLETED (status superseded), atualizar `project_sse_status.md` Health AMARELO → VERDE.
+
+**Se Opção A romper mais de 3 módulos** (testes locais do DM falham cascateando): reverter e aplicar Opção B — override `module: "CommonJS"` só em `packages/shared-utils/tsconfig.json` e `packages/shared-types/tsconfig.json`, sem tocar no root. Essa é a condição de reversão declarada.
+
+### Escopo negativo — NÃO fazer
+
+- Não tocar em secrets do Fly.io nem do GitHub — o problema nunca foi de secret
+- Não alterar `fly.toml`, `infra/docker/api.Dockerfile`, nem `.github/workflows/deploy-api-staging.yml` (ficam tal como estão)
+- Não refatorar source dos arquivos individuais `uuid.ts`, `currency.ts`, `date.ts`, `validation.ts` (eles não têm import relativo sem extensão — só o barrel precisa de fix)
+- Não mexer em imports dentro das apps que consomem `@sse/shared-utils` (esses resolvem via `main` do package.json — não quebram)
+- Não redigir ADR-011 (Release Cadence) nesta tarefa — só fica liberado quando `/ready` estiver verde e DM/PO decidirem o gatilho
+- Não bundlear (esbuild/tsup) — overkill para o escopo
+- Não introduzir `package.json` com `"type": "module"` nos shared packages sem avaliar cascata (se o Nest consumer não estiver preparado, quebra)
+
+### Critérios de aceite
+
+- [ ] `pnpm --filter @sse/shared-utils build` gera `dist/index.js` com todos os `export * from './XXX.js'` (com extensão)
+- [ ] `pnpm --filter @sse/shared-types build` idem
+- [ ] `pnpm test` verde em todas as suites (mínimo 293 testes)
+- [ ] `pnpm --filter @sse/api build` verde
+- [ ] PR CI verde (lint + test + build)
+- [ ] Após merge: workflow `Deploy API (Staging)` conclui GREEN
+- [ ] `curl https://sse-api-staging.fly.dev/ready` → HTTP 200 com `{"status":"ok","checks":{"db":"up","redis":"up"}}`
+- [ ] `curl https://sse-api-staging.fly.dev/health` → HTTP 200
+
+### Subagentes obrigatórios
+
+- `test-runner` — validar 100% verde após mudança de module resolution (risco de regressão em imports)
+- `db-reviewer` — **não necessário** (sem migration, sem query)
+- `security-reviewer` — **não necessário** (sem auth, sem RLS)
+- `frontend-reviewer` — **não necessário** (sem UI)
+
+### Persona servida
+
+N/A (infra / build).
+
+### Gap fechado
+
+N/A — destrava pipeline para entrega de gaps.
+
+### ADR candidato
+
+DM avalia: se a mudança `ESNext/bundler → NodeNext` tiver impacto material além do fix (ex: altera comportamento de algum import indireto no Nest ou frontend), abrir **ADR-014 — Module resolution strategy (NodeNext)**. Se for só o fix cirúrgico, dispensa ADR (comentário no PR basta).
+
+---
+
+## T-20260421-1 — Manutenção do dashboard NetSuite↔Bússola (standing task)
+
+**Origin:** PO
+**Priority:** P2
+**Status:** PENDING
+**Created:** 2026-04-21
+**Tipo:** Standing task (acionada por gatilho, não por data)
+
+### Objetivo
+Manter `docs/strategy/ANALISE_NETSUITE_vs_BUSSOLA_v1.html` sincronizado com o estado real do projeto. O Luigi adotou este dashboard como artefato canônico de acompanhamento estratégico (NetSuite↔Bússola) em 2026-04-21. Fonte textual pareada: `ANALISE_NETSUITE_vs_BUSSOLA_v1.md`.
+
+### Contexto
+Sessão PO Cowork 2026-04-21 gerou análise comparativa NetSuite vs Bússola cobrindo 12 áreas (Core ERP, CRM/Service, UX/Dashboards), 4 novos RFs propostos (RF-004 Customer 360, RF-005 Estimate State Machine + Inbox, RF-006 Payment Hold, RF-007 Case Management), 13 anti-recomendações explícitas, novo princípio P8 (offline-first), reclassificação 1099-NEC, ajuste cockpit "Cash disponível vs Cash Balance", e rascunho ADR-012. Dashboard HTML (1050 linhas, 62KB, 7 abas, Tailwind CDN) é o canal visual. Luigi quer acompanhar esta comparação daqui para frente como referência contínua — não é relatório de sessão, é instrumento vivo.
+
+### Gatilhos de atualização (quando agir)
+1. **RF 004/005/006/007 muda de status** (PROPOSTO → APPROVED → IN_PROGRESS → DONE) → atualizar aba "Novos RFs" + "Roadmap"
+2. **Bússola é ajustada** (revisão trimestral ou evento-gatilho) → atualizar aba "Ajustes Bússola" + "Comparação" (diagnósticos aligned/adjust/reject/superior podem mudar)
+3. **Nova anti-recomendação identificada** ou anti-rec existente revisitada → aba "Anti-Recomendações"
+4. **Nova área NetSuite explorada** (ex: SuiteTax, SuiteBilling) → adicionar card na aba "Comparação"
+5. **ADR-012 adotado ou refinado** → aba "ADR-012" + footer status
+6. **Release da Fase muda de fase** (ex: Fase 1 → Fase 2) → aba "Roadmap"
+
+### Ação sugerida (quando gatilho dispara)
+1. Editar primeiro o `.md` (fonte de verdade textual).
+2. Sincronizar o `.html` (os arrays JS `AREAS` e `ANTIRECS` + seção correspondente).
+3. Validar abrindo o `.html` em browser local (visual smoke test).
+4. Commit único com escopo claro: `docs(strategy): sync NetSuite dashboard — [motivo do gatilho]`.
+
+### Escopo negativo — NÃO fazer
+- Não transformar em app/dashboard dinâmico (Next.js/React) — HTML estático é intencional.
+- Não remover as 26 fontes NetSuite do `.md`.
+- Não renumerar ADR-012 sem nova decisão do PO.
+- Não mesclar com `BUSSOLA_PRODUTO_SSE.md` — artefatos separados por design.
+- Não incluir atualização do dashboard no mesmo PR de RF de feature — sempre PR separado de doc.
+- Não atualizar sem gatilho explícito (evitar churn).
+
+### Done quando
+- HTML reflete estado atual do gatilho que disparou a atualização.
+- `.md` e `.html` permanecem em paridade de conteúdo.
+- PR mergeado com escopo de doc isolado.
+
+### Subagentes obrigatórios
+Nenhum. Opcional `frontend-reviewer` se a estrutura HTML (tabs, arrays, CSS) mudar materialmente.
+
+### Persona servida (se aplicável)
+N/A (meta — instrumento de governança estratégica do PO).
+
+### Gap fechado (se aplicável)
+N/A (meta).
+
+---
+
+## T-20260421-2 — Implementar RF-004 (Customer 360 View)
+
+**Origin:** PO
+**Priority:** P1
+**Status:** PENDING
+**Created:** 2026-04-21
+**Claimed:** —
+**Branch:** `feature/SSE-XXX-rf-004-customer-360`
+**PR:** —
+
+### Objetivo
+Implementar RF-004 conforme spec em `docs/strategy/RF_BACKLOG.md` (v0.2) — tela unificada Customer 360 com 7 abas (Overview, Vehicles, Estimates, Service Orders, Insurance Claims, Payments, Interactions) para servir a persona Estimator antes/durante/após o atendimento.
+
+### Contexto
+Origem: análise comparativa NetSuite vs Bússola (sessão PO 2026-04-21), formalizada em ADR-012. NetSuite tem Customer 360 como padrão de indústria e o SSE hoje força o Estimator a saltar entre 4–5 telas para montar contexto do cliente — fricção direta com P4 (uma tela = uma decisão). Complexidade estimada L. Alta probabilidade de candidatar-se a Gap 9 na próxima revisão da Bússola se fricção Estimator continuar apontada.
+
+### Ação sugerida
+1. Ler RF-004 completo em `docs/strategy/RF_BACKLOG.md` (status APPROVED, aprovado em 2026-04-21 via ADR-012).
+2. **Validar complexidade L (PO assessment)** — se parecer XL, propor split (ex: 4 abas primeiras como RF-004a, 3 restantes como RF-004b) ao PO antes de abrir branch.
+3. Decidir tecnologia de abas (shadcn/ui Tabs + lazy loading por aba vs full page load) — registrar em ADR se estrutural.
+4. Endpoint backend `GET /customers/:id/360` (agregador) + endpoints `/vehicles`, `/estimates`, `/service-orders` já existem — reutilizar.
+5. Frontend: página `/app/customers/[id]` com abas dinâmicas por role (Estimator vê tudo; Technician vê Vehicles+SOs; Accountant vê Payments+Interactions).
+6. **Decisão técnica do DM registrada no PR:** Global Search (Cmd/Ctrl+K) está implementado no SSE? Se não, abrir ENH separado (P1) referenciando §7 da Bússola v1.1. Não confundir com Customer 360 — é dependência de UX macro, não deste RF.
+7. Subagentes obrigatórios: frontend-reviewer + test-runner + security-reviewer (RBAC granular por aba).
+
+### Escopo negativo — NÃO fazer
+- Não implementar Customer 360 como modal ou drawer — é tela dedicada (P4)
+- Não criar novos endpoints de domínio — agregar os que já existem
+- Não implementar Insurance Claims aba completamente se módulo de insurance não estiver pronto — deixar placeholder com CTA "módulo em breve"
+- Não antecipar Cmd+K Global Search nesta tarefa (ENH separado)
+- Não alterar modelo de dados de `customers` para armazenar agregações — sempre agregar em runtime com cache Redis
+- Não mesclar com RF-005 (Estimate State Machine) — este RF complementa mas não bloqueia
+
+### Done quando
+- Critérios de aceite CA1–CA10 do RF-004 todos checados
+- `/app/customers/:id` renderiza 7 abas acessíveis com dados reais em staging
+- Performance: < 500ms para carregar aba Overview (agregação cacheada)
+- RBAC: Estimator vê tudo; Technician vê subset; Accountant vê subset — auditoria em security-reviewer
+- RF-004 marcado como IN_PROGRESS em `RF_BACKLOG.md` quando DM começar; DONE ao mergear
+- PR referencia ADR-012 na descrição
+
+### Subagentes obrigatórios
+frontend-reviewer (7 abas + UX unified) + test-runner (coverage 80%) + security-reviewer (RBAC por aba).
+
+### Persona servida
+Estimator (primária) — Bússola §2.
+
+### Gap fechado
+Complemento a Gap 5 (Insurance workflow) — candidato a novo Gap 9 na próxima revisão da Bússola. Ver ADR-012.
+
+### Dependências
+- Recomendado: RF-002 (T-20260417-11) merged — para Estimator ter wizard completo antes
+- Independente: RF-005/006 (complementam mas não bloqueiam)
+
+---
+
+## T-20260421-3 — Implementar RF-005 (Estimate State Machine + Inbox)
+
+**Origin:** PO
+**Priority:** P1
+**Status:** PENDING
+**Created:** 2026-04-21
+**Claimed:** —
+**Branch:** `feature/SSE-XXX-rf-005-estimate-state-machine`
+**PR:** —
+
+### Objetivo
+Implementar RF-005 conforme spec em `docs/strategy/RF_BACKLOG.md` (v0.2) — máquina de estados para Estimates com 10 status (Draft → Sent → In Review → Approved → Supplemented → Disputed → Rejected → Cancelled → Completed → Archived) + Inbox kanban+tabela para Estimator gerenciar pipeline.
+
+### Contexto
+Origem: ADR-012 + Bússola §4 Gap 5 (Insurance workflow). NetSuite tem máquina de estados explícita em Sales Orders; hoje o SSE mantém estimate como flag boolean, o que impede visualização de gargalos no pipeline do Estimator. Complexidade estimada XL — alta probabilidade de split em sub-RFs. Este RF é bloqueante para RF-006 (Payment Hold) — a transição para "Disputed" é o gatilho do payment hold.
+
+### Ação sugerida
+1. Ler RF-005 completo em `docs/strategy/RF_BACKLOG.md` (status APPROVED, aprovado 2026-04-21 via ADR-012).
+2. **Validar complexidade XL — SPLIT RECOMENDADO** pelo PO: (a) state machine core + 10 status + transições + migration (RF-005a, M) → (b) Inbox kanban + tabela (RF-005b, M) → (c) notificações + webhooks de transição (RF-005c, S). DM valida e propõe ao PO antes de abrir branch.
+3. Migration nova: tabela `estimate_status_transitions` (FK estimate_id + from_status + to_status + user_id + reason + created_at) + enum `estimate_status` (10 valores). Ver CLAUDE.md §3 FAM e §4 para convenções.
+4. Backend: `EstimateStateMachine` service com validação de transições legais (ex: Draft → Sent OK, Archived → Draft NOT OK), auditoria automática, webhook de transição.
+5. Frontend: `/app/estimates/inbox` — kanban por padrão (10 colunas, responsive), toggle para tabela (filtro+sort por coluna). Implementar drag-and-drop entre colunas com confirmação modal (RN: quem pode mover para Approved? Role Estimator+manager+owner).
+6. **Decisão técnica do DM registrada no PR:** Reversing Journal Entries já existe no SSE? — relevante se RF-005 toca GL (transição para Cancelled pode requerer reverso de lançamento). Se não existe, abrir ENH separado (P2, Fase 3/Accountant). Documentar no PR.
+7. Subagentes obrigatórios: db-reviewer (migration + enum + constraints) + frontend-reviewer (kanban+tabela + a11y) + test-runner (coverage 80% + testes de máquina de estados) + security-reviewer (quem pode transicionar).
+
+### Escopo negativo — NÃO fazer
+- Não implementar no mesmo RF Payment Hold — isso é RF-006 (T-20260421-4)
+- Não criar notificação em email/SMS nesta tarefa — fica para RF-005c se split aprovado, ou ENH futuro
+- Não alterar lógica de criação de estimates (quem cria, onde cria) — RF só adiciona estados
+- Não forçar todos os estimates existentes para novo enum sem script de migração idempotente
+- Não acoplar máquina de estados com máquina de service orders — são domínios separados (ver RF-005 para regras)
+- Não implementar Reversing JE aqui (decisão técnica do DM — abrir ENH separado se necessário)
+
+### Done quando
+- Critérios de aceite CA1–CA10 do RF-005 todos checados
+- Migration aplicada; enum tem 10 valores exatos listados em `RF_BACKLOG.md`
+- `/app/estimates/inbox` renderiza kanban e tabela; drag-and-drop funciona em 80% dos casos de uso
+- Transições ilegais bloqueadas no backend; 100% de coverage nas regras de máquina
+- RF-005 marcado DONE em `RF_BACKLOG.md` ao mergear
+- PR referencia ADR-012 na descrição
+
+### Subagentes obrigatórios
+db-reviewer + frontend-reviewer + test-runner + security-reviewer.
+
+### Persona servida
+Estimator (primária) — Bússola §2. Owner-Operator secundária (cockpit agrega pipeline).
+
+### Gap fechado
+Gap 5 (Insurance workflow) — Bússola §4.
+
+### Dependências
+- Desbloqueia: RF-006 (T-20260421-4 — Payment Hold depende de estado "Disputed")
+- Independente: RF-004/007 (complementam mas não bloqueiam)
+- Reversing JE (decisão DM): pode abrir como ENH paralelo se módulo de GL for impactado
+
+---
+
+## T-20260421-4 — Implementar RF-006 (Payment Hold / Disputed Estimate)
+
+**Origin:** PO
+**Priority:** P1
+**Status:** BLOCKED (aguarda T-20260421-3 — RF-005 em produção)
+**Created:** 2026-04-21
+**Claimed:** —
+**Branch:** `feature/SSE-XXX-rf-006-payment-hold`
+**PR:** —
+
+### Objetivo
+Implementar RF-006 conforme spec em `docs/strategy/RF_BACKLOG.md` (v0.2) — bloqueio automático de pagamentos (insurance + out-of-pocket) quando estimate transiciona para "Disputed" no RF-005, com workflow de resolução e auditoria.
+
+### Contexto
+Origem: ADR-012 + Bússola §4 Gap 5. NetSuite tem "Hold Payments on Sales Orders" como padrão para disputas; hoje o SSE não tem mecanismo de bloqueio — Estimator precisa avisar Accountant manualmente e há risco de pagamento liberado por engano. Complexidade estimada M. Depende de RF-005 (T-20260421-3) estar em produção — sem state machine, não há gatilho "Disputed".
+
+### Ação sugerida
+1. Ler RF-006 completo em `docs/strategy/RF_BACKLOG.md` (status APPROVED, aprovado 2026-04-21 via ADR-012).
+2. **Não iniciar antes de T-20260421-3 mergeada em staging** — este RF escuta eventos da state machine.
+3. Backend: listener para webhook `estimate.status.changed` (from=*, to=Disputed) → cria `payment_hold` record vinculado ao estimate + customer + insurance_claim; bloqueia approvals de `financial_transactions` associados.
+4. Workflow de resolução: Accountant/Owner pode "resolver" o hold (resolution: paid_out / refunded / cancelled / released) com audit trail obrigatório.
+5. Frontend: notification bell + painel `/app/financial/payment-holds` listando holds ativos, filtros por customer/estimate/status.
+6. **Decisão técnica do DM registrada no PR:** impacto em GL (Journal Entries) de hold criado/resolvido? Se criar JE de contra-partida (ex: Suspense account 1490), documentar padrão contábil e consultar ADR se necessário.
+7. Subagentes obrigatórios: db-reviewer (tabela `payment_holds` + RLS + indexes) + security-reviewer (quem pode criar/resolver) + test-runner.
+
+### Escopo negativo — NÃO fazer
+- Não implementar antes de T-20260421-3 estar mergeada — dependência hard
+- Não criar nova máquina de estados para holds — usar enum simples (active, resolved, cancelled)
+- Não bloquear pagamentos retroativos (já processados antes do Disputed) — só futuros
+- Não enviar notificação automática para seguradora nesta entrega — ENH futuro
+- Não acoplar lógica de hold com banco (Plaid/reconciliation) — é camada de aplicação, não bancária
+- Não implementar liberação automática após tempo — sempre manual com audit trail
+
+### Done quando
+- Critérios de aceite CA1–CA8 do RF-006 todos checados
+- Tabela `payment_holds` criada com RLS; listener funcional em staging
+- Hold criado automaticamente ao transicionar estimate para Disputed; bloqueio de approval verificável
+- Resolução manual com audit log completo; notificação visível no bell
+- RF-006 marcado DONE em `RF_BACKLOG.md` ao mergear
+- PR referencia ADR-012 + dependência de T-20260421-3
+
+### Subagentes obrigatórios
+db-reviewer + security-reviewer + test-runner. Opcional frontend-reviewer se UI tem complexidade.
+
+### Persona servida
+Estimator (primária — aciona hold) + Accountant (secundária — resolve hold). Bússola §2.
+
+### Gap fechado
+Complemento a Gap 5 (Insurance workflow) — Bússola §4.
+
+### Dependências
+- **BLOCKED BY** T-20260421-3 (RF-005) — desbloquear status assim que RF-005 for DONE
+- Independente: RF-004/007
+
+---
+
+## T-20260421-5 — Implementar RF-007 (Case Management simplificado)
+
+**Origin:** PO
+**Priority:** P2
+**Status:** PENDING
+**Created:** 2026-04-21
+**Claimed:** —
+**Branch:** `feature/SSE-XXX-rf-007-case-management`
+**PR:** —
+
+### Objetivo
+Implementar RF-007 conforme spec em `docs/strategy/RF_BACKLOG.md` (v0.2) — módulo leve de Case Management (não ticketing full) para registrar follow-ups, dúvidas de cliente, supplements de insurance que não são disputa. Intencionalmente enxuto: 3 status (Open, In Progress, Closed), vinculação a customer+optional vehicle/estimate, notas + anexos.
+
+### Contexto
+Origem: ADR-012 + Bússola §4 Gap 5 (Insurance workflow). NetSuite tem CRM Case Management robusto; o SSE rejeita essa complexidade (anti-rec #13 formaliza limite). Complexidade estimada M. Intencionalmente P2 e leve — se crescer em escopo, violamos P1 (simplificar > completar).
+
+### Ação sugerida
+1. Ler RF-007 completo em `docs/strategy/RF_BACKLOG.md` (status APPROVED, aprovado 2026-04-21 via ADR-012, com anti-rec #13 explícita).
+2. Migration: tabela `cases` (id, tenant_id, customer_id, vehicle_id?, estimate_id?, title, description, status enum, created_by, assigned_to?, created_at, updated_at, closed_at?) + `case_notes` (case_id, user_id, body, attachments jsonb, created_at).
+3. Backend: CRUD `/cases` com RLS + RBAC (Estimator/Manager/Owner criam; qualquer role vê cases dos customers que ele acessa).
+4. Frontend: `/app/cases` lista + filtros por status/assigned_to; `/app/customers/:id/cases` embedded na aba Interactions do RF-004.
+5. **Decisão técnica do DM registrada no PR:** anexos via StorageService (S3/R2) — reaproveitar módulo existente, não criar novo. Limit 10MB por arquivo, 5 por case na v0.1.
+6. Subagentes obrigatórios: db-reviewer + test-runner + frontend-reviewer.
+
+### Escopo negativo — NÃO fazer (especialmente importante — anti-rec #13)
+- **Não transformar em ticketing full estilo Zendesk/Freshdesk** — se a pressão vier, reforçar anti-rec #13 e escalar ao PO
+- Não adicionar SLA tracking, priority matrix, escalation rules, auto-assignment — P1 (simplificar > completar)
+- Não integrar com email externo (reply-via-email) — ENH muito futuro se volume justificar
+- Não adicionar chatbot ou IA para sugestões de resolução — fora de escopo Fase 2
+- Não criar dashboards de métricas de cases (time-to-close, SLA breach) — se aparecer pressão, escalar ao PO para decidir se promove RF ou rejeita
+- Não permitir que Technician crie cases sem supervisão (RBAC: Technician vê, não cria)
+- Se após 90 dias em produção ≤ 5% dos tenants usarem cases, cancelar RF conforme condição de reversão #4 do ADR-012
+
+### Done quando
+- Critérios de aceite CA1–CA8 do RF-007 todos checados
+- Tabela `cases` + `case_notes` criadas com RLS; CRUD funcional
+- `/app/cases` e aba em `/app/customers/:id/cases` renderizam em staging
+- Anexos via StorageService funcionando (upload + download + delete)
+- RF-007 marcado DONE em `RF_BACKLOG.md` ao mergear
+- PR referencia ADR-012 + anti-rec #13 explicitamente na descrição
+
+### Subagentes obrigatórios
+db-reviewer + test-runner + frontend-reviewer.
+
+### Persona servida
+Estimator (primária) — Bússola §2.
+
+### Gap fechado
+Complemento a Gap 5 (Insurance workflow) — Bússola §4.
+
+### Dependências
+- Recomendado: RF-004 (T-20260421-2) merged — para que aba Interactions do Customer 360 já embeda cases
+- Independente: RF-005/006
+
+### Monitoramento pós-release (condição de reversão ADR-012 #4)
+- PM Agent monitora uso em 90 dias: % tenants com ≥ 1 case, mediana de cases/tenant/mês
+- Se ≤ 5% tenants, escalar ao PO para decidir cancelamento + novo ADR de retirada
+
+---
+
+## T-20260421-6 — Aplicar patches da Bússola v1.2 + Operating Model v2.1 + sugestão CLAUDE.md Regra 19 (ADR-013)
+
+**Origin:** PO
+**Priority:** P2
+**Status:** PENDING
+**Created:** 2026-04-21
+**Tipo:** Doc-only (sem código de produção)
+
+### Objetivo
+Aplicar 3 patches derivados do ADR-013 (incorporação parcial do pacote MF):
+1. `docs/strategy/BUSSOLA_PRODUTO_SSE.md` → v1.2 (§6 reorganizada em §6.1/§6.2/§6.3, PV/PUX adotados)
+2. `docs/process/OPERATING_MODEL_v2.md` → v2.1 (§5.4 novo — health check do squad)
+3. `CLAUDE.md` seção 10 → nova Regra 19 (respeitar PV/PUX; frontend-reviewer bloqueia violação)
+
+### Contexto
+ADR-013 (draft em `.auto-memory/proposals/adr_013_draft.md`) formaliza absorção cirúrgica de PV1–PV6 + PUX1–PUX6 do pacote MF na Bússola SSE, sem conflito com P1–P8. Escopo aprovado pelo PO em sessão 2026-04-21 (noite, parte 2) via AskUserQuestion: Opção A — Cirúrgica, absorver em `frontend-reviewer` existente, sem subagente novo.
+
+### Instruções detalhadas
+Todas as instruções passo-a-passo estão nos 3 arquivos de patch em `.auto-memory/proposals/`:
+- `bussola_v1_2_patch_pv_pux.md` — 3 edições (header, §6, §9)
+- `operating_model_v2_1_patch_squad_health.md` — 3 edições (header, §5.4 novo, §4 cadência)
+- `claude_md_rule_19_suggestion.md` — sugestão de texto para Regra 19
+
+Também promover o ADR-013:
+- Copiar `.auto-memory/proposals/adr_013_draft.md` → `docs/decisions/013-incorporacao-parcial-pv-pux.md`
+- Alterar status "DRAFT" → "Accepted" no header
+- Manter "Data: 2026-04-21"
+
+### Escopo negativo — NÃO fazer
+- Não alterar texto de P1–P8 na Bússola — apenas mover para subseção §6.1
+- Não criar subagente `ux-reviewer` independente (decisão PO)
+- Não redigir RF-UI-SSE de paleta agora (fica para sessão futura)
+- Não tocar §1–§5, §7–§8 da Bússola
+- Não tocar §6 Métricas nem §7 Fluxo do Operating Model
+- Não alterar CLAUDE.md Regras 1–18
+- Não adicionar outros princípios PV/PUX que não sejam PV1–PV6 + PUX1–PUX6 conforme patch
+- Não fazer grep/replace cego — patches são descritivos, aplicar com cuidado de âncoras markdown
+
+### Verificação embutida (rodar após patches)
+Comandos no próprio patch — executar todos os `grep` listados no final de cada patch. Reportar no PR o resultado de cada verificação.
+
+### Done quando
+- Bússola v1.2 com §6.1/§6.2/§6.3 e v1.2 no header
+- Operating Model v2.1 com §5.4 "Health check do squad"
+- CLAUDE.md §10 com Regra 19
+- ADR-013 promovido a Accepted em `docs/decisions/`
+- Todos os grep de verificação passam
+- PR com escopo doc-only, sem tocar código de produção
+- Commit: `docs: adopt ADR-013 — PV/PUX framework + squad health ritual`
+
+### Subagentes obrigatórios
+Nenhum (doc-only). Opcional `frontend-reviewer` se quiser usar o próprio patch como teste inicial do novo checklist.
+
+### Persona servida
+N/A (governança interna).
+
+### Gap fechado
+N/A (governança — habilita coerência visual/UX para RF-004 e futuras RFs de UI).
+
+### Referências
+- `.auto-memory/proposals/adr_013_draft.md`
+- `.auto-memory/proposals/bussola_v1_2_patch_pv_pux.md`
+- `.auto-memory/proposals/operating_model_v2_1_patch_squad_health.md`
+- `.auto-memory/proposals/claude_md_rule_19_suggestion.md`
+
+---
+
+## T-20260421-7 — Expandir frontend-reviewer com checklist PV/PUX (ADR-013)
+
+**Origin:** PO
+**Priority:** P2
+**Status:** PENDING
+**Created:** 2026-04-21
+**Tipo:** Doc-only
+**Blocked by:** T-20260421-6 (precisa Bússola v1.2 publicada para referenciar §6.2/§6.3)
+
+### Objetivo
+Expandir o prompt do `frontend-reviewer` em `.claude/agents/SSE_Prompts_Squad_IA.md` (seção DM-06, linhas ~308–335) de 8 para 20 itens de checklist — 8 atuais + 6 PV + 6 PUX — com output format expandido.
+
+### Instruções detalhadas
+Conteúdo completo do novo bloco DM-06 em `.auto-memory/proposals/frontend_reviewer_patch_pv_pux.md`. Substituir integralmente a seção DM-06 pelo conteúdo novo. Itens 1–8 preservados; 9–14 são PV1–PV6; 15–20 são PUX1–PUX6.
+
+### Escopo negativo — NÃO fazer
+- Não criar subagente novo (decisão PO: absorver no existente)
+- Não alterar seções DM-01..DM-05 nem DM-07+
+- Não alterar COMBO-01 (ciclo completo de feature) — pode mencionar PV/PUX mas não expandir aqui
+- Não adicionar item para paleta concreta (cor/fonte) — adotamos princípio, não valores
+- Não remover nenhum dos 8 itens atuais
+
+### Done quando
+- Seção DM-06 contém 20 itens (8 base + 6 PV + 6 PUX)
+- Output format expandido com 3 bloqueantes/opcionais/positivos
+- Seções DM-01..DM-05 e COMBO-01+ intactas
+- Todos os grep de verificação passam (ver patch)
+- Commit: `docs(squad): expand frontend-reviewer with PV/PUX checklist (ADR-013)`
+
+### Subagentes obrigatórios
+Nenhum.
+
+### Referências
+- `.auto-memory/proposals/frontend_reviewer_patch_pv_pux.md`
+- Bússola v1.2 §6.2 e §6.3 (após T-20260421-6)
+
+---
+
+## T-20260421-8 — Atualizar AGENTS.md e `.auto-memory/MEMORY.md` com referência ao ADR-013
+
+**Origin:** PO
+**Priority:** P2
+**Status:** PENDING
+**Created:** 2026-04-21
+**Tipo:** Doc-only
+**Blocked by:** T-20260421-6 (ADR-013 precisa estar Accepted)
+
+### Objetivo
+Propagar existência da Regra 19 + PV/PUX em 2 arquivos de índice:
+1. `AGENTS.md` — adicionar linha sobre frontend-reviewer com checklist expandido + Regra 19
+2. `.auto-memory/MEMORY.md` — adicionar linha linkando `sse_mf_incorporation.md` (criado em sessão)
+
+### Instruções
+- `AGENTS.md`: após seção que descreve os 4 subagentes, adicionar nota: *"Desde ADR-013 (2026-04-21), `frontend-reviewer` carrega checklist de 20 itens cobrindo PV1–PV6 + PUX1–PUX6 da Bússola §6.2/§6.3. Regra 19 do CLAUDE.md torna violação bloqueante."*
+- `MEMORY.md` (do projeto em `.auto-memory/`): se houver index de artefatos, adicionar linha referenciando ADR-013 e a Bússola v1.2.
+
+### Escopo negativo — NÃO fazer
+- Não duplicar conteúdo dos patches em AGENTS.md — apenas referência
+- Não alterar estrutura dos arquivos, só inserir nota
+
+### Done quando
+- AGENTS.md menciona Regra 19 e checklist expandido
+- `.auto-memory/MEMORY.md` (do projeto) tem referência ao ADR-013
+- Commit: `docs: cross-reference ADR-013 in AGENTS.md and MEMORY.md`
+
+### Subagentes obrigatórios
+Nenhum.
+
+---
+
+## T-20260421-9 — Sincronizar dashboard NetSuite↔Bússola com v1.2 (gatilho #2)
+
+**Origin:** PO
+**Priority:** P2
+**Status:** PENDING
+**Created:** 2026-04-21
+**Tipo:** Doc-only
+**Blocked by:** T-20260421-6 (Bússola v1.2 publicada)
+
+### Objetivo
+Acionar o gatilho #2 do T-20260421-1 (standing task) — "Bússola é ajustada" → atualizar aba "Ajustes Bússola" + "Comparação" do dashboard `docs/strategy/ANALISE_NETSUITE_vs_BUSSOLA_v1.html` com a promoção v1.1 → v1.2 e a reorganização de §6.
+
+### Contexto
+O dashboard é artefato vivo (adotado por ADR-012). Qualquer mudança na Bússola dispara atualização. Gatilho #2 documentado em T-20260421-1 do `dm_queue.md`.
+
+### Instruções
+1. Ler `docs/strategy/BUSSOLA_PRODUTO_SSE.md` v1.2 (após T-20260421-6 mergear)
+2. Atualizar `ANALISE_NETSUITE_vs_BUSSOLA_v1.md`:
+   - Header: adicionar linha "v1.2 (2026-04-21): Bússola promovida a v1.2 via ADR-013 — §6 reorganizada em §6.1/§6.2/§6.3, PV/PUX adotados"
+   - Aba/seção "Ajustes Bússola": adicionar card ou linha referenciando ADR-013
+3. Sincronizar `ANALISE_NETSUITE_vs_BUSSOLA_v1.html` — mesmas edições no array JS equivalente
+4. Commit: `docs(strategy): sync NetSuite dashboard with Bussola v1.2 (ADR-013 trigger)`
+
+### Escopo negativo — NÃO fazer
+- Não transformar em dashboard dinâmico
+- Não alterar as 26 fontes NetSuite do `.md`
+- Não incluir mais do que a referência ao ADR-013 — PV/PUX já vivem na Bússola, não duplicar aqui
+
+### Done quando
+- `.md` e `.html` referenciam ADR-013 e Bússola v1.2
+- Visual smoke test do `.html` passa
+- Commit mergeado
+
+### Subagentes obrigatórios
+Opcional `frontend-reviewer` (este seria o primeiro teste do novo checklist aplicado — meta-teste útil).
+
+---
+
 ## T-20260420-1 — Hardening dos prompts do Dev Manager (pós-Bash(*))
 
 **Origin:** PO
@@ -958,21 +1538,37 @@ Parcialmente Gap 4 (owner cockpit) via T-022. Operacional em T-020/T-021.
 
 **Origin:** PM (escala para PO — requer ação humana)
 **Priority:** P0
-**Status:** BLOCKED
+**Status:** SUPERSEDED por T-20260421-10 (2026-04-21 noite — diagnóstico anterior estava errado)
 **Created:** 2026-04-12
+**Closed:** 2026-04-21 (sem merge — substituída)
 **Claimed:** —
 **Branch:** —
 **PR:** —
 
-### Objetivo
+### Atualização 2026-04-21 (sessão PO debug assistido)
+
+Diagnóstico desta tarefa ("secrets ausentes" / "DATABASE_URL_UNPOOLED inválida") foi **refutado** por logs frescos da máquina Fly.io:
+
+```
+Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/app/packages/shared-utils/dist/uuid'
+imported from /app/packages/shared-utils/dist/index.js
+```
+
+Causa real: bug de build ESM nos barrels de `packages/shared-utils` (e provavelmente `shared-types`). Imports sem extensão `.js` + `moduleResolution: "bundler"` no tsconfig. O processo Node **nunca** chega a escutar na porta 3001 — crasha no boot há 9 dias.
+
+**Não requer ação humana** (secrets são irrelevantes ao bug). Escopo migrado para **T-20260421-10** — handoff ao DM com fix cirúrgico.
+
+Quando T-20260421-10 fechar com `/ready` verde, mover esta tarefa para `dm_queue_archive.md` no status COMPLETED-SUPERSEDED.
+
+### Objetivo (histórico — não executar)
 Desbloquear deploy API staging (Fly.io) que falha com exit code 1 por ausência de secrets.
 
-### Contexto
+### Contexto (histórico — refutado)
 Deploy API falha em todos os runs com `exit code 1`. Secrets ausentes: `FLY_API_TOKEN` e `DATABASE_URL_UNPOOLED`. Bloqueia T-019 (smoke test) e valida end-to-end staging.
 
 **Status BLOCKED:** esta tarefa requer ação HUMANA do PO (Luigi) — nenhum agente pode configurar secrets do GitHub. Ao iniciar próxima sessão PO, DM deve relembrar Luigi desta pendência.
 
-### Ação sugerida
+### Ação sugerida (histórico — não executar)
 1. DM, ao iniciar sessão com Luigi, notifica: *"Para desbloquear T-019 e deploy API, preciso que você configure `FLY_API_TOKEN` e `DATABASE_URL_UNPOOLED` em Settings → Secrets → Actions do repo GitHub."*
 2. Após secrets configurados: re-run do workflow `Deploy API (Staging)` via `gh workflow run deploy-api-staging.yml`
 3. Marcar T-019 como Concluído no Excel quando smoke test passar
@@ -982,9 +1578,8 @@ Deploy API falha em todos os runs com `exit code 1`. Secrets ausentes: `FLY_API_
 - Não fazer deploy manual com token temporário — secrets são o caminho correto
 
 ### Done quando
-- Secrets configurados por Luigi
-- Workflow `Deploy API (Staging)` rodado e GREEN
-- T-019 (smoke test) passa
+- ~~Secrets configurados por Luigi~~ (superseded)
+- T-20260421-10 fecha com `/ready` 200 em staging
 
 ### Subagentes obrigatórios
 Nenhum.
@@ -994,5 +1589,8 @@ N/A (infra).
 
 ### Gap fechado
 N/A (infra).
+
+### Aprendizado registrado (para evitar repetição)
+Diagnóstico de deploy sem consumir logs de boot da máquina é especulação. Próxima vez que um deploy falhar sem causa óbvia, **primeiro comando**: `flyctl logs -a <app> --no-tail | Select-Object -Last 100`. Hipóteses (secrets, DNS, port, SSL) só depois. Vale um aditivo no runbook `docs/runbooks/staging-deploy.md` se o DM achar pertinente no PR de T-20260421-10.
 
 --
