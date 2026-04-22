@@ -10,12 +10,13 @@ import { QueryCustomerDto } from './dto/query-customer.dto';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { TenantGuard } from '../../common/guards/tenant.guard';
 import { RbacGuard } from '../../common/guards/rbac.guard';
+import { PlanGuard, RequirePlanFeature } from '../../common/guards/plan.guard';
 import { CurrentTenant } from '../../common/decorators/current-tenant.decorator';
 import { RequirePermissions } from '../../common/decorators/permissions.decorator';
 
 @ApiTags('customers')
 @ApiBearerAuth()
-@UseGuards(AuthGuard, TenantGuard, RbacGuard)
+@UseGuards(AuthGuard, TenantGuard, RbacGuard, PlanGuard)
 @Controller('customers')
 export class CustomersController {
   constructor(private readonly customersService: CustomersService) {}
@@ -75,6 +76,7 @@ export class CustomersController {
   @ApiOperation({ summary: 'Get Customer 360 summary metrics' })
   @ApiResponse({ status: 200, description: 'Open counts, balance, YTD revenue, last activity' })
   @RequirePermissions('customers:read:detail')
+  @RequirePlanFeature('reports')
   getSummary(
     @CurrentTenant() tenantId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -86,12 +88,14 @@ export class CustomersController {
   @ApiOperation({ summary: 'Get customer activity timeline (merged events)' })
   @ApiResponse({ status: 200, description: 'Events sorted by occurred_at DESC' })
   @RequirePermissions('customers:read:detail')
+  @RequirePlanFeature('reports')
   getActivityTimeline(
     @CurrentTenant() tenantId: string,
     @Param('id', ParseUUIDPipe) id: string,
     @Query('limit') limit?: string,
   ) {
-    const parsedLimit = limit ? parseInt(limit, 10) : 50;
+    const parsed = limit ? parseInt(limit, 10) : 50;
+    const parsedLimit = Number.isNaN(parsed) ? 50 : Math.max(1, Math.min(parsed, 200));
     return this.customersService.getActivityTimeline(tenantId, id, parsedLimit);
   }
 }

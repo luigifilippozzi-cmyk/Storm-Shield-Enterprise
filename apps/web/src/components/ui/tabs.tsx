@@ -53,6 +53,7 @@ export function TabsList({
 }) {
   return (
     <div
+      role="tablist"
       className={cn(
         'inline-flex flex-wrap items-center gap-1 rounded-lg border bg-muted p-1 text-muted-foreground',
         className,
@@ -78,6 +79,8 @@ export function TabsTrigger({
   return (
     <button
       type="button"
+      role="tab"
+      aria-selected={isActive}
       onClick={() => setActiveTab(value)}
       className={cn(
         'inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
@@ -103,5 +106,5 @@ export function TabsContent({
 }) {
   const { activeTab } = React.useContext(TabsContext);
   if (activeTab !== value) return null;
-  return <div className={cn('mt-4 focus-visible:outline-none', className)}>{children}</div>;
+  return <div role="tabpanel" className={cn('mt-4 focus-visible:outline-none', className)}>{children}</div>;
 }

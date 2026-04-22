@@ -1,6 +1,6 @@
 'use client';
 
-import { use } from 'react';
+import { use, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCustomer, useDeleteCustomer } from '@/hooks/use-customers';
@@ -26,8 +26,7 @@ const TABS = [
 
 type TabValue = (typeof TABS)[number]['value'];
 
-export default function CustomerDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+function CustomerDetailContent({ id }: { id: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const rawTab = searchParams.get('tab') as TabValue | null;
@@ -140,5 +139,18 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+export default function CustomerDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center p-12">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    }>
+      <CustomerDetailContent id={id} />
+    </Suspense>
   );
 }

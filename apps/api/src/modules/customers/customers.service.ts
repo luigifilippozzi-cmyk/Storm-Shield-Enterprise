@@ -172,6 +172,7 @@ export class CustomersService {
   }
 
   async getActivityTimeline(tenantId: string, id: string, limit = 50) {
+    const safeLimit = Number.isNaN(limit) ? 50 : Math.max(1, Math.min(limit, 200));
     await this.findOne(tenantId, id);
     const knex = await this.tenantDb.getConnection();
 
@@ -180,10 +181,10 @@ export class CustomersService {
         .where({ customer_id: id, tenant_id: tenantId })
         .select('id', 'type as event_subtype', 'subject as description', 'notes', 'interaction_date as occurred_at')
         .orderBy('interaction_date', 'desc')
-        .limit(limit),
+        .limit(safeLimit),
       knex('so_status_history as ssh')
         .join('service_orders as so', 'so.id', 'ssh.service_order_id')
-        .where({ 'so.customer_id': id, 'so.tenant_id': tenantId })
+        .where({ 'so.customer_id': id, 'so.tenant_id': tenantId, 'ssh.tenant_id': tenantId })
         .select(
           'ssh.id',
           'ssh.from_status',
@@ -193,17 +194,17 @@ export class CustomersService {
           'so.order_number as description',
         )
         .orderBy('ssh.created_at', 'desc')
-        .limit(limit),
+        .limit(safeLimit),
       knex('financial_transactions')
         .where({ customer_id: id, tenant_id: tenantId, deleted_at: null })
         .select('id', 'transaction_type as event_subtype', 'amount', 'description', 'created_at as occurred_at')
         .orderBy('created_at', 'desc')
-        .limit(limit),
+        .limit(safeLimit),
       knex('estimates')
         .where({ customer_id: id, tenant_id: tenantId, deleted_at: null })
         .select('id', 'status as event_subtype', 'estimate_number as description', 'created_at as occurred_at')
         .orderBy('created_at', 'desc')
-        .limit(limit),
+        .limit(safeLimit),
     ]);
 
     const events = [
@@ -215,6 +216,6 @@ export class CustomersService {
 
     return events
       .sort((a, b) => new Date(b.occurred_at).getTime() - new Date(a.occurred_at).getTime())
-      .slice(0, limit);
+      .slice(0, safeLimit);
   }
 }
