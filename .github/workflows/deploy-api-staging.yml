@@ -70,28 +70,34 @@ jobs:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         run: flyctl deploy --remote-only -c apps/api/fly.toml
 
-      - name: Start machine and wait
+      - name: Smoke test — liveness probe
+        id: smoke
+        continue-on-error: true
+        run: |
+          echo "Waiting for cold start (first request triggers auto-start)..."
+          for i in 1 2 3 4 5 6 7 8; do
+            if curl --fail --silent --show-error --max-time 60 https://sse-api-staging.fly.dev/health; then
+              echo ""
+              echo "API is live on attempt $i"
+              exit 0
+            fi
+            echo "attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
+          echo "Liveness probe failed after 8 attempts"
+          exit 1
+
+      - name: Capture Fly.io logs (diagnostic)
+        if: always()
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         run: |
-          MACHINE_ID=$(flyctl machine list --app sse-api-staging --json 2>/dev/null | python3 -c "import sys,json; m=json.load(sys.stdin); print(m[0]['id'] if m else '')" 2>/dev/null || echo "")
-          if [ -n "$MACHINE_ID" ]; then
-            echo "Starting machine $MACHINE_ID..."
-            flyctl machine start "$MACHINE_ID" --app sse-api-staging || true
-          fi
-          echo "Waiting 45s for app to initialize..."
-          sleep 45
+          echo "=== Machine status ==="
+          flyctl machine list --app sse-api-staging 2>&1 || true
+          echo ""
+          echo "=== Last 60 log lines ==="
+          flyctl logs --app sse-api-staging -n 60 2>&1 || true
 
-      - name: Smoke test — liveness probe
-        run: |
-          set -euo pipefail
-          for i in 1 2 3 4 5; do
-            if curl --fail --silent --show-error --max-time 30 https://sse-api-staging.fly.dev/health; then
-              echo "API is live"
-              exit 0
-            fi
-            echo "attempt $i: not live yet, retrying in 15s..."
-            sleep 15
-          done
-          echo "Liveness probe failed after 5 attempts"
-          exit 1
+      - name: Fail if smoke test failed
+        if: steps.smoke.outcome == 'failure'
+        run: exit 1
