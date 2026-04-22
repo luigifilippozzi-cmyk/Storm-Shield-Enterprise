@@ -39,6 +39,7 @@ COPY --from=builder --chown=nestjs:nodejs /app/packages/shared-types/dist ./pack
 COPY --from=builder --chown=nestjs:nodejs /app/packages/shared-types/package.json ./packages/shared-types/package.json
 COPY --from=builder --chown=nestjs:nodejs /app/packages/shared-utils/dist ./packages/shared-utils/dist
 COPY --from=builder --chown=nestjs:nodejs /app/packages/shared-utils/package.json ./packages/shared-utils/package.json
+COPY --from=deps --chown=nestjs:nodejs /app/packages/shared-utils/node_modules ./packages/shared-utils/node_modules
 
 USER nestjs
 
