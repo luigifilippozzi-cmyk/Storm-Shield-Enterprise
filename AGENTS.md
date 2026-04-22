@@ -118,6 +118,9 @@ Há outro(s) agente(s) trabalhando neste repo simultaneamente.
 - [ ] Se nova tabela: migration idempotente + RLS policy + tenant_id + índices
 - [ ] Se mudança arquitetural: CLAUDE.md atualizado + ADR criado
 - [ ] Descrição do PR explica "o quê" + "por quê" + como testar
+- [ ] Se cria/altera UI (`.tsx`): `frontend-reviewer` acionar obrigatoriamente (Regra 19); checklist DM-06 inclui PV1–PV6 + PUX1–PUX6 (Bússola §6.2/§6.3 via ADR-013). Violação bloqueante.
+
+> **Nota (ADR-013, 2026-04-21):** `frontend-reviewer` carrega checklist expandido de 20 itens (8 base + 6 PV + 6 PUX). Regra 19 do `CLAUDE.md` torna violação de PV/PUX bloqueante de merge. Prompt em `.claude/agents/SSE_Prompts_Squad_IA.md` DM-06.
 
 ---
 
