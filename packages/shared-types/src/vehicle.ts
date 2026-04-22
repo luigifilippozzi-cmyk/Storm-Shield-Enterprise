@@ -1,4 +1,4 @@
-import { VehicleCondition } from './enums';
+import { VehicleCondition } from './enums.js';
 
 export interface Vehicle {
   id: string;

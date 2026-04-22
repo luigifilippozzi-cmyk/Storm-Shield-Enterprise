@@ -1,4 +1,4 @@
-import { CustomerType, CustomerSource, InteractionType } from './enums';
+import { CustomerType, CustomerSource, InteractionType } from './enums.js';
 
 export interface Customer {
   id: string;

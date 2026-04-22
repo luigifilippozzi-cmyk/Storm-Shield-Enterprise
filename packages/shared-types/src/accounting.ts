@@ -6,7 +6,7 @@ import {
   DepreciationMethod,
   AssetStatus,
   DisposalType,
-} from './enums';
+} from './enums.js';
 
 // ── General Ledger ──
 export interface ChartOfAccount {

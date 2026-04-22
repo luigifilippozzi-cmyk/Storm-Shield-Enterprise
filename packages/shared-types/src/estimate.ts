@@ -1,4 +1,4 @@
-import { EstimateStatus, EstimateLineType } from './enums';
+import { EstimateStatus, EstimateLineType } from './enums.js';
 
 export interface Estimate {
   id: string;

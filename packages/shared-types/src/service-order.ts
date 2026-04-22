@@ -1,4 +1,4 @@
-import { ServiceOrderStatus, TaskStatus } from './enums';
+import { ServiceOrderStatus, TaskStatus } from './enums.js';
 
 export interface ServiceOrder {
   id: string;
