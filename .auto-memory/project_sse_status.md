@@ -4,6 +4,63 @@ description: Current state of Storm Shield Enterprise project — metrics, healt
 type: project
 ---
 
+# SSE Project Status — 2026-04-22 (DM Agent — sessão tarde/noite — RF-004 merged + ADR-013 merged)
+
+## Revisão DM — 2026-04-22 (sessão completa: subagentes + PR #44 + PR #45)
+
+**Saúde: VERDE** — Deploy API VERDE. CI VERDE. Deploy Web VERDE. PRs abertos: 0. ADR count: 13.
+
+**Fase 1:** ~97% | Módulos: 13/15 | Testes: 368 | Endpoints: 112 | Migrations: 14 | ADRs: 13 | Controllers: 16
+
+**CI:** VERDE | **Deploy Web:** VERDE | **Deploy API:** VERDE | **PRs abertos:** 0 | **PRs merged:** 45
+
+### Novidades desta sessão (2026-04-22 tarde/noite)
+- **PR #44 merged:** feat(web,api) RF-004 Customer 360 View (SSE-053) — 7 tabs unificadas, 2 endpoints novos, Suspense boundary corrigida, ARIA compliance, plan gate adicionado, cross-tenant bug crítico corrigido
+- **PR #45 merged:** docs ADR-013 — Bússola v1.2 (§6.1/§6.2/§6.3), Operating Model v2.1 (§5.4 squad health), CLAUDE.md Regra 19, frontend-reviewer expandido 8→20 itens, AGENTS.md atualizado
+- **ADR-013 Accepted:** incorporação parcial PV/PUX do pacote MF. ADR count: 12 → **13**
+- **Subagentes acionados:** test-runner [PASS 368/368], security-reviewer [FAIL→PASS — Critical+High+3 Medium corrigidos], frontend-reviewer [FAIL→PASS — B1-B3 corrigidos]
+- **T-20260421-2 COMPLETED** (RF-004 PR aberto + merged)
+- **T-20260421-6/7/8 COMPLETED** (ADR-013 doc patches via PR #45)
+
+### Prioridades P0/P1 para próxima sessão DM
+1. **P1** — T-20260421-3 (RF-005): **CONSULTAR PO ANTES de abrir branch** — split XL obrigatório (RF-005a/b/c)
+2. **P2** — T-20260421-9: Sync NetSuite dashboard com Bússola v1.2 (gatilho #2 desbloqueado) — PR doc-only
+3. **P2** — T-20260421-5 (RF-007): Case Management simplificado — independente, pode rodar em paralelo após RF-005 validado
+
+### Alertas
+- T-20260421-3 (RF-005): XL → split OBRIGATÓRIO antes de branch. Não iniciar sem validação PO.
+- T-20260421-4 (RF-006): BLOCKED by T-20260421-3 — não iniciar
+- Coverage < 80% em serviços (meta CLAUDE.md regra 6) — standing issue
+- Low priority: finer-grained RBAC para `/customers/:id/summary` (dados financeiros)
+
+### Alinhamento Bússola (regras 15-18)
+Sem violações. PR #44 cita Estimator (Bússola §2) + candidato Gap 9. PR #45 é doc-only, N/A. Bússola v1.2 + Regra 19 agora vigentes.
+
+### Verificação Regras CLAUDE.md §10
+- Regra 4 (KNEX_CONNECTION direto): OK
+- Regra 5 (FLOAT em migrations): OK
+- Regra 6 (CASCADE em financeiro/contábil): OK
+- Regra 9 (secrets hardcoded): OK
+- Regra 16 (persona+gap em PRs de UI): PR #44 ✓
+- Regra 19 (PV/PUX em PRs de UI): PR #44 revisado por frontend-reviewer ✓
+
+### Gaps P2 Fase 1 remanescentes
+- B1-3: Vehicle detail — estimates vinculados
+- B2-2: Estimate form — wizard multi-step completo
+- B3-4: Financial — breakdown por categoria
+
+### Handoff DM aberto (dm_queue.md) — tasks ativas
+- **COMPLETED:** T-20260421-10, T-20260421-2 (RF-004), T-20260421-6/7/8 (ADR-013 patches)
+- **PENDING P1:** T-20260421-3 (RF-005 XL — aguarda split PO)
+- **BLOCKED P1:** T-20260421-4 (RF-006, aguarda T-3)
+- **PENDING P2:** T-20260421-1 (NetSuite standing), T-20260421-5 (RF-007), T-20260421-9 (NetSuite dashboard v1.2 — desbloqueado), T-036 (accounting frontend)
+- **Legacy:** T-20260412-2 (ratificação PO pendente)
+
+### Última sessão PM: 2026-04-22
+### Última sessão DM: 2026-04-22 (RF-004 PR #44 + ADR-013 PR #45 mergeados)
+
+---
+
 # SSE Project Status — 2026-04-22 (PM Agent — revisão diária)
 
 ## Revisão PM — 2026-04-22

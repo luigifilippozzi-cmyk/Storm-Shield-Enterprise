@@ -423,8 +423,12 @@ Complemento a Gap 5 (Insurance workflow) — Bússola §4.
 
 **Origin:** PO
 **Priority:** P2
-**Status:** PENDING
+**Status:** COMPLETED
 **Created:** 2026-04-21
+**Claimed:** DM Agent (sessão 2026-04-22)
+**Closed:** 2026-04-22
+**Branch:** `docs/SSE-054-adr-013-patches`
+**PR:** #45
 **Tipo:** Doc-only (sem código de produção)
 
 ### Objetivo
@@ -490,8 +494,12 @@ N/A (governança — habilita coerência visual/UX para RF-004 e futuras RFs de 
 
 **Origin:** PO
 **Priority:** P2
-**Status:** PENDING
+**Status:** COMPLETED
 **Created:** 2026-04-21
+**Claimed:** DM Agent (sessão 2026-04-22)
+**Closed:** 2026-04-22
+**Branch:** `docs/SSE-054-adr-013-patches`
+**PR:** #45
 **Tipo:** Doc-only
 **Blocked by:** T-20260421-6 (precisa Bússola v1.2 publicada para referenciar §6.2/§6.3)
 
@@ -528,8 +536,12 @@ Nenhum.
 
 **Origin:** PO
 **Priority:** P2
-**Status:** PENDING
+**Status:** COMPLETED
 **Created:** 2026-04-21
+**Claimed:** DM Agent (sessão 2026-04-22)
+**Closed:** 2026-04-22
+**Branch:** `docs/SSE-054-adr-013-patches`
+**PR:** #45
 **Tipo:** Doc-only
 **Blocked by:** T-20260421-6 (ADR-013 precisa estar Accepted)
 

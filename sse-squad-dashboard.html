@@ -284,32 +284,34 @@
 <script>
 // <!--METRICS_START-->
 const D = {
-  lastUpdated: "2026-04-22 (PM Agent — revisao diaria)",
-  updatedBy: "PM Agent",
+  lastUpdated: "2026-04-22 (Dev Manager — RF-004 PR#44 + ADR-013 PR#45 merged)",
+  updatedBy: "Dev Manager",
   health: "green",
-  healthText: "VERDE. Deploy API VERDE (T-20260421-10 COMPLETED). CI verde. Deploy Web verde. PR #44 aberto aguardando review (RF-004 Customer 360 — Estimator / Gap 9). Todos os P0 concluidos: RF-001+RF-002+RF-003+T-20260421-10. Regras 1-18 OK. /ready 503 esperado (DATABASE_URL+REDIS_URL ausentes nos Fly secrets — acao Luigi).",
+  healthText: "VERDE. Deploy API VERDE. CI VERDE. Deploy Web VERDE. PRs abertos: 0. RF-004 Customer 360 merged (PR #44) — 7 abas, subagentes PASS (test+security+frontend). ADR-013 merged (PR #45) — Bussola v1.2 + Regra 19 + frontend-reviewer 20 itens. ADRs: 13. Testes: 368. /ready 503 esperado (DATABASE_URL+REDIS_URL ausentes nos Fly secrets — acao Luigi).",
   activeFase: "2",
   kpis: {
     backendModules: 13,
     controllers: 16,
-    endpoints: 110,
+    endpoints: 112,
     frontendPages: 38,
     specFiles: 23,
     tests: 368,
     migrations: 14,
-    adrs: 12,
+    adrs: 13,
     excelTotal: 36,
     excelDone: 30
   },
   agents: [
     { name: "PM Agent", role: "Status Diario + Metricas", color: "var(--blue)", bg: "var(--blue-bg)", icon: "clipboard", status: "active", statusText: "Revisao 2026-04-21 noite — dados frescos pos-sessao PO noite parte 3", stats: [["Frequencia","Diario"],["Escopo","Read-only"],["Output","Relatorio + Dashboard"]] },
-    { name: "Dev Manager", role: "Implementacao + Orquestracao", color: "var(--accent2)", bg: "var(--teal-bg)", icon: "gear", status: "active", statusText: "Sessao 2026-04-22 — T-20260421-10 COMPLETED: 4 crashes corrigidos, Deploy API VERDE pela primeira vez. ADR-011 redigido.", stats: [["Autoridade","Execucao tecnica"],["Subagentes","4 configurados"],["Git","commits diretos em main (hotfix series)"]] },
+    { name: "Dev Manager", role: "Implementacao + Orquestracao", color: "var(--accent2)", bg: "var(--teal-bg)", icon: "gear", status: "active", statusText: "Sessao 2026-04-22 tarde/noite — PR #44 RF-004 + PR #45 ADR-013 merged. 3 subagentes PASS (test+security+frontend). Critical+High+3 Medium corrigidos. Bussola v1.2 vigente.", stats: [["Autoridade","Execucao tecnica"],["Subagentes","4 configurados"],["PRs merged","#44 + #45"]] },
     { name: "test-runner", role: "Jest + Coverage", color: "var(--green)", bg: "var(--green-bg)", icon: "check", status: "active", statusText: "363 testes, 23 suites — GREEN (CI 2026-04-21 13:28Z success)", stats: [["Framework","Jest + ts-jest"],["Specs","23 test suites"],["Trigger","Sempre pre-PR"]] },
     { name: "security-reviewer", role: "RLS + XSS + Auth", color: "var(--red)", bg: "var(--red-bg)", icon: "shield", status: "active", statusText: "HARDENED — regras 15-18 + comandos destrutivos. PR #38 fix AuthGuard validado.", stats: [["Foco","tenant_id, RLS, AES"],["Checks","OWASP Top 10 + regras 15-18"],["Trigger","auth/db changes"]] },
     { name: "db-reviewer", role: "Migrations + Schema", color: "var(--purple)", bg: "var(--purple-bg)", icon: "database", status: "active", statusText: "Baseline atualizado — 000-013 (14 SQL files), dinamico via ls", stats: [["Foco","RLS, indexes, FK"],["Migrations","14 SQL files"],["Trigger","Schema changes"]] },
-    { name: "frontend-reviewer", role: "Next.js + shadcn/ui", color: "var(--cyan)", bg: "rgba(6,182,212,.12)", icon: "layout", status: "active", statusText: "38 rotas (RF-001+RF-002+RF-003 DONE). Expansao PV/PUX pendente (T-20260421-7).", stats: [["Framework","Next.js 15 + React 19"],["Pages","38 paginas"],["Trigger","UI/component changes"]] }
+    { name: "frontend-reviewer", role: "Next.js + shadcn/ui", color: "var(--cyan)", bg: "rgba(6,182,212,.12)", icon: "layout", status: "active", statusText: "Checklist expandido: 20 itens (8 base + 6 PV + 6 PUX via ADR-013). PR #44 FAIL→PASS (B1 Suspense, B2 ARIA, B3 customer_id). Regra 19 vigente.", stats: [["Framework","Next.js 15 + React 19"],["Checklist","20 itens (ADR-013)"],["Trigger","UI/component changes — Regra 19"]] }
   ],
   activity: [
+    { time: "Abr 22", color: "var(--accent2)", msg: "<strong>PR #45 merged</strong> docs: ADR-013 — Bussola v1.2 (PV1-PV6 + PUX1-PUX6, §6.1/§6.2/§6.3), Operating Model v2.1 (§5.4 squad health), CLAUDE.md Regra 19, frontend-reviewer 8→20 itens, AGENTS.md atualizado. ADRs: 13.", tag: "merge" },
+    { time: "Abr 22", color: "var(--accent2)", msg: "<strong>PR #44 merged</strong> feat(web,api): RF-004 Customer 360 View (SSE-053) — 7 abas unificadas, 368/368 testes. Fixes: cross-tenant bug (Critical), plan gate ausente (High), unbounded limit (Medium), @IsUUID (Medium), Suspense boundary (B1), ARIA roles (B2), customer_id param (B3). Estimator / Gap 9 candidato.", tag: "merge" },
     { time: "Abr 22", color: "var(--blue)", msg: "<strong>PM Agent</strong> revisao diaria — Saude VERDE. Deploy API VERDE (T-20260421-10 done). CI verde. PR #44 open (RF-004 Customer 360, Estimator, Gap 9). Metricas: 13/15 modulos, 38 pages, 368 testes, 110 endpoints, 14 migrations, 12 ADRs. Regras 1-18 OK. Sem violacoes Bussola. Prioridade: review PR #44 + Luigi configura Fly secrets (/ready). Proximo P1: RF-005 (split XL).", tag: "pm" },
     { time: "Abr 22", color: "var(--accent2)", msg: "<strong>PR #44 aberto</strong> feat(web,api): RF-004 Customer 360 View — 7-tab unified customer screen (SSE-053). 368 testes. 2 endpoints novos (/summary + /activity-timeline). Tabs UI + 7 Customer360* components. Deep-link ?tab=value. Estimator / Gap 9 candidato.", tag: "merge" },
     { time: "Abr 22", color: "var(--green)", msg: "<strong>Dev Manager</strong> T-20260421-10 COMPLETED — Deploy API VERDE pela primeira vez. 4 crashes corrigidos: (1) ESM barrels .js, (2) Dockerfile missing shared-utils/node_modules, (3) CJS circular import KNEX tokens, (4) AuthModule @Global. ADR-011 redigido. /health {status:ok} tentativa 1.", tag: "dm" },
@@ -359,7 +361,7 @@ const D = {
     { label: "Deploy Staging (Web)", desc: "Workflow geral + Vercel — SUCCESS 2026-04-21 13:28Z", status: "green", date: "2026-04-21" },
     { label: "Deploy API", desc: "Fly.io — SUCCESS 2026-04-22 18:29Z. /health {status:ok} na primeira tentativa. Maquina 1/1 checks. T-20260421-10 COMPLETED. /ready 503 esperado (DATABASE_URL+REDIS_URL ausentes nos Fly secrets — acao Luigi).", status: "green", date: "2026-04-22" },
     { label: "Deploy Web", desc: "Vercel — SUCCESS (consistente)", status: "green", date: "2026-04-21" },
-    { label: "PRs Abertos", desc: "1 PR aberto: #44 RF-004 Customer 360 View (aguarda review — frontend-reviewer + security-reviewer + test-runner obrigatorios). 44 total (43 merged + 1 open).", status: "yellow", date: "2026-04-22" }
+    { label: "PRs Abertos", desc: "0 PRs abertos. 45 total merged. Ultimo: #45 docs ADR-013 (2026-04-22). Penultimo: #44 RF-004 Customer 360 (2026-04-22).", status: "green", date: "2026-04-22" }
   ],
   alertas: {
     bloqueantes: [],
@@ -367,13 +369,13 @@ const D = {
     emRisco: [
       { titulo: "/ready retorna 503 em staging", desc: "DATABASE_URL e REDIS_URL nao configurados como Fly secrets. /health OK (liveness), /ready falha (readiness). App funcional mas sem DB/Redis no staging.", acao: "Luigi: fly secrets set DATABASE_URL=<neon-pooled> REDIS_URL=<upstash> --app sse-api-staging" },
       { titulo: "Coverage < 80% em todos os services", desc: "82% atingido em estimates + vehicles. Outros services nao verificados. Meta CLAUDE.md §10 regra 6.", acao: "pnpm --filter @sse/api test -- --coverage (verificar todos os services)" },
-      { titulo: "T-20260421-3 (RF-005) — XL, split recomendado", desc: "Estimate State Machine e Inbox: complexidade XL. PO recomenda split em RF-005a (state machine core) + RF-005b (Inbox kanban) + RF-005c (notificacoes). DM deve propor split ao PO antes de abrir branch.", acao: "Validar split com PO antes de iniciar. RF-006 depende de RF-005 — coordenar sequenciamento." }
+      { titulo: "T-20260421-3 (RF-005) — XL, split OBRIGATORIO antes de branch", desc: "Estimate State Machine e Inbox: complexidade XL. PO recomenda split em RF-005a (state machine core) + RF-005b (Inbox kanban) + RF-005c (notificacoes). DM NAO deve abrir branch sem validacao PO.", acao: "Validar split com PO antes de iniciar. RF-006 depende de RF-005 — coordenar sequenciamento." }
     ],
     proximos7: [
-      { titulo: "T-20260421-2 (P1): RF-004 — PR #44 aguarda review+merge", desc: "Estimator. 7 abas. PR #44 aberto 2026-04-22. 368/368 testes. subagentes: frontend-reviewer + security-reviewer + test-runner obrigatorios antes do merge." },
-      { titulo: "T-20260421-3 (P1): RF-005 Estimate State Machine + Inbox", desc: "Gap 5 Bussola. Complexidade XL — split obrigatorio antes de iniciar. Desbloqueia RF-006." },
-      { titulo: "Luigi (acao manual): configurar Fly secrets", desc: "DATABASE_URL (Neon pooled, usuario sse_app) + REDIS_URL (Upstash free). Desbloqueia /ready verde e full staging health." },
-      { titulo: "T-20260421-6 (P2): Bussola v1.2 + ADR-013 patches (doc-only)", desc: "PV1-PV6 + PUX1-PUX6 absorvidos. 4 arquivos editados. Desbloqueia T-20260421-7,8,9." }
+      { titulo: "T-20260421-3 (P1): RF-005 Estimate State Machine + Inbox — consultar PO para split", desc: "Gap 5 Bussola. Complexidade XL — DM deve propor split ao PO (RF-005a/b/c) ANTES de abrir branch. Desbloqueia RF-006 (T-20260421-4)." },
+      { titulo: "T-20260421-9 (P2): Sync NetSuite dashboard com Bussola v1.2", desc: "Gatilho #2 desbloqueado (Bussola foi ajustada para v1.2 via ADR-013). PR doc-only. T-20260421-6 COMPLETED." },
+      { titulo: "T-20260421-5 (P2): RF-007 Case Management simplificado", desc: "Gap 5 Bussola. Complexidade M. Independente de RF-005/006. Anti-rec #13 explícita (nao ticketing full)." },
+      { titulo: "Luigi (acao manual): configurar Fly secrets", desc: "DATABASE_URL (Neon pooled, usuario sse_app) + REDIS_URL (Upstash free). Desbloqueia /ready verde e full staging health." }
     ],
     alinhamentoBussola: []
   },
@@ -387,13 +389,12 @@ const D = {
   ],
   recomendacoes: [
     { prioridade: "P1 (Luigi)", texto: "Configurar Fly secrets: fly secrets set DATABASE_URL=<neon-pooled> REDIS_URL=<upstash> --app sse-api-staging. Desbloqueara /ready verde e full health check." },
-    { prioridade: "P1", texto: "RF-004 PR #44 aberto — aguarda review. Subagentes obrigatorios: frontend-reviewer + security-reviewer + test-runner antes de merge." },
-    { prioridade: "P1", texto: "T-20260421-3 (RF-005): DM validar split XL com PO ANTES de abrir branch. RF-005a (state machine) desbloqueia RF-006 (Payment Hold)." },
-    { prioridade: "P2", texto: "T-20260421-6 (doc-only): Bussola v1.2 + ADR-013 patches. Desbloqueia T-20260421-7 (frontend-reviewer PV/PUX), T-20260421-8 (AGENTS.md), T-20260421-9 (NetSuite dashboard v1.2)." },
-    { prioridade: "P2", texto: "Marcar COMPLETED: T-20260412-3 (T-008+T-009 ja implementados) e T-20260417-4 (Discovery Gaps entregue). Reduzir ruido no dm_queue." }
+    { prioridade: "P1 (DM)", texto: "T-20260421-3 (RF-005): validar split XL com PO ANTES de abrir branch. Propor RF-005a (state machine core) + RF-005b (Inbox kanban) + RF-005c (notificacoes). RF-005a desbloqueia RF-006 (Payment Hold)." },
+    { prioridade: "P2 (DM)", texto: "T-20260421-9: sync NetSuite dashboard com Bussola v1.2 (gatilho #2 desbloqueado por T-20260421-6 COMPLETED). PR doc-only simples." },
+    { prioridade: "P2 (DM)", texto: "T-20260421-5 (RF-007): Case Management simplificado — M, independente, pode rodar apos consulta PO para RF-005." }
   ],
   backlog: [
-    { id: "RF-004", task: "Customer 360 View (7 abas)", fase: "2", prio: "P1", status: "Em andamento", nota: "PR #44 aberto 2026-04-22. 368 testes. 2 endpoints novos. Tabs UI + 7 componentes Customer360*. Aguarda review+merge." },
+    { id: "RF-004", task: "Customer 360 View (7 abas)", fase: "2", prio: "P1", status: "Concluido", nota: "PR #44 merged 2026-04-22. 368 testes. 2 endpoints novos (/summary + /activity-timeline). 7 abas + ARIA + Suspense. Critical+High+3 Medium corrigidos via subagentes." },
     { id: "RF-005", task: "Estimate State Machine + Inbox", fase: "2", prio: "P1", status: "Aprovado", nota: "ADR-012. Gap 5. XL — split recomendado. T-20260421-3. Desbloqueia RF-006." },
     { id: "RF-006", task: "Payment Hold / Disputed Estimate", fase: "2", prio: "P1", status: "Bloqueado", nota: "ADR-012. Gap 5. BLOCKED by RF-005. T-20260421-4." },
     { id: "RF-007", task: "Case Management simplificado", fase: "2", prio: "P2", status: "Aprovado", nota: "ADR-012. Gap 5. Anti-rec #13 (nao ticketing full). T-20260421-5." },
