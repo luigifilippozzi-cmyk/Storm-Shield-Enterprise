@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsEnum, IsInt, IsISO8601, Min, Max } from 'class-validator';
+import { IsOptional, IsString, IsEnum, IsInt, IsISO8601, IsUUID, Min, Max } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { TransactionType } from '@sse/shared-types';
@@ -28,6 +28,11 @@ export class QueryTransactionDto {
   @IsOptional()
   @IsISO8601({ strict: true })
   date_to?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by customer ID (UUID)' })
+  @IsOptional()
+  @IsUUID('all')
+  customer_id?: string;
 
   @ApiPropertyOptional({ default: 1 })
   @IsOptional()

@@ -193,11 +193,12 @@ N/A (meta).
 
 **Origin:** PO
 **Priority:** P1
-**Status:** PENDING
+**Status:** COMPLETED
 **Created:** 2026-04-21
-**Claimed:** —
-**Branch:** `feature/SSE-XXX-rf-004-customer-360`
-**PR:** —
+**Claimed:** 2026-04-22
+**Closed:** 2026-04-22
+**Branch:** `feature/SSE-053-rf-004-customer-360`
+**PR:** #44
 
 ### Objetivo
 Implementar RF-004 conforme spec em `docs/strategy/RF_BACKLOG.md` (v0.2) — tela unificada Customer 360 com 7 abas (Overview, Vehicles, Estimates, Service Orders, Insurance Claims, Payments, Interactions) para servir a persona Estimator antes/durante/após o atendimento.

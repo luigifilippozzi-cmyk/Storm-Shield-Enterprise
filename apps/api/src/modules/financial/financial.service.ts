@@ -25,7 +25,7 @@ export class FinancialService {
 
   async findAll(tenantId: string, query: QueryTransactionDto): Promise<PaginatedResult<any>> {
     const knex = await this.tenantDb.getConnection();
-    const { search, transaction_type, category, date_from, date_to, page = 1, limit = 20, sort_by = 'created_at', sort_order = 'desc' } = query;
+    const { search, transaction_type, category, customer_id, date_from, date_to, page = 1, limit = 20, sort_by = 'created_at', sort_order = 'desc' } = query;
 
     const baseQuery = knex('financial_transactions')
       .where({ tenant_id: tenantId, deleted_at: null });
@@ -43,6 +43,10 @@ export class FinancialService {
 
     if (category) {
       baseQuery.where('category', category);
+    }
+
+    if (customer_id) {
+      baseQuery.where('customer_id', customer_id);
     }
 
     if (date_from) {

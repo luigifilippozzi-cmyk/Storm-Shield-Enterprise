@@ -1,48 +1,49 @@
 'use client';
 
-import { use } from 'react';
+import { use, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useCustomer, useDeleteCustomer } from '@/hooks/use-customers';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { cn, formatPhone, formatDate } from '@/lib/utils';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Customer360Overview } from '@/components/customers/customer360-overview';
+import { Customer360Vehicles } from '@/components/customers/customer360-vehicles';
+import { Customer360Estimates } from '@/components/customers/customer360-estimates';
+import { Customer360ServiceOrders } from '@/components/customers/customer360-service-orders';
+import { Customer360Receivables } from '@/components/customers/customer360-receivables';
+import { Customer360Activity } from '@/components/customers/customer360-activity';
+import { Customer360Documents } from '@/components/customers/customer360-documents';
 
-const SOURCE_LABELS: Record<string, string> = {
-  insurance: 'Insurance',
-  walk_in: 'Walk-in',
-  referral: 'Referral',
-  website: 'Website',
-  other: 'Other',
-};
+const TABS = [
+  { value: 'overview', label: 'Overview' },
+  { value: 'vehicles', label: 'Vehicles' },
+  { value: 'estimates', label: 'Estimates' },
+  { value: 'service-orders', label: 'Service Orders' },
+  { value: 'receivables', label: 'Payments & Receivables' },
+  { value: 'activity', label: 'Activity' },
+  { value: 'documents', label: 'Documents' },
+] as const;
 
-const SOURCE_COLORS: Record<string, string> = {
-  insurance: 'bg-blue-100 text-blue-800',
-  walk_in: 'bg-green-100 text-green-800',
-  referral: 'bg-purple-100 text-purple-800',
-  website: 'bg-orange-100 text-orange-800',
-  other: 'bg-gray-100 text-gray-800',
-};
+type TabValue = (typeof TABS)[number]['value'];
 
-function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
-  if (!value) return null;
-  return (
-    <div className="grid grid-cols-3 gap-4 py-3 border-b last:border-0">
-      <dt className="text-sm font-medium text-muted-foreground">{label}</dt>
-      <dd className="col-span-2 text-sm">{value}</dd>
-    </div>
-  );
-}
-
-export default function CustomerDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+function CustomerDetailContent({ id }: { id: string }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const rawTab = searchParams.get('tab') as TabValue | null;
+  const activeTab: TabValue = TABS.some((t) => t.value === rawTab) ? (rawTab as TabValue) : 'overview';
+
   const { data: customer, isLoading, error } = useCustomer(id);
   const deleteCustomer = useDeleteCustomer();
 
+  const handleTabChange = (tab: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', tab);
+    router.replace(`/customers/${id}?${params.toString()}`, { scroll: false });
+  };
+
   const handleDelete = async () => {
     if (!customer) return;
-    if (!confirm(`Are you sure you want to delete ${customer.first_name} ${customer.last_name}?`)) return;
+    if (!confirm(`Delete ${customer.first_name} ${customer.last_name}? This cannot be undone.`)) return;
     await deleteCustomer.mutateAsync(customer.id);
     router.push('/customers');
   };
@@ -68,12 +69,8 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
     );
   }
 
-  const address = [customer.address, customer.city, customer.state, customer.zip]
-    .filter(Boolean)
-    .join(', ');
-
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
@@ -91,78 +88,69 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
           )}
         </div>
         <div className="flex gap-2">
-          <Link href={`/customers/${customer.id}/edit`}>
-            <Button variant="outline">Edit</Button>
+          <Link href={`/estimates/new?customer_id=${customer.id}`}>
+            <Button size="sm">New Estimate</Button>
           </Link>
-          <Button variant="destructive" onClick={handleDelete}>
+          <Link href={`/customers/${customer.id}/edit`}>
+            <Button variant="outline" size="sm">Edit</Button>
+          </Link>
+          <Button variant="destructive" size="sm" onClick={handleDelete}>
             Delete
           </Button>
         </div>
       </div>
 
-      {/* Badges */}
-      <div className="flex gap-2">
-        <Badge variant="outline" className="capitalize">
-          {customer.type}
-        </Badge>
-        <Badge
-          className={cn(
-            'border-transparent',
-            SOURCE_COLORS[customer.source] || SOURCE_COLORS.other,
-          )}
-        >
-          {SOURCE_LABELS[customer.source] || customer.source}
-        </Badge>
-      </div>
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
+        <TabsList>
+          {TABS.map((tab) => (
+            <TabsTrigger key={tab.value} value={tab.value}>
+              {tab.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
 
-      {/* Contact */}
-      <section className="rounded-lg border">
-        <div className="border-b px-4 py-3">
-          <h2 className="font-semibold">Contact Information</h2>
-        </div>
-        <dl className="px-4">
-          <DetailRow label="Phone" value={formatPhone(customer.phone)} />
-          {customer.phone_secondary && (
-            <DetailRow label="Secondary Phone" value={formatPhone(customer.phone_secondary)} />
-          )}
-          <DetailRow label="Email" value={customer.email} />
-          <DetailRow label="Address" value={address || null} />
-        </dl>
-      </section>
+        <TabsContent value="overview">
+          <Customer360Overview customer={customer} />
+        </TabsContent>
 
-      {/* Insurance */}
-      {customer.policy_number && (
-        <section className="rounded-lg border">
-          <div className="border-b px-4 py-3">
-            <h2 className="font-semibold">Insurance</h2>
-          </div>
-          <dl className="px-4">
-            <DetailRow label="Policy Number" value={customer.policy_number} />
-          </dl>
-        </section>
-      )}
+        <TabsContent value="vehicles">
+          <Customer360Vehicles customerId={customer.id} />
+        </TabsContent>
 
-      {/* Notes */}
-      {customer.notes && (
-        <section className="rounded-lg border">
-          <div className="border-b px-4 py-3">
-            <h2 className="font-semibold">Notes</h2>
-          </div>
-          <div className="px-4 py-3 text-sm whitespace-pre-wrap">{customer.notes}</div>
-        </section>
-      )}
+        <TabsContent value="estimates">
+          <Customer360Estimates customerId={customer.id} />
+        </TabsContent>
 
-      {/* Meta */}
-      <section className="rounded-lg border">
-        <div className="border-b px-4 py-3">
-          <h2 className="font-semibold">Record Info</h2>
-        </div>
-        <dl className="px-4">
-          <DetailRow label="Created" value={formatDate(customer.created_at)} />
-          <DetailRow label="Last Updated" value={formatDate(customer.updated_at)} />
-          <DetailRow label="ID" value={<code className="text-xs">{customer.id}</code>} />
-        </dl>
-      </section>
+        <TabsContent value="service-orders">
+          <Customer360ServiceOrders customerId={customer.id} />
+        </TabsContent>
+
+        <TabsContent value="receivables">
+          <Customer360Receivables customerId={customer.id} />
+        </TabsContent>
+
+        <TabsContent value="activity">
+          <Customer360Activity customerId={customer.id} />
+        </TabsContent>
+
+        <TabsContent value="documents">
+          <Customer360Documents customerId={customer.id} />
+        </TabsContent>
+      </Tabs>
     </div>
+  );
+}
+
+export default function CustomerDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center p-12">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    }>
+      <CustomerDetailContent id={id} />
+    </Suspense>
   );
 }

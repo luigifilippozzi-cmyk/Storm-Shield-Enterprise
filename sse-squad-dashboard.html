@@ -284,7 +284,7 @@
 <script>
 // <!--METRICS_START-->
 const D = {
-  lastUpdated: "2026-04-22 (DM Agent — T-20260421-10 COMPLETED)",
+  lastUpdated: "2026-04-22 (DM Agent — RF-004 Customer 360 PR #44 aberto)",
   updatedBy: "DM Agent",
   health: "green",
   healthText: "VERDE. Deploy API live pela primeira vez: /health retorna {status:ok} em staging (tentativa 1, ~7s). Maquina 1/1 checks. T-20260421-10 COMPLETED — 9 dias de bloqueio resolvidos. 4 causas raiz corrigidas: (1) ESM barrel .js, (2) Dockerfile missing shared-utils/node_modules, (3) CJS circular import DB tokens, (4) AuthModule nao global. ADR-011 redigido. /ready 503 esperado (DATABASE_URL+REDIS_URL ausentes nos Fly secrets — acao Luigi).",
@@ -292,10 +292,10 @@ const D = {
   kpis: {
     backendModules: 13,
     controllers: 16,
-    endpoints: 108,
+    endpoints: 110,
     frontendPages: 38,
     specFiles: 23,
-    tests: 363,
+    tests: 368,
     migrations: 14,
     adrs: 12,
     excelTotal: 36,
@@ -310,6 +310,7 @@ const D = {
     { name: "frontend-reviewer", role: "Next.js + shadcn/ui", color: "var(--cyan)", bg: "rgba(6,182,212,.12)", icon: "layout", status: "active", statusText: "38 rotas (RF-001+RF-002+RF-003 DONE). Expansao PV/PUX pendente (T-20260421-7).", stats: [["Framework","Next.js 15 + React 19"],["Pages","38 paginas"],["Trigger","UI/component changes"]] }
   ],
   activity: [
+    { time: "Abr 22", color: "var(--accent2)", msg: "<strong>PR #44 aberto</strong> feat(web,api): RF-004 Customer 360 View — 7-tab unified customer screen (SSE-053). 368 testes. 2 endpoints novos (/summary + /activity-timeline). Tabs UI + 7 Customer360* components. Deep-link ?tab=value. Estimator / Gap 9 candidato.", tag: "merge" },
     { time: "Abr 22", color: "var(--green)", msg: "<strong>Dev Manager</strong> T-20260421-10 COMPLETED — Deploy API VERDE pela primeira vez. 4 crashes corrigidos: (1) ESM barrels .js, (2) Dockerfile missing shared-utils/node_modules, (3) CJS circular import KNEX tokens, (4) AuthModule @Global. ADR-011 redigido. /health {status:ok} tentativa 1.", tag: "dm" },
     { time: "Abr 21", color: "var(--blue)", msg: "<strong>PM Agent</strong> revisao noite completa — causa real deploy API identificada (ESM bug, nao secrets). T-20260421-10 (P0) criada. PR #38 merged (AuthGuard fix). ADR-012 Accepted. Bussola v1.1. RF-004..007 APPROVED. 9 novas tasks DM (T-20260421-1..9). Regras 1-18: OK.", tag: "pm" },
     { time: "Abr 21", color: "var(--accent2)", msg: "<strong>PR #38</strong> fix(tenants): add AuthGuard to POST /tenants endpoint (SSE-052) — HIGH security fix. 38 PRs total merged.", tag: "merge" },
@@ -338,7 +339,7 @@ const D = {
     { id: "3", nome: "Accounting & FAM", total: 8, done: 7, saude: "green", desc: "COA + JE + Fiscal Periods + FAM + Reports (P&L, Balance Sheet, Trial Balance) DONE. Falta apenas T-036 (frontend pages COA/JE)." }
   ],
   modules: [
-    { name: "customers", files: 12, spec: true, controller: true, endpoints: 8 },
+    { name: "customers", files: 12, spec: true, controller: true, endpoints: 10 },
     { name: "estimates", files: 10, spec: true, controller: true, endpoints: 8 },
     { name: "vehicles", files: 9, spec: true, controller: true, endpoints: 7 },
     { name: "service-orders", files: 9, spec: true, controller: true, endpoints: 8 },
@@ -368,7 +369,7 @@ const D = {
       { titulo: "T-20260421-3 (RF-005) — XL, split recomendado", desc: "Estimate State Machine e Inbox: complexidade XL. PO recomenda split em RF-005a (state machine core) + RF-005b (Inbox kanban) + RF-005c (notificacoes). DM deve propor split ao PO antes de abrir branch.", acao: "Validar split com PO antes de iniciar. RF-006 depende de RF-005 — coordenar sequenciamento." }
     ],
     proximos7: [
-      { titulo: "T-20260421-2 (P1): RF-004 Customer 360 View", desc: "Estimator. 7 abas. Complexidade L — validar split antes de abrir branch. Endpoints existem; agregar via GET /customers/:id/360." },
+      { titulo: "T-20260421-2 (P1): RF-004 — PR #44 aguarda review+merge", desc: "Estimator. 7 abas. PR #44 aberto 2026-04-22. 368/368 testes. subagentes: frontend-reviewer + security-reviewer + test-runner obrigatorios antes do merge." },
       { titulo: "T-20260421-3 (P1): RF-005 Estimate State Machine + Inbox", desc: "Gap 5 Bussola. Complexidade XL — split obrigatorio antes de iniciar. Desbloqueia RF-006." },
       { titulo: "Luigi (acao manual): configurar Fly secrets", desc: "DATABASE_URL (Neon pooled, usuario sse_app) + REDIS_URL (Upstash free). Desbloqueia /ready verde e full staging health." },
       { titulo: "T-20260421-6 (P2): Bussola v1.2 + ADR-013 patches (doc-only)", desc: "PV1-PV6 + PUX1-PUX6 absorvidos. 4 arquivos editados. Desbloqueia T-20260421-7,8,9." }
@@ -385,13 +386,13 @@ const D = {
   ],
   recomendacoes: [
     { prioridade: "P1 (Luigi)", texto: "Configurar Fly secrets: fly secrets set DATABASE_URL=<neon-pooled> REDIS_URL=<upstash> --app sse-api-staging. Desbloqueara /ready verde e full health check." },
-    { prioridade: "P1", texto: "T-20260421-2 (RF-004): DM iniciar Customer 360 View. Endpoints existem — agregar GET /customers/:id/360. Validar complexidade L; se XL, propor split ao PO antes de abrir branch." },
+    { prioridade: "P1", texto: "RF-004 PR #44 aberto — aguarda review. Subagentes obrigatorios: frontend-reviewer + security-reviewer + test-runner antes de merge." },
     { prioridade: "P1", texto: "T-20260421-3 (RF-005): DM validar split XL com PO ANTES de abrir branch. RF-005a (state machine) desbloqueia RF-006 (Payment Hold)." },
     { prioridade: "P2", texto: "T-20260421-6 (doc-only): Bussola v1.2 + ADR-013 patches. Desbloqueia T-20260421-7 (frontend-reviewer PV/PUX), T-20260421-8 (AGENTS.md), T-20260421-9 (NetSuite dashboard v1.2)." },
     { prioridade: "P2", texto: "Marcar COMPLETED: T-20260412-3 (T-008+T-009 ja implementados) e T-20260417-4 (Discovery Gaps entregue). Reduzir ruido no dm_queue." }
   ],
   backlog: [
-    { id: "RF-004", task: "Customer 360 View (7 abas)", fase: "2", prio: "P1", status: "Aprovado", nota: "ADR-012. Estimator. Gap 9 candidato. T-20260421-2." },
+    { id: "RF-004", task: "Customer 360 View (7 abas)", fase: "2", prio: "P1", status: "Em andamento", nota: "PR #44 aberto 2026-04-22. 368 testes. 2 endpoints novos. Tabs UI + 7 componentes Customer360*. Aguarda review+merge." },
     { id: "RF-005", task: "Estimate State Machine + Inbox", fase: "2", prio: "P1", status: "Aprovado", nota: "ADR-012. Gap 5. XL — split recomendado. T-20260421-3. Desbloqueia RF-006." },
     { id: "RF-006", task: "Payment Hold / Disputed Estimate", fase: "2", prio: "P1", status: "Bloqueado", nota: "ADR-012. Gap 5. BLOCKED by RF-005. T-20260421-4." },
     { id: "RF-007", task: "Case Management simplificado", fase: "2", prio: "P2", status: "Aprovado", nota: "ADR-012. Gap 5. Anti-rec #13 (nao ticketing full). T-20260421-5." },
