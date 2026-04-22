@@ -70,16 +70,24 @@ jobs:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         run: flyctl deploy --remote-only -c apps/api/fly.toml
 
+      - name: Wake machine (cold-start)
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          flyctl machine start --app sse-api-staging || true
+          echo "Waiting 30s for machine to boot..."
+          sleep 30
+
       - name: Smoke test — readiness probe
         run: |
           set -euo pipefail
-          for i in 1 2 3 4 5; do
-            if curl --fail --silent --show-error --max-time 10 https://sse-api-staging.fly.dev/ready; then
+          for i in 1 2 3 4 5 6 7 8; do
+            if curl --fail --silent --show-error --max-time 30 https://sse-api-staging.fly.dev/ready; then
               echo "API is ready"
               exit 0
             fi
-            echo "attempt $i: not ready yet, retrying in 5s..."
-            sleep 5
+            echo "attempt $i: not ready yet, retrying in 15s..."
+            sleep 15
           done
-          echo "Readiness probe failed after 5 attempts"
+          echo "Readiness probe failed after 8 attempts"
           exit 1
