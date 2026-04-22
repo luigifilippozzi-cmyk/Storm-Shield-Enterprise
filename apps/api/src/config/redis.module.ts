@@ -11,19 +11,19 @@ export const REDIS_CLIENT = 'REDIS_CLIENT';
       provide: REDIS_CLIENT,
       useFactory: (config: ConfigService): Redis => {
         const url = config.get<string>('REDIS_URL');
-        if (url) {
-          return new Redis(url, {
-            lazyConnect: false,
-            maxRetriesPerRequest: 3,
-          });
-        }
-        return new Redis({
-          host: config.get<string>('REDIS_HOST', 'localhost'),
-          port: config.get<number>('REDIS_PORT', 6379),
-          password: config.get<string>('REDIS_PASSWORD', 'sse_redis_dev'),
-          lazyConnect: false,
-          maxRetriesPerRequest: 3,
-        });
+        const client = url
+          ? new Redis(url, { lazyConnect: false, maxRetriesPerRequest: 3 })
+          : new Redis({
+              host: config.get<string>('REDIS_HOST', 'localhost'),
+              port: config.get<number>('REDIS_PORT', 6379),
+              password: config.get<string>('REDIS_PASSWORD', 'sse_redis_dev'),
+              lazyConnect: false,
+              maxRetriesPerRequest: 3,
+            });
+        // Prevent unhandled 'error' events from crashing the process when
+        // Redis is temporarily unreachable. /ready reports degraded status.
+        client.on('error', () => undefined);
+        return client;
       },
       inject: [ConfigService],
     },
