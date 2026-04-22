@@ -2,9 +2,9 @@ import { Module, Global } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import knex, { Knex } from 'knex';
 import { TenantDatabaseService } from './tenant-database.service';
+import { KNEX_CONNECTION, KNEX_ADMIN_CONNECTION } from './database.tokens';
 
-export const KNEX_CONNECTION = 'KNEX_CONNECTION';
-export const KNEX_ADMIN_CONNECTION = 'KNEX_ADMIN_CONNECTION';
+export { KNEX_CONNECTION, KNEX_ADMIN_CONNECTION };
 
 /**
  * Determine if SSL should be used for a given connection URL.

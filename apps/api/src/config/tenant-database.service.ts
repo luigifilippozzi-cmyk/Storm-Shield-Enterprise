@@ -2,7 +2,7 @@ import { Injectable, Inject, Scope } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { Knex } from 'knex';
 import type { Request } from 'express';
-import { KNEX_CONNECTION } from './database.module';
+import { KNEX_CONNECTION } from './database.tokens';
 
 /**
  * Request-scoped service that provides a Knex instance with:
