@@ -1,9 +1,11 @@
 # Bússola de Produto — Storm Shield Enterprise
 
 > Documento de referência estratégica para decisões de roadmap, redesenho de UX e priorização de RFs no SSE.
-> Criado em: 2026-04-17 | Sessão PO Cowork | Autor: Luigi (PO) + PO Assistant
+> Criado em: 2026-04-17 (v1.0 via ADR-009). Atualizado em: 2026-04-21 (v1.1 via ADR-012).
+> Autor: Luigi (PO) + PO Assistant
 > **Propósito:** Servir de norte a todas as decisões de produto. Deve ser lido antes de qualquer sessão de redesenho, priorização ou discovery de RF.
 > **Natureza:** Não é backlog. Não é arquitetura técnica. É bússola — orienta "que produto estamos construindo e para quem".
+> **v1.1 (2026-04-21):** incorpora aprendizados de `ANALISE_NETSUITE_vs_BUSSOLA_v1.md` — novo princípio P8 (offline-first), §5 expandida (6 anti-features + 1099-NEC movido para Superamos + MACRS adicionado), §7 nota de nomenclatura "Workspace" + Global Search obrigatório, §8 estendida com RF-004/006/007 e ajuste Cockpit.
 
 ---
 
@@ -247,6 +249,13 @@ Tabela de filtro para toda feature nova. Se uma feature está em "Simplificamos"
 | Custom fields | Full customization por tenant | Schema fixo + campos `notes` em entidades chave | Custom fields explodem complexidade e migração. |
 | Workflow automation | BPMN-ish com approvals condicionais | n8n workflows pré-definidos | Body shop não modela BPM. Pré-definido é o certo. |
 | Approval de budget | Budget vs actual com alertas | Cash-based P&L + dashboard simples | Owner-operator não roda budgeting formal. |
+| **Custom Segments / Classifications (Dept/Class/Location)** | Departments, Classes, Locations, Custom Segments — dimensões de análise configuráveis | Nenhum — tenant = 1 shop = 1 location | Violação direta de P7. Anti-target §1 (rede multi-filial). Adicionado v1.1. |
+| **SuiteFlow / Workflow Designer** | BPMN visual builder com approval routing multinível | n8n workflows pré-definidos pelo time SSE | Body shop não modela BPM. Pré-definido é o certo. Já aludido; explicitado v1.1. |
+| **Saved Searches / Custom KPIs** | User monta query → vira KPI em portlet | 4 relatórios canônicos fixos (P&L, BS, TB, Dep Schedule) + KPIs fixos por persona | Self-service reporting exige training + cria dívida de suporte. ICP não usa. Adicionado v1.1. |
+| **OneWorld / Subsidiaries** | Multi-entity consolidado (várias empresas num tenant) | 1 tenant = 1 empresa = 1 shop | Anti-target §1 (rede multi-filial). Adicionado v1.1. |
+| **SuiteBilling / Usage billing** | Recurring + one-time + usage + overage por linha | Plano fixo mensal via Stripe (4 tiers + PlanGuard) | Fase 7+. Atualizar quando houver 1000+ tenants ativos. Adicionado v1.1. |
+| **Dashboard Portlets configuráveis** | User arrasta/solta portlets no dashboard | KPIs fixos por persona (sem drag-and-drop) | Configurabilidade vira distração. User não customiza dashboard. Adicionado v1.1. |
+| **Intelligent Transaction Matching (ML-based)** | ML-based match de bank transactions | Regra simples: amount + date ±3 dias (via Plaid Fase 2) | ML é overkill para body shop 5–15 func. Adicionado v1.1. |
 
 ### Onde HERDAMOS (requisito regulatório ou padrão)
 
@@ -255,7 +264,6 @@ Tabela de filtro para toda feature nova. Se uma feature está em "Simplificamos"
 | Chart of Accounts US GAAP | Requisito regulatório — contador precisa disso exportável. |
 | Double-entry bookkeeping | Base de toda contabilidade; não há "simplificação" válida. |
 | Audit trail (audit_logs) | Requisito de segurança SaaS multi-tenant + eventual compliance SOC 2. |
-| 1099-NEC generation | Requisito IRS para contractors. |
 | Sales Tax (Missouri, depois multi-state) | Requisito local. |
 | Multi-tenant isolation (schema + RLS) | Requisito SaaS. Já entregue. |
 | AES-256-GCM em campos sensíveis | Requisito de segurança para SSN/EIN/bank accounts. |
@@ -269,6 +277,9 @@ Tabela de filtro para toda feature nova. Se uma feature está em "Simplificamos"
 | Mobile-first para técnico | NetSuite mobile é business-user oriented (vendedor consultando CRM). SSE mobile é shop-floor oriented (técnico registrando hora com câmera). Gap 2. |
 | Onboarding <1h | NetSuite requer implementação com parceiro (semanas). SSE requer wizard (minutos). Gap 3. |
 | Preço | $30–$200/mês vs. $500–$5000/mês. Permite o ICP existir como cliente. |
+| **1099-NEC nativo** | NetSuite **não gera 1099** — depende de integradores externos (Yearli, Sovos, Track1099). SSE gera nativamente. Essencial ao ICP (contractors 1099 são operação padrão do shop). Movido de Herdamos → Superamos em v1.1. |
+| **MACRS nativo em FAM** | NetSuite trata MACRS como "alternate tax method" separado, exigindo configuração. SSE tem MACRS nativo (ADR-008) porque é requisito IRS para veículos do shop. Feature essencial, não extensão. Adicionado v1.1. |
+| **Activation tracking instrumentado** | NetSuite tem dashboards pós-implementação; não trata activation rate como métrica padrão. SSE tem tabela `activation_events` + dashboard interno (RF-003). Diferencial de governança PO/PM. Adicionado v1.1. |
 
 ---
 
@@ -289,6 +300,8 @@ Qualquer nova tela, RF ou redesenho deve passar por estes 7 filtros. Violação 
 **P6 — Contabilidade nos bastidores.** Tech/estimator nunca veem "journal entry" ou "debit/credit". Owner vê KPIs agregados em linguagem de negócio ("margem", "receivable", "cash"). Accountant vê GL detalhado — é quem fala a língua contábil.
 
 **P7 — NetSuite é referência, não benchmark.** Feature nova só entra se passa no filtro "body shop médio de 5–15 func usa isso?". Se a justificativa é "NetSuite tem" ou "pode ser necessário no futuro", desprioriza.
+
+**P8 — Offline-first para shop floor (adicionado v1.1).** Técnico não pode perder trabalho quando WiFi cai. Operações críticas do mobile (timer, fotos, SO status) funcionam offline e sincronizam quando reconectar. Desktop pode assumir online; mobile do Technician **não**. Sem offline, mobile do técnico vira "ferramenta que só funciona no escritório" — contradiz P2. Origem: gap identificado em `ANALISE_NETSUITE_vs_BUSSOLA_v1.md §2.7` (FSM Mobile).
 
 ---
 
@@ -318,8 +331,12 @@ Accountant   → /app/books           [Fiscal cycle: período + JE + export]
 
 - **User com múltiplos roles** (ex: owner que também estima) escolhe workspace ativo no topo (pattern tipo "switch workspace"). Default é role mais "alto" (owner > manager > estimator > technician > accountant > viewer).
 - **Settings** (categorias, contas, users, plan) fica fora dos workspaces — sempre acessível por owner/admin via menu do avatar.
-- **Search global** (Cmd/Ctrl+K) funciona em todos os workspaces — customer name, VIN, estimate #, SO #.
+- **Search global (Cmd/Ctrl+K) é obrigatório** em todos os workspaces — customer name, VIN, estimate #, SO #. User acessa qualquer entidade digitando parte do nome/número sem navegar menu. Se não existir no SSE hoje, é ENH P1 independente dos outros RFs (ver `ANALISE_NETSUITE_vs_BUSSOLA_v1.md §2.8`).
 - **Não implementar** navegação horizontal de botões tipo Minhas Finanças ("14 páginas, todas iguais"). Hierarquia de persona > workspace > seção > tela é explícita.
+
+### Nota de nomenclatura (v1.1)
+
+Adotamos o termo **"Workspace"** (e não "Center" como NetSuite) para não importar jargão de ERP genérico para o SSE. "Workspace" é autodescritivo em EN e PT-BR, e sinaliza melhor a intenção de "ambiente de trabalho da persona" do que "centro" (que sugere centralidade hierárquica). Origem: `ANALISE_NETSUITE_vs_BUSSOLA_v1.md §2.8`.
 
 ---
 
@@ -337,6 +354,11 @@ Accountant   → /app/books           [Fiscal cycle: período + JE + export]
 | **P2** | 90–120 dias | Export básico para Accountant (GL + TB + JE em CSV/XLSX) (Fase 2) | Gap 7 parcial | Antecipa cobertura da persona influenciadora. |
 | **P2** | 120–150 dias | Descope formal dos 3 métodos de depreciação extras para plano enterprise | Gap 6 | Poupa dev time. Documentar em ADR. |
 | **P3** | 150–180 dias | Portal do Contador completo (Fase 4 conforme CLAUDE.md) | Gap 7 total | Cobre persona com experiência dedicada. |
+| **P1** (v1.1) | 60–90 dias | **RF-004 Customer 360 View** — tela unificada com 7 abas | Fricção CRM (Gap 9 candidato) | Padrão NetSuite validado. 90% dos cliques do Estimator caem aqui. |
+| **P1** (v1.1) | 60–90 dias | **RF-005 Estimate State Machine + Inbox** | Gap 5 | Formaliza o "RF futuro — Insurance workflow visual". Core do ICP. |
+| **P1** (v1.1) | 60–90 dias | **RF-006 Payment Hold / Disputed Estimate** | Gap 5 complementar | Evita shop continuar trabalho enquanto claim está travado. Inspiração NetSuite Payment Hold. |
+| **P1** (v1.1) | Concorrente com Cockpit | **Ajuste RF do Cockpit** — incluir Available Balance distinct from Cash Balance | Gap 4 refinado | Sem isso, KPI "Cash disponível" é enganoso durante float bancário. Inspiração NetSuite In-Transit Payments. |
+| **P2** (v1.1) | 90–120 dias | **RF-007 Case Management simplificado** | Gap 5 parcial | Customer complaint + disputes não-estimate. Estrutura leve, anti-rec #13 formaliza limite de escopo. |
 
 ### Nota sobre Fase 2 (IA + Integrações)
 
@@ -361,6 +383,14 @@ Este reordenamento é **sugestão do PO** e entra como input para o Dev Manager.
 | 2026-04-17 | Reordenamento sugerido para Fase 2 (activation/cockpit/insurance/mobile antes de IA) — a ratificar | PO Cowork |
 | 2026-04-17 | Descope formal dos 3 métodos de depreciação extras para plano enterprise — a registrar em ADR próprio | PO Cowork |
 | 2026-04-17 | Bússola SSE v0.1 oficializada via ADR-009 | PO Cowork |
+| 2026-04-21 | Análise comparativa NetSuite vs Bússola concluída (v1) | PO Cowork |
+| 2026-04-21 | Dashboard NetSuite↔Bússola adotado como artefato vivo (HTML interativo) | PO Cowork |
+| 2026-04-21 | **RF-004 a RF-007 aprovados** (Customer 360, Estimate State Machine, Payment Hold, Case Management) | PO Cowork |
+| 2026-04-21 | **Princípio P8 (offline-first shop floor)** adicionado a §6 | PO Cowork |
+| 2026-04-21 | **§5 expandida** — 7 novas linhas em Simplificamos; 1099-NEC movido para Superamos; MACRS e activation tracking adicionados a Superamos | PO Cowork |
+| 2026-04-21 | **§7 atualizada** — nota de nomenclatura "Workspace"; Global Search obrigatório | PO Cowork |
+| 2026-04-21 | **§8 ajustada** — 5 linhas novas (RF-004, RF-005, RF-006, RF-007, ajuste Cockpit/Available Balance) | PO Cowork |
+| 2026-04-21 | Bússola SSE **v1.1** oficializada via ADR-012 | PO Cowork |
 
 ---
 

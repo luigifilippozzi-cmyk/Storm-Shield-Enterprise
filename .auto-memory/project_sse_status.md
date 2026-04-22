@@ -4,6 +4,61 @@ description: Current state of Storm Shield Enterprise project — metrics, healt
 type: project
 ---
 
+# SSE Project Status — 2026-04-22 (PM Agent — revisão diária)
+
+## Revisão PM — 2026-04-22
+
+**Saúde: VERDE** — Deploy API VERDE (T-20260421-10 COMPLETED). CI verde. Deploy Web verde. Todos os P0 concluídos. PR #44 open aguardando review.
+
+**Fase 1:** ~96% | Módulos: 13/15 | Testes: 368 | Endpoints: 110 | Migrations: 14 | ADRs: 12 | Controllers: 16
+
+**CI:** VERDE | **Deploy Web:** VERDE | **Deploy API:** VERDE | **PRs abertos:** 1 (#44)
+
+### Prioridades P0/P1 para Dev Manager
+1. **P1** — RF-004 PR #44: acionar subagentes (frontend-reviewer + security-reviewer + test-runner) → merge.
+2. **P1** — Luigi (humano): `fly secrets set DATABASE_URL=<neon-pooled> REDIS_URL=<upstash> --app sse-api-staging` — desbloqueará /ready verde.
+3. **P1** — T-20260421-3 (RF-005): validar split XL com PO ANTES de abrir branch. Desbloqueia RF-006.
+4. **P2** — T-20260421-6: Bússola v1.2 + ADR-013 patches (doc-only). Desbloqueia T-7, T-8, T-9.
+
+### Alertas
+- PR #44 (RF-004): aguarda review subagentes — não mergear sem frontend-reviewer + security-reviewer + test-runner
+- /ready 503 em staging (DATABASE_URL+REDIS_URL ausentes nos Fly secrets — ação Luigi)
+- T-20260421-3 (RF-005): complexidade XL → split obrigatório antes de abrir branch
+- T-20260421-4 (RF-006): BLOCKED by T-20260421-3
+- Coverage < 80% em todos os services (meta CLAUDE.md regra 6)
+
+### Alinhamento Bússola (regras 15-18)
+Sem violações. PR #44 cita Estimator (Bússola §2) + Gap 9 / ADR-012. dm_queue.md usa template canônico §4. Stubs deprecated não escritos.
+
+### Verificação Regras CLAUDE.md §10
+- Regra 4 (KNEX_CONNECTION direto): OK
+- Regra 5 (FLOAT em migrations): OK
+- Regra 6 (CASCADE em financeiro/contábil): OK
+- Regra 9 (secrets hardcoded): OK
+
+### Gaps P2 Fase 1 remanescentes
+- B1-3: Vehicle detail — estimates vinculados
+- B2-2: Estimate form — wizard multi-step completo
+- B3-4: Financial — breakdown por categoria
+
+### Inconsistências
+- T-20260417-4: PENDING mas RFs 1+3+8 implementados → marcar COMPLETED
+- T-20260412-3: implementado confirmado → marcar COMPLETED
+- T-20260412-1: SUPERSEDED (diagnóstico errado) → mover para archive
+- T-20260412-2: aguarda ratificação PO
+
+### Handoff DM aberto (dm_queue.md)
+- **COMPLETED:** T-20260421-10 (ESM fix), T-20260421-2 (RF-004 PR aberto)
+- **PENDING P1:** T-20260421-3 (RF-005 XL), T-20260421-5 (RF-007)
+- **BLOCKED:** T-20260421-4 (RF-006, aguarda T-3)
+- **PENDING P2:** T-20260421-1 (NetSuite standing), T-20260421-6 (Bússola v1.2), T-20260421-7/8/9 (bloq. T-6), T-036 (accounting frontend)
+- **Legacy:** T-20260412-2 (ratificação PO pendente)
+
+### Última sessão PM: 2026-04-22
+### Última sessão DM: 2026-04-22 (Deploy API VERDE + RF-004 PR #44)
+
+---
+
 # SSE Project Status — 2026-04-22 (DM Agent — sessão hotfix deploy API)
 
 ## Revisão DM — 2026-04-22 (RF-004 PR #44 aberto)

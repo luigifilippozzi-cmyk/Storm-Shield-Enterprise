@@ -10,6 +10,236 @@ type: project
 
 ---
 
+## Sessão 2026-04-21 (noite, parte 3) — PO Cowork (Debug assistido do deploy API — causa real identificada)
+
+**Contexto:** Luigi pediu *"resolver bloqueios existentes"* após a sessão parte 2. Após AskUserQuestion com 2 perguntas, escopo foi limitado a **T-20260412-1 (Deploy API)** com saída tipo **"análise PO + plano de ação"**. O diagnóstico anterior no `project_sse_status.md` dizia *"máquina sobe mas /ready timeout, possível DATABASE_URL_UNPOOLED inválida ou port mismatch"* — hipóteses nunca verificadas contra logs.
+
+Plano inicial (4 passos) previa debug incremental via flyctl com 4 hipóteses ranqueadas: (1) REDIS_URL ausente, (2) DATABASE_URL pooled ausente, (3) Neon IP allow-list, (4) Redis não provisionado. **Todas erradas.**
+
+### Decisões de produto
+
+1. **Diagnóstico anterior (T-20260412-1) foi REFUTADO.** Não é problema de secret, nem de port, nem de Redis, nem de Neon. Logs Fly.io da máquina `6837ee3c513728` mostram `ERR_MODULE_NOT_FOUND: '/app/packages/shared-utils/dist/uuid'` em loop — processo Node crasha no boot há 9 dias.
+   - *Causa raiz:* `packages/shared-utils/src/index.ts` (e provavelmente `shared-types/src/index.ts`) tem `export * from './uuid'` **sem extensão `.js`**. Combinado com `tsconfig.base.json` usando `moduleResolution: "bundler"` (config para webpack/vite, não para Node runtime), o `dist/index.js` compilado mantém os imports sem extensão. Node ESM quebra.
+   - *Por que CI passa:* ts-jest transpila on-the-fly, não executa `dist/`. Dev local usa Nest com ts-node. **Só o Docker runtime (que roda `node apps/api/dist/main`) força esse caminho.**
+   - *Condição de reversão do diagnóstico:* se após Opção A os logs ainda mostrarem ERR_MODULE_NOT_FOUND em outro módulo, o diagnóstico estava incompleto — rever dependências transitivas.
+
+2. **T-20260412-1 marcada como SUPERSEDED.** Não requer ação humana. Escopo migrado para nova tarefa.
+
+3. **T-20260421-10 criada** (P0, PENDING, DM). Escopo surgical Opção A — adicionar `.js` aos barrels de `shared-utils` e `shared-types`, trocar `moduleResolution` para `"NodeNext"` em `tsconfig.base.json`. Condição de reversão: se Opção A romper 3+ módulos em cascata, DM aplica Opção B (override `module: "CommonJS"` só nos packages, sem tocar root).
+
+4. **ADR-011 continua reservado** — destrava só quando T-20260421-10 fechar com `/ready` verde em staging. ADR candidato **ADR-014** (Module resolution strategy) fica a critério do DM se a mudança tiver impacto material.
+
+5. **Aprendizado documentado** (na própria tarefa T-20260412-1 como footer histórico): diagnóstico de deploy sem consumir logs de boot é especulação. Próxima vez, primeiro comando é `flyctl logs --no-tail`. DM pode opcionalmente atualizar `docs/runbooks/staging-deploy.md` no PR da fix.
+
+### Alinhamento Bússola
+
+- Personas tocadas: N/A — é bug de infra/build.
+- Gaps tocados: nenhum direto. Indireto: destrava pipeline para entrega de qualquer gap (Fase 1 fechar + Fase 2 começar).
+- Princípios: nenhum.
+
+### Intervenções humanas executadas por Luigi
+
+1. `flyctl version` / `auth whoami` / `apps list` — confirmaram login e app "suspended" (que na verdade é cold-stop + crash loop).
+2. `flyctl machine start 6837ee3c513728` — máquina subiu e caiu em ~10s (exit_code=1, oom_killed=false).
+3. `flyctl status` antes e depois — mostrou `1 total, 1 warning` nas checks, state `stopped` persistente mesmo após start.
+4. `curl /health` → 503 (do proxy Fly, sem máquina saudável); `curl /ready` → 000 (timeout total).
+5. `flyctl logs --no-tail | Select -Last 150` — entregou a stack trace completa que matou todas as hipóteses de infra.
+6. `flyctl machine status` — confirmou `exit_code=1, oom_killed=false, requested_stop=false` em loop desde 2026-04-21 21:47:16.
+
+### Artefatos produzidos
+
+| Artefato | Arquivo | Mudança |
+|---|---|---|
+| Nova tarefa DM P0 | `.auto-memory/dm_queue.md` (topo) | `T-20260421-10 — Fix ESM module resolution` (prepend) |
+| Tarefa superseded | `.auto-memory/dm_queue.md` (bottom) | `T-20260412-1` atualizada com footer histórico + status SUPERSEDED |
+| Status atualizado | `.auto-memory/project_sse_status.md` | Novo bloco "Atualização PO (2026-04-21 noite parte 3)" + Health reason corrigido + P0/P1 reordenado + Handoff DM atualizado |
+| Sessão logada | `.auto-memory/po_sessions.md` | Esta entrada |
+
+### Próxima sessão (sugestão)
+
+Assim que T-20260421-10 fechar com `/ready` 200:
+1. Marcar T-20260412-1 como COMPLETED-SUPERSEDED e mover para `dm_queue_archive.md`
+2. Atualizar Health para VERDE
+3. Desbloquear redação de ADR-011 (Release Cadence)
+4. Considerar aditivo no runbook `docs/runbooks/staging-deploy.md` — "primeiro comando ao investigar deploy fail: `flyctl logs --no-tail`"
+
+### Escopo negativo desta sessão
+
+- Não mexi em código (apenas diagnóstico + delegação)
+- Não alterei CLAUDE.md, AGENTS.md, nem ADRs
+- Não toquei Bússola, RF_BACKLOG, dashboard NetSuite
+- Não redigi ADR-011 (continua reservado)
+- Não abri PR (isso é tarefa do DM em T-20260421-10)
+- Não mexi em `fly.toml`, Dockerfile nem workflow — eles estão corretos
+
+---
+
+## Sessão 2026-04-21 (noite, parte 2) — PO Cowork (Incorporação parcial do pacote MF — PV/PUX + squad health)
+
+**Contexto:** imediatamente após a sessão "NetSuite vs Bússola" (parte 1), Luigi disponibilizou um pacote de conhecimento exportado do projeto Minhas Finanças (MF) — 10 arquivos destilando ~18 meses de aprendizados em governança de squad assistido por IA, princípios de UX (PUX1–PUX6), princípios visuais (PV1–PV6), padrão de subagente ux-reviewer, estrutura da Bússola de Produto, regras invioláveis, workflow Git/PowerShell, anti-patterns e checklist de adoção. Pediu: *"vamos incorporar a tecnologia estabelecida no mf em nosso projeto ... levando em consideração a eficiência em nossa implementação e roadmap estabelecida"*.
+
+Pergunta antes da ação (AskUserQuestion, 3 perguntas): Luigi confirmou **Opção A — Cirúrgica** (PV/PUX na Bússola + saúde do squad no Operating Model), **upload dos 3 arquivos-chave antes de executar** (02 ux-reviewer, 03 PV/PUX, 05 template Bússola), e **absorver em `frontend-reviewer` existente** (sem criar subagente novo).
+
+### Decisões de produto
+
+1. **ADR-013 — Opção A (Cirúrgica) — DRAFT → aguarda DM promover a Accepted via T-20260421-6.** Bússola v1.1 → v1.2. Operating Model v2.0 → v2.1. CLAUDE.md ganha Regra 19 (sugestão — aplicação pelo DM). `frontend-reviewer` expandido de 8 para 20 itens (8 base + 6 PV + 6 PUX). ADR-011 segue reservado para release cadence.
+   - *Condição de reversão:* (a) 3 PRs consecutivos de UI mergeados sem `frontend-reviewer` mencionar PV/PUX como critério → sinal de decoração; (b) RF da Fase 2 com UI que contradiz 2+ princípios sem ADR de exceção → princípios não pegaram; (c) retrospectiva trimestral indica atrito > valor → tradução para stack SSE errada. Qualquer condição → reabrir ADR-013.
+
+2. **PV1–PV6 e PUX1–PUX6 adotados integralmente** com redação SSE-specific:
+   - Stack MF (vanilla HTML + CSS vars + Inter/Fraunces + Lucide) **traduzido** para stack SSE (Next.js 15 + Tailwind + shadcn/ui + next-themes + next/font + lucide-react via shadcn/ui).
+   - **Zero conflito** com P1–P8. PV3 e PUX1 reforçam P1 (hero por persona). PUX2 (`tabular-nums`) reforça P6. PUX6 (skeletons) reforça P3. PV6 (densidade) complementa P6. Os 8 restantes são adições novas.
+   - *Decisão adiada (escopo negativo desta sessão):* paleta concreta (cor primária hex, famílias tipográficas) fica para RF-UI-SSE futuro, análogo ao NRF-UI-WARM do MF. Adotamos **o princípio**, não os valores.
+
+3. **Novo ritual §5.4 do Operating Model** — "Health check do squad (sinais de adoção quebrada)". Quinzenal, dono PM Agent, checklist de 8 itens (subagentes invocados, princípios citados, escopo negativo nas tarefas, ADRs criados quando devia, MEMORY.md atualizado, BLOCKED drenando, lead time estável, condições de reversão checadas).
+
+4. **Regra 19 do CLAUDE.md (sugestão ao DM aplicar em T-20260421-6):**
+   > *"Sempre respeitar os princípios PV1–PV6 (§6.2) e PUX1–PUX6 (§6.3) da Bússola em todo PR que cria ou modifica UI. `frontend-reviewer` é obrigatório em PRs de UI e bloqueia merge em caso de violação. Violação justificada exige ADR próprio. Adotado via ADR-013."*
+
+5. **Escopo negativo explícito da sessão:** não criar subagente `ux-reviewer` independente; não adotar workflow Git/PowerShell do MF (SSE já tem o seu); não redigir paleta/tipografia concretas agora; não tocar §1–§5, §7–§8 da Bússola; não tocar §6 Métricas nem §7 Fluxo do Operating Model; não alterar CLAUDE.md Regras 1–18.
+
+### Alinhamento Bússola
+
+- Personas tocadas: **todas as 4** (PV/PUX aplicam-se transversalmente — Cockpit do Owner, Inbox do Estimator, My Work do Technician, Books do Accountant).
+- Gaps tocados: **indireto em todos** — PV/PUX habilitam Gap 1 (Landing por persona) a entregar com coerência visual.
+- Princípios reforçados: **P1** via PV3+PUX1; **P3** via PUX6; **P6** via PUX2+PV6.
+- Novo princípio: nenhum em §6.1; **12 novos** em §6.2 e §6.3 (PV1–PV6 + PUX1–PUX6).
+
+### Artefatos produzidos
+
+| Artefato | Localização | Operação |
+|---|---|---|
+| ADR-013 draft | `.auto-memory/proposals/adr_013_draft.md` | Novo (DRAFT) |
+| Patch Bússola v1.2 | `.auto-memory/proposals/bussola_v1_2_patch_pv_pux.md` | Novo |
+| Patch Operating Model v2.1 | `.auto-memory/proposals/operating_model_v2_1_patch_squad_health.md` | Novo |
+| Patch frontend-reviewer | `.auto-memory/proposals/frontend_reviewer_patch_pv_pux.md` | Novo |
+| Sugestão CLAUDE.md Regra 19 | `.auto-memory/proposals/claude_md_rule_19_suggestion.md` | Novo |
+| T-20260421-6 (aplicar patches) | `.auto-memory/dm_queue.md` | Novo, P2, Status PENDING |
+| T-20260421-7 (expandir frontend-reviewer) | `.auto-memory/dm_queue.md` | Novo, P2, Blocked by T-20260421-6 |
+| T-20260421-8 (cross-ref AGENTS + MEMORY) | `.auto-memory/dm_queue.md` | Novo, P2, Blocked by T-20260421-6 |
+| T-20260421-9 (sync dashboard) | `.auto-memory/dm_queue.md` | Novo, P2, Blocked by T-20260421-6 |
+
+### Próxima sessão
+
+**Foco sugerido:** (a) acompanhar DM aplicar T-20260421-6..9; (b) após Bússola v1.2 publicada, agendar sessão de discovery de paleta concreta (RF-UI-SSE) análoga ao NRF-UI-WARM do MF; (c) começar RF-004 Customer 360 com frontend-reviewer carregando já o checklist expandido (primeiro teste real de ADR-013).
+
+---
+
+## Sessão 2026-04-21 (noite) — PO Cowork (NetSuite vs Bússola — análise + incorporação)
+
+**Contexto:** Luigi pediu análise comparativa entre a documentação pública do NetSuite e a Bússola de Produto SSE v1.0 (ADR-009). Objetivo: confrontar a Bússola com padrões de indústria sem perder posicionamento "simpler + cheaper + purpose-built", identificando gaps não-vistos, reforços possíveis, e padrões adotáveis sem violar P1–P7. Base: `docs.oracle.com/en/cloud/saas/netsuite/ns-online-help/` via WebSearch (fetch bloqueado por allowlist). 12 áreas exploradas.
+
+Durante a sessão, Luigi enviou duas instruções de aprovação:
+1. *"este é o dashboard que eu quero acompanhar daqui para frente, informe o PM e DM"* — adoção do HTML como artefato vivo de governança estratégica.
+2. *"eu provo o plano de desenvolvimento"* — desambiguação via AskUserQuestion confirmou "Pacote completo" (Bússola v1.1 + 4 RFs + ADR-012 + dashboard sync + DM tasks).
+
+### Decisões de produto
+
+1. **ADR-012 — Opção A (Adotar ajustes propostos) — Accepted.** ADR-011 permanece reservado para Release Cadence (aguarda T-20260412-1 sair de BLOCKED).
+   - *Condição de reversão:* (a) ≥2 dos RFs 004/005/006/007 cancelados antes de dev → reabrir ADR; (b) P8 atrasar Gap 2 em >30 dias → reavaliar P8; (c) mudança material da Bússola em Julho/2026 invalidar RFs; (d) RF-007 ≤5% uso em 90 dias → cancelar + novo ADR.
+
+2. **Bússola promovida para v1.1** — §5 Simplificamos (+7 linhas: Custom Segments/Classifications, SuiteFlow, Saved Searches, OneWorld/Subsidiaries, SuiteBilling, Dashboard Portlets configuráveis, Intelligent Transaction Matching); §5 Superamos (+1099-NEC movido de Herdamos, MACRS nativo, Activation tracking instrumentado); §6 novo **P8 (Offline-first para shop floor)**; §7 Global Search Cmd/Ctrl+K obrigatório + nota de nomenclatura "Workspace" (não "Center"); §8 (+5 linhas: RF-004 P1, RF-005 P1, RF-006 P1, RF-007 P2, ajuste Cockpit Available vs Cash Balance P1); §9 (10 decisões datadas).
+   - *Condição de reversão:* revisão trimestral de Julho/2026 (ADR-010 §4) — se personas/gaps mudarem materialmente, redescopar.
+
+3. **4 RFs APPROVED em RF_BACKLOG.md v0.2:**
+   - RF-004 Customer 360 View (P1, Fase 2, Persona Estimator, L)
+   - RF-005 Estimate State Machine + Inbox (P1, Fase 2, Persona Estimator, XL — split recomendado)
+   - RF-006 Payment Hold / Disputed Estimate (P1, Fase 2, Persona Estimator, M, depende de RF-005)
+   - RF-007 Case Management simplificado (P2, Fase 2, Persona Estimator, M, com anti-rec #13 formal)
+
+4. **13 anti-recomendações explícitas** documentadas em `ANALISE_NETSUITE_vs_BUSSOLA_v1.md §7` — reduzem debate recorrente sobre features NetSuite rejeitadas.
+
+5. **Dashboard NetSuite↔Bússola** (`ANALISE_NETSUITE_vs_BUSSOLA_v1.html` + `.md`) adotado como artefato canônico de acompanhamento contínuo, mantido via **T-20260421-1** (standing task) com 6 gatilhos explícitos.
+
+6. **3 decisões técnicas delegadas ao DM** (cada PR de RF registra):
+   - Reversing Journal Entries já existe no SSE? (relevante p/ RF-005 se toca GL)
+   - Half-Year convention MACRS implementada? (relevante se RF toca FAM)
+   - Global Search Cmd/Ctrl+K está no SSE? (relevante p/ RF-004; ENH P1 separado se não)
+   - *Condição de reversão:* DM decide e registra; se decisão for "existe mas parcial", PO reavaliará se abre ENH complementar.
+
+### Alinhamento Bússola
+
+- Personas tocadas: **Estimator** (primária nos 4 RFs); Owner-Operator (secundária via RF-005 kanban); Accountant (secundária via RF-006 resolução).
+- Gaps tocados: **Gap 5 (Insurance workflow)** amplificado por RF-004/005/006/007; **Gap 2 (Mobile Technician)** reforçado via P8 antes do RF ser escrito.
+- Princípios reforçados: **P1 (simplificar > completar)** formalizado em RF-007 via anti-rec #13; **P4 (uma tela = uma decisão)** validado em RF-004.
+
+### Artefatos produzidos
+
+| Artefato | Localização | Operação |
+|---|---|---|
+| Relatório NetSuite vs Bússola | `docs/strategy/ANALISE_NETSUITE_vs_BUSSOLA_v1.md` | Novo → Accepted |
+| Dashboard interativo | `docs/strategy/ANALISE_NETSUITE_vs_BUSSOLA_v1.html` | Novo → Accepted (living artifact) |
+| ADR-012 formal | `docs/decisions/012-netsuite-incorporacao-parcial.md` | Novo |
+| Bússola v1.1 | `docs/strategy/BUSSOLA_PRODUTO_SSE.md` | Patch (header, §5, §6, §7, §8, §9) |
+| RF_BACKLOG v0.2 | `docs/strategy/RF_BACKLOG.md` | Header + RF-004/005/006/007 + Próximos RFs |
+| Standing task do dashboard | `.auto-memory/dm_queue.md` T-20260421-1 | Novo |
+| Tasks DM para 4 RFs | `.auto-memory/dm_queue.md` T-20260421-2/3/4/5 | Novo |
+| Status update PM | `.auto-memory/project_sse_status.md` | Anotação PO no topo + ADR count 10→11 + RFs |
+| Memória do dashboard | `...memory/project_sse_netsuite_dashboard.md` | Novo |
+| Index de memória | `...memory/MEMORY.md` | Patch (entrada do dashboard) |
+| Index de auto-memory | `.auto-memory/MEMORY.md` | Patch (seção "Dashboards estratégicos") |
+
+### Issues criadas / PRs revisados
+- Issues: nenhuma nova nesta sessão (4 RFs viram backlog, não issues até DM claim)
+- PRs revisados: nenhum (sessão puramente estratégica)
+
+### Bloqueios
+- T-20260412-1 (Deploy API) permanece BLOCKED — aguarda ação humana do Luigi para configurar secrets Fly.io
+- ADR-011 (Release Cadence) permanece reservado
+
+### Próxima sessão PO
+- Foco: monitorar primeiro RF em dev (RF-004 ou RF-005) e validar que PR cita persona/gap conforme Regra 16
+- Opcional: revisitar T-20260412-1 se Luigi confirmar disponibilidade para mexer em secrets Fly.io
+
+---
+
+## Sessão 2026-04-20 (tarde) — PO Cowork (Settings Hardening + Prompt Review)
+
+**Contexto:** Luigi relatou fadiga de prompts de aprovação em sessões de subagentes (ex: `cd ... && git fetch && git pull | tail` disparando modal apesar de `Bash(git fetch:*)` estar no allow list). Pediu script para eliminar interrupções. Escopo alinhado via AskUserQuestion (3 níveis de agressividade × limpeza de legado).
+
+### Decisões de produto
+
+1. **`Bash(*)` total em `.claude/settings.local.json`** — substituído allow list de 80 entradas hiperespecíficas por `Bash(*)` + 1 Read. Backup preservado em `settings.local.json.bak-20260420`. Opção escolhida sobre wildcards targetados (mais conservadora) e `defaultMode: bypassPermissions` (mais agressiva, incluía Edit/Write/MCP).
+   - *Condição de reversão:* se qualquer subagente rodar comando destrutivo inesperado (rm, curl|sh, reset --hard em main, commit direto em main), restaurar do `.bak-20260420` OU trocar para lista targetada (`Bash(git:*)`, `Bash(gh:*)`, `Bash(pnpm:*)`, etc.)
+   - *Trade-off aceito:* Regra 1 do CLAUDE.md ("NUNCA push direto em main") agora depende 100% da disciplina do agente, não mais de gate de permissão. Motivou T-20260420-1.
+
+2. **Revisão crítica dos prompts do squad** — analisados 6 prompts (DevManager, PMAgent, 4 subagentes). Identificados 10 gaps no contexto pós-Bash(*), empacotados em 2 tarefas para DM conforme severidade.
+
+### Artefatos produzidos
+
+| Artefato | Localização | Operação |
+|---|---|---|
+| Allow list enxuto | `.claude/settings.local.json` | Reescrita (80 → 2 entradas) |
+| Backup do allow list anterior | `.claude/settings.local.json.bak-20260420` | Novo |
+| Handoff T-20260420-1 (P1 hardening DM) | `.auto-memory/dm_queue.md` | Append-top |
+| Handoff T-20260420-2 (P2 housekeeping subagentes) | `.auto-memory/dm_queue.md` | Append-top |
+
+### Issues criadas / PRs revisados / Bloqueios
+
+- Issues criadas: 0 (PO-only session)
+- PRs revisados: 0
+- Bloqueios: T-20260412-1 (Deploy API) permanece BLOCKED — inalterado por esta sessão
+- Decisões adiadas: ADR-011 (release cadence) continua reservado até T-20260412-1 sair de BLOCKED
+
+### Alinhamento Bússola
+
+- **Persona primária tocada:** N/A (sessão meta/infra — segurança do processo de delivery)
+- **Gap fechado:** N/A (meta)
+- Observação: T-20260420-2 reforça **Regra 16** (persona+gap em PRs de UI) via patch no `frontend-reviewer.md`
+
+### Handoffs DM derivados
+
+- **T-20260420-1** (P1 PENDING) — hardening do `DevManager_Squad_v2.md`: proibições destrutivas + escopo negativo na pré-autorização
+- **T-20260420-2** (P2 PENDING) — housekeeping dos 4 subagentes + alinhamento com regras 15–18
+- Ambos registrados conforme template canônico `HANDOFF_PROTOCOL.md` §4
+
+### Próxima sessão
+
+1. Aguardar DM consumir T-20260420-1 (P1) — revisar diff quando PR abrir
+2. Monitorar se `Bash(*)` gera comportamento inesperado em subagentes — caso positivo, acionar condição de reversão
+3. Avaliar se T-20260412-1 (Deploy API) avançou para permitir destravar ADR-011 (release cadence)
+
+---
+
 ## Sessão 2026-04-20 — PO Cowork (Relatório de Prontidão + Plano de Testes UI)
 
 **Contexto:** Luigi pediu atualização do relatório de prontidão (antigo `SSE_Post_Migration_Readiness_Report_20260412.md`, desatualizado) e do plano de testes, incluindo UI com dados fictícios. Escopo alinhado via AskUserQuestion antes da execução.
@@ -340,66 +570,4 @@ Tarefas do PM Agent do arquivo antigo foram migradas com IDs novos e mantidas:
 ### Handoffs
 
 - **Dev Manager:** 10 tarefas em `dm_queue.md` (3 do PM originais + 7 novas do PO). Executar em ordem de prioridade, com atenção especial à T-20260417-5 (que leva tudo desta sessão ao repo via PR).
-- **PM Agent:** adotar template canônico do `HANDOFF_PROTOCOL.md` §5 na próxima execução diária. Apontar inconsistência se houver.
-
-### Bloqueios / alertas
-
-- **Alerta de ordem:** T-20260412-2 (Frontend Polish criado pelo PM em 2026-04-12) está em PENDING com uma nota de alerta — precisa validação de Luigi se executa antes ou depois dos Gaps P0 da Bússola em sessão PO futura.
-- **Bloqueio persistente:** T-20260412-1 (GitHub Secrets) continua BLOCKED por ação humana do Luigi. DM deve relembrar na próxima sessão.
-
-### Próxima sessão
-
-**Opção A (recomendado):** WS-C — audit de documentação, usando `next_sessions_plan.md` §Sessão N+1 como briefing. Estimativa 45–60 min.
-
-**Opção B:** WS-D — operating model v2. Só se Luigi preferir formalizar operação antes de limpar docs.
-
-**Opção C:** nova sessão dedicada aos Gaps P0 da Bússola (Gap 1 + Gap 3 + Gap 8 → RFs). Requer T-20260417-4 (briefing técnico do DM) concluída antes.
-
----
-
-### Decisões de produto
-
-1. **ICP definido:** body shop médio nos EUA com 5–15 funcionários.
-2. **Métrica de sucesso 12m:** # tenants ativos + activation rate.
-3. **Posicionamento:** alternativa simpler + cheaper + purpose-built vs. NetSuite/Mitchell/CCC.
-4. **4 personas primárias:** Owner-Operator, Estimator, Technician, Accountant. Manager/admin colapsados em Owner; Viewer como secundário.
-5. **Bússola de Produto SSE v0.1** redigida em `docs/strategy/BUSSOLA_PRODUTO_SSE.md` — 10 seções, incluindo diagnóstico de 8 gaps críticos e reordenamento sugerido da Fase 2.
-6. **Adoção formalizada** via `docs/decisions/009-adocao-bussola-de-produto.md` (ADR-009).
-
-### Artefatos produzidos
-
-| Artefato | Localização |
-|---|---|
-| Bússola SSE v0.1 | `docs/strategy/BUSSOLA_PRODUTO_SSE.md` |
-| ADR-009 | `docs/decisions/009-adocao-bussola-de-produto.md` |
-| Tarefas DM derivadas | `.auto-memory/dm_tasks_pending.md` |
-| Este log | `.auto-memory/po_sessions.md` |
-
-### Gaps críticos identificados (por prioridade na Bússola §4)
-
-- **Gap 1** Landing única, não por persona (P0) — bloqueia activation rate
-- **Gap 2** Mobile do técnico em Fase 5 contradiz a persona mais frequente (P1)
-- **Gap 3** Onboarding / time-to-first-value não instrumentado (P0)
-- **Gap 4** Cockpit do Owner ausente (P1)
-- **Gap 5** Insurance workflow subdesenvolvido apesar de ser core do ICP (P1)
-- **Gap 6** FAM over-engineered (5 métodos, ICP usa 2) (P2)
-- **Gap 7** Portal do Contador em Fase 4 (P2 — adiantar export básico para Fase 2)
-- **Gap 8** Sem sensor de activation (P0 — pré-requisito da métrica)
-
-### Handoffs
-
-- **Dev Manager:** receber `.auto-memory/dm_tasks_pending.md` com 4 tarefas derivadas (patch CLAUDE.md, patch PR template, patch AGENTS.md, conversão dos gaps P0 em RFs).
-- **PM Agent:** incluir no próximo daily um check "houve decisão nesta semana que contradiz a Bússola §2 ou §6?".
-
-### Bloqueios / alertas
-
-- Nenhum bloqueio técnico. Bússola §8 sugere reordenamento de Fase 2 (activation/cockpit/insurance/mobile antes de IA/integrações) — requer ratificação em sessão PO dedicada antes de virar decisão.
-- Descope formal dos 3 métodos de depreciação extras do FAM (Declining Balance, Sum-of-Years, Units of Production) para plano enterprise — registrar em ADR próprio quando for decidido.
-
-### Próxima sessão
-
-**Foco sugerido:** converter os gaps P0 (Gap 1, Gap 3, Gap 8) em RFs formais com critério de aceite, labels GitHub e prioridade. Rodar discovery ≤3 perguntas sobre cada um antes de redigir.
-
----
-
-*Histórico de sessões PO é append-only. Não reescrever sessões passadas; novas entradas no topo.*
+- **PM Agent:** adotar template canônico do `HANDOFF_PROTOCOL.md` §5 na próxima 

@@ -1595,3 +1595,6 @@ N/A (infra).
 Diagnóstico de deploy sem consumir logs de boot da máquina é especulação. Próxima vez que um deploy falhar sem causa óbvia, **primeiro comando**: `flyctl logs -a <app> --no-tail | Select-Object -Last 100`. Hipóteses (secrets, DNS, port, SSL) só depois. Vale um aditivo no runbook `docs/runbooks/staging-deploy.md` se o DM achar pertinente no PR de T-20260421-10.
 
 --
+## [2026-04-22] T-20260422-11 — Adicionar secao Dashboards estrategicos ao template §5 do HANDOFF_PROTOCOL
+[COLAR BLOCO ACIMA SEM ALTERACOES]
+---

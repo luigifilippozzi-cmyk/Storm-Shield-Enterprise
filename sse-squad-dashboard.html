@@ -284,10 +284,10 @@
 <script>
 // <!--METRICS_START-->
 const D = {
-  lastUpdated: "2026-04-22 (DM Agent — RF-004 Customer 360 PR #44 aberto)",
-  updatedBy: "DM Agent",
+  lastUpdated: "2026-04-22 (PM Agent — revisao diaria)",
+  updatedBy: "PM Agent",
   health: "green",
-  healthText: "VERDE. Deploy API live pela primeira vez: /health retorna {status:ok} em staging (tentativa 1, ~7s). Maquina 1/1 checks. T-20260421-10 COMPLETED — 9 dias de bloqueio resolvidos. 4 causas raiz corrigidas: (1) ESM barrel .js, (2) Dockerfile missing shared-utils/node_modules, (3) CJS circular import DB tokens, (4) AuthModule nao global. ADR-011 redigido. /ready 503 esperado (DATABASE_URL+REDIS_URL ausentes nos Fly secrets — acao Luigi).",
+  healthText: "VERDE. Deploy API VERDE (T-20260421-10 COMPLETED). CI verde. Deploy Web verde. PR #44 aberto aguardando review (RF-004 Customer 360 — Estimator / Gap 9). Todos os P0 concluidos: RF-001+RF-002+RF-003+T-20260421-10. Regras 1-18 OK. /ready 503 esperado (DATABASE_URL+REDIS_URL ausentes nos Fly secrets — acao Luigi).",
   activeFase: "2",
   kpis: {
     backendModules: 13,
@@ -310,6 +310,7 @@ const D = {
     { name: "frontend-reviewer", role: "Next.js + shadcn/ui", color: "var(--cyan)", bg: "rgba(6,182,212,.12)", icon: "layout", status: "active", statusText: "38 rotas (RF-001+RF-002+RF-003 DONE). Expansao PV/PUX pendente (T-20260421-7).", stats: [["Framework","Next.js 15 + React 19"],["Pages","38 paginas"],["Trigger","UI/component changes"]] }
   ],
   activity: [
+    { time: "Abr 22", color: "var(--blue)", msg: "<strong>PM Agent</strong> revisao diaria — Saude VERDE. Deploy API VERDE (T-20260421-10 done). CI verde. PR #44 open (RF-004 Customer 360, Estimator, Gap 9). Metricas: 13/15 modulos, 38 pages, 368 testes, 110 endpoints, 14 migrations, 12 ADRs. Regras 1-18 OK. Sem violacoes Bussola. Prioridade: review PR #44 + Luigi configura Fly secrets (/ready). Proximo P1: RF-005 (split XL).", tag: "pm" },
     { time: "Abr 22", color: "var(--accent2)", msg: "<strong>PR #44 aberto</strong> feat(web,api): RF-004 Customer 360 View — 7-tab unified customer screen (SSE-053). 368 testes. 2 endpoints novos (/summary + /activity-timeline). Tabs UI + 7 Customer360* components. Deep-link ?tab=value. Estimator / Gap 9 candidato.", tag: "merge" },
     { time: "Abr 22", color: "var(--green)", msg: "<strong>Dev Manager</strong> T-20260421-10 COMPLETED — Deploy API VERDE pela primeira vez. 4 crashes corrigidos: (1) ESM barrels .js, (2) Dockerfile missing shared-utils/node_modules, (3) CJS circular import KNEX tokens, (4) AuthModule @Global. ADR-011 redigido. /health {status:ok} tentativa 1.", tag: "dm" },
     { time: "Abr 21", color: "var(--blue)", msg: "<strong>PM Agent</strong> revisao noite completa — causa real deploy API identificada (ESM bug, nao secrets). T-20260421-10 (P0) criada. PR #38 merged (AuthGuard fix). ADR-012 Accepted. Bussola v1.1. RF-004..007 APPROVED. 9 novas tasks DM (T-20260421-1..9). Regras 1-18: OK.", tag: "pm" },
@@ -358,7 +359,7 @@ const D = {
     { label: "Deploy Staging (Web)", desc: "Workflow geral + Vercel — SUCCESS 2026-04-21 13:28Z", status: "green", date: "2026-04-21" },
     { label: "Deploy API", desc: "Fly.io — SUCCESS 2026-04-22 18:29Z. /health {status:ok} na primeira tentativa. Maquina 1/1 checks. T-20260421-10 COMPLETED. /ready 503 esperado (DATABASE_URL+REDIS_URL ausentes nos Fly secrets — acao Luigi).", status: "green", date: "2026-04-22" },
     { label: "Deploy Web", desc: "Vercel — SUCCESS (consistente)", status: "green", date: "2026-04-21" },
-    { label: "PRs Abertos", desc: "Nenhum PR pendente — 39+ total merged", status: "green", date: "2026-04-22" }
+    { label: "PRs Abertos", desc: "1 PR aberto: #44 RF-004 Customer 360 View (aguarda review — frontend-reviewer + security-reviewer + test-runner obrigatorios). 44 total (43 merged + 1 open).", status: "yellow", date: "2026-04-22" }
   ],
   alertas: {
     bloqueantes: [],
