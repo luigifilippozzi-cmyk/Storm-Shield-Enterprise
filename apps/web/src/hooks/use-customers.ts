@@ -151,3 +151,51 @@ export function useDeleteCustomer() {
     },
   });
 }
+
+// ── Customer 360 ──
+
+export interface CustomerSummary {
+  open_estimates_count: number;
+  open_so_count: number;
+  balance: number;
+  ytd_revenue: number;
+  last_activity_at: string | null;
+}
+
+export interface ActivityEvent {
+  id: string;
+  event_type: 'interaction' | 'so_status_change' | 'payment' | 'estimate_created';
+  event_subtype?: string;
+  description: string;
+  occurred_at: string;
+  amount?: number;
+  from_status?: string;
+  to_status?: string;
+  notes?: string;
+}
+
+export function useCustomerSummary(id: string) {
+  const getHeaders = useApiHeaders();
+
+  return useQuery({
+    queryKey: ['customers', id, 'summary'],
+    queryFn: async () => {
+      const { token } = await getHeaders();
+      return api<CustomerSummary>(`/customers/${id}/summary`, { token });
+    },
+    enabled: !!id,
+  });
+}
+
+export function useCustomerActivityTimeline(id: string, limit = 50) {
+  const getHeaders = useApiHeaders();
+
+  return useQuery({
+    queryKey: ['customers', id, 'activity-timeline', limit],
+    queryFn: async () => {
+      const { token } = await getHeaders();
+      return api<ActivityEvent[]>(`/customers/${id}/activity-timeline?limit=${limit}`, { token });
+    },
+    enabled: !!id,
+  });
+}

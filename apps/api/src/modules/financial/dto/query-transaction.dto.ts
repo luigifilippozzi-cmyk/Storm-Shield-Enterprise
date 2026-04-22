@@ -29,6 +29,11 @@ export class QueryTransactionDto {
   @IsISO8601({ strict: true })
   date_to?: string;
 
+  @ApiPropertyOptional({ description: 'Filter by customer ID (UUID)' })
+  @IsOptional()
+  @IsString()
+  customer_id?: string;
+
   @ApiPropertyOptional({ default: 1 })
   @IsOptional()
   @Type(() => Number)

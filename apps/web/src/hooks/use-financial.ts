@@ -8,6 +8,7 @@ import type { FinancialTransaction } from '@sse/shared-types';
 export interface TransactionFilters {
   search?: string;
   transaction_type?: string;
+  customer_id?: string;
   page?: number;
   limit?: number;
   sort_by?: string;
