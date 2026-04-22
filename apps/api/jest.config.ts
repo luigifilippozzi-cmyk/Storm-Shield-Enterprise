@@ -24,6 +24,7 @@ const config: Config = {
   moduleNameMapper: {
     '^@sse/shared-utils$': '<rootDir>/../../../packages/shared-utils/src',
     '^@sse/shared-types$': '<rootDir>/../../../packages/shared-types/src',
+    '^(\\.{1,2}/.+)\\.js$': '$1',
   },
 };
 

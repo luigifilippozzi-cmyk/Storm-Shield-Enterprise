@@ -1,4 +1,4 @@
-import { TransactionType, PaymentMethod, PaymentStatus } from './enums';
+import { TransactionType, PaymentMethod, PaymentStatus } from './enums.js';
 
 export interface FinancialTransaction {
   id: string;

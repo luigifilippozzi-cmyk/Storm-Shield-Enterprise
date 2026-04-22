@@ -1,4 +1,4 @@
-import { TenantStatus, SubscriptionPlan } from './enums';
+import { TenantStatus, SubscriptionPlan } from './enums.js';
 
 export interface Tenant {
   id: string;
