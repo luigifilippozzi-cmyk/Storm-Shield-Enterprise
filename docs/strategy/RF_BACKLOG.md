@@ -1,10 +1,11 @@
 # RF Backlog — Storm Shield Enterprise
 
 > Backlog de Requisitos Funcionais derivados dos Gaps Críticos da Bússola.
-> **Status:** v0.1 — iniciado em 2026-04-17
-> **Convenção de numeração:** RF-NNN sequencial. Próximo RF a criar: **RF-004**.
+> **Status:** v0.2 — atualizado em 2026-04-21 (incorporação de RF-004..007 via ADR-012)
+> **Convenção de numeração:** RF-NNN sequencial. Próximo RF a criar: **RF-008**.
 > **Status permitidos:** PROPOSED | APPROVED | IN_PROGRESS | DONE | CANCELED
 > **Autoridade:** Bússola §4 (gaps) + §8 (ordem de ataque). RFs aqui derivam diretamente de gaps.
+> **Autoridade adicional (RF-004..007):** ADR-012 (incorporação parcial de padrões NetSuite) + `ANALISE_NETSUITE_vs_BUSSOLA_v1.md`.
 
 ---
 
@@ -302,15 +303,348 @@ Justificativa: migration nova + módulo backend novo + alteração em 6 services
 
 ---
 
+## RF-004 — Customer 360 View
+
+**Status:** IN_PROGRESS
+**PR:** #44 (feature/SSE-053-rf-004-customer-360)
+**Prioridade:** P1
+**Fase:** 2
+**Aprovado em:** 2026-04-21 (sessão PO, via ADR-012)
+**Gap fechado:** Fricção CRM — novo gap candidato (Gap 9), não nos 8 originais da Bússola v1.0. A decisão formal de adicionar como Gap 9 fica para revisão trimestral de julho/2026.
+**Persona primária:** Estimator. Secundárias: Owner-Operator, Accountant.
+**Princípio respeitado:** P1 (landing por persona, estendido a detalhe de entidade).
+**Origem:** `ANALISE_NETSUITE_vs_BUSSOLA_v1.md` §2.6 + §5 — adaptação de NetSuite Customer 360 View.
+
+### Descrição
+
+Ao clicar em um customer, exibir página unificada com abas em vez de páginas fragmentadas. Substitui o fluxo atual "customer → voltar → filtrar estimates por customer → voltar → filtrar SOs por customer".
+
+### Regras de Negócio
+
+- **RN1** — 7 abas canônicas renderizadas via shadcn Tabs: `Overview | Vehicles | Estimates | Service Orders | Payments & Receivables | Activity | Documents`. Default: Overview.
+- **RN2** — Header da página tem quick actions: "Novo Estimate", "Nova SO", "Add Note". Ações partem do customer pré-preenchido.
+- **RN3** — Aba Overview mostra: foto/avatar, contatos (phone/email/address), balance total em aberto, última atividade, badge do tipo de customer (insurance vs out-of-pocket).
+- **RN4** — Aba Payments & Receivables split entre "Insurance payments" e "Out-of-pocket", com totais.
+- **RN5** — Activity timeline faz merge cronológico de: `estimate_status_changes` + `so_status_history` + `customer_interactions` + `notifications` enviadas + `consent_records`.
+- **RN6** — Balance e receivables calculados via query agregada **real-time** (não cacheada). Justificativa: dados de receita não toleram stale.
+- **RN7** — Aba Documents lista todos os uploads via StorageService vinculados ao customer (estimate docs, SO photos, supplements, NFs).
+- **RN8** — URL estrutura: `/app/customers/:id?tab=overview` — tab via query param para deep-link.
+
+### Módulos impactados
+
+**Frontend:**
+- `apps/web/src/app/(dashboard)/customers/[id]/page.tsx` — refator para abas
+- Novos componentes em `apps/web/src/components/customers/`: `customer360-tabs.tsx`, `customer360-overview.tsx`, `customer360-vehicles.tsx`, `customer360-estimates.tsx`, `customer360-service-orders.tsx`, `customer360-receivables.tsx`, `customer360-activity.tsx`, `customer360-documents.tsx`
+
+**Backend:**
+- Reuso majoritário de endpoints existentes.
+- 1–2 endpoints agregadores novos:
+  - `GET /customers/:id/summary` — retorna `{ balance, last_activity_at, open_estimates_count, open_so_count, ytd_revenue }`
+  - `GET /customers/:id/activity-timeline?limit=N` — retorna eventos mesclados ordenados por `occurred_at DESC`
+
+### Migrations
+
+**Nenhuma.** Todos os dados já existem; é agregação/visualização.
+
+### Critérios de Aceite
+
+- [ ] CA1 — Clique em customer abre a página com 7 abas; Overview renderizada por default
+- [ ] CA2 — Quick actions (Novo Estimate / Nova SO) abrem modal ou navegam com customer pré-preenchido
+- [ ] CA3 — Balance mostrado em Overview bate com query agregada de financial_transactions pendentes
+- [ ] CA4 — Activity timeline ordena correto por data e mostra ≥4 tipos de evento (estimate/SO status, interactions, consent)
+- [ ] CA5 — Deep-link `/app/customers/:id?tab=estimates` abre diretamente na aba Estimates
+- [ ] CA6 — Cobertura de testes ≥ 80% nos componentes novos + endpoints agregadores
+- [ ] CA7 — PR descreve persona Estimator + gap (fricção CRM / Gap 9 candidato) — Regra 16 CLAUDE.md
+
+### Subagentes obrigatórios
+
+`frontend-reviewer` (7 componentes + navegação por tabs) + `test-runner` (coverage) + `security-reviewer` (endpoints agregadores precisam respeitar RLS — não leak cross-tenant via aggregation).
+
+### Complexidade estimada
+
+**L (alto).** PO assessment — DM deve validar.
+
+Justificativa: 7 abas no frontend (L), backend é principalmente reuso (S), endpoints agregadores têm performance como risco (indexes em `customer_id` já existem mas query cross-tabela precisa profiling). Pode ser quebrado em sub-RFs: 004a (Overview + Vehicles + Documents — tabs simples); 004b (Estimates + SOs — filtros); 004c (Receivables + Activity — agregações complexas).
+
+### Dependências
+
+- Nenhuma técnica direta. Pode ir em paralelo com RF-005/RF-006.
+- **Valor pleno** emerge quando RF-005 estiver DONE (Activity timeline fica mais rica com estimate state machine formalizada).
+
+### Notas de implementação
+
+- Considerar caching seletivo das queries agregadas (Redis) para customers com >100 transactions — DM decide se necessário após profiling inicial.
+- Timeline pode virar o componente mais pesado — usar virtualized list se customer tem >200 eventos históricos.
+
+---
+
+## RF-005 — Estimate State Machine + Inbox do Estimator
+
+**Status:** APPROVED
+**Prioridade:** P1
+**Fase:** 2
+**Aprovado em:** 2026-04-21 (sessão PO, via ADR-012)
+**Gap fechado:** Gap 5 (Insurance workflow subdesenvolvido) — Bússola §4. Formaliza o "RF futuro — Insurance workflow visual" que estava mencionado em Bússola §8.
+**Persona primária:** Estimator. Secundárias: Owner-Operator (visibilidade), Accountant (receivables).
+**Princípio respeitado:** P5 (insurance-first).
+**Origem:** `ANALISE_NETSUITE_vs_BUSSOLA_v1.md` §5 + Bússola §4 Gap 5.
+
+### Descrição
+
+Formalizar state machine explícita em `estimates.status` cobrindo o ciclo completo de claim de seguradora, e expor como inbox (kanban/tabela) ao Estimator em `/app/estimates/inbox` (workspace do RF-001).
+
+### Regras de Negócio
+
+- **RN1** — Estados canônicos:
+  ```
+  draft → submitted_to_adjuster → awaiting_approval → approved → supplement_pending → approved_with_supplement → paid → closed
+                                          ↓                              ↓
+                                        rejected                       disputed (hand-off ao RF-006)
+  ```
+- **RN2** — Transitions válidas documentadas em ENUM + validator no service (não strings livres). Estado final: `closed` ou `rejected`.
+- **RN3** — Cada transition gera evento em `estimate_status_changes` (tabela já existe) com: `from_status`, `to_status`, `changed_by_user_id`, `changed_at`, `notes`.
+- **RN4** — Inbox em `/app/estimates/inbox` com 2 visualizações: **Kanban** (colunas por estado, drag-and-drop entre estados permitidos) e **Tabela** (filtros por status + adjuster + data).
+- **RN5** — Estimator vê apenas os estimates dos quais é responsável ou órfãos (sem owner). Admin/Owner vê todos.
+- **RN6** — Status `disputed` é transição especial que dispara fluxo do RF-006 (Payment Hold / Disputed Estimate).
+- **RN7** — Badges coloridos consistentes: draft (cinza), submitted_to_adjuster (azul), awaiting_approval (amarelo), approved (verde), supplement_pending (laranja), approved_with_supplement (verde), rejected (vermelho), disputed (vermelho-pulsante), paid (verde-escuro), closed (preto).
+- **RN8** — SLA interno: estimate em `awaiting_approval` > 14 dias dispara notification ao owner (via notifications table). SLA em `supplement_pending` > 7 dias mesma coisa.
+
+### Módulos impactados
+
+**Backend:**
+- `apps/api/src/modules/estimates/estimates.service.ts` — validator de transitions
+- Migration 014 ou alter nos ENUMs existentes — expandir `estimate_status` ENUM com os novos estados (DM decide se é migration nova ou patch no ENUM existente).
+- `estimate_status_changes` table — confirmar que já existe e é append-only; se não, criar.
+
+**Frontend:**
+- Novo: `apps/web/src/app/(dashboard)/estimates/inbox/page.tsx` (alinhado com RF-001)
+- Componentes: `estimates-kanban.tsx`, `estimates-inbox-table.tsx`, `estimate-status-badge.tsx` (reutilizável)
+- Integração com RF-004 (aba Estimates do Customer 360 usa `estimate-status-badge`)
+
+### Migrations
+
+**Sim.** Migration `014_estimate_state_machine.sql` — expandir ENUM `estimate_status`, garantir tabela `estimate_status_changes` com constraint append-only.
+
+### Critérios de Aceite
+
+- [ ] CA1 — Todos os 10 estados (draft..closed + disputed + rejected) representáveis e transitions válidas documentadas no código
+- [ ] CA2 — Service rejeita transition inválida (ex: draft → paid) com 400
+- [ ] CA3 — Cada transition grava registro em `estimate_status_changes`
+- [ ] CA4 — Inbox kanban com drag-and-drop respeita transitions válidas (não permite drop ilegal)
+- [ ] CA5 — Inbox tabela filtra por status + adjuster + data corretamente
+- [ ] CA6 — Estimator vê só seus estimates; Owner vê todos
+- [ ] CA7 — SLA alerts geram notifications após 14 dias em `awaiting_approval` (job batch diário — DM decide cron)
+- [ ] CA8 — Cobertura ≥ 80%; testes unitários do validator de transitions cobrem todos os pares from→to
+- [ ] CA9 — PR descreve persona Estimator + Gap 5 — Regra 16
+
+### Subagentes obrigatórios
+
+`db-reviewer` (migration 014 + ENUM expansion) + `frontend-reviewer` (kanban/drag-drop) + `test-runner` (validator coverage é core) + `security-reviewer` (ownership enforcement RN5).
+
+### Complexidade estimada
+
+**XL (muito alto).** PO assessment — DM deve validar e decidir split.
+
+Justificativa: state machine + kanban + inbox + SLA jobs + migrations. Sugestão de split em 3 sub-RFs: 005a (state machine + validator + migration — backend); 005b (inbox tabela + filtros — frontend básico); 005c (kanban + drag-drop + SLA alerts — frontend avançado + jobs).
+
+### Dependências
+
+- **RF-001 (Landing por Persona)** — `/app/estimates/inbox` pressupõe workspace do Estimator.
+- Bloqueio parcial de **RF-006** — RF-006 usa o estado `disputed` introduzido aqui.
+
+### Notas de implementação
+
+- SLA timers podem começar como alertas simples; "SLA dashboard" pode virar ENH P2 futura.
+- Avaliar se permitir "custom statuses" por tenant — **decisão já tomada: NÃO** (Bússola §1, anti-custom-fields). Documentar como violação explícita.
+
+---
+
+## RF-006 — Payment Hold / Disputed Estimate
+
+**Status:** APPROVED
+**Prioridade:** P1
+**Fase:** 2
+**Aprovado em:** 2026-04-21 (sessão PO, via ADR-012)
+**Gap fechado:** complementa Gap 5 (Insurance workflow). Inspiração: NetSuite Payment Hold.
+**Persona primária:** Estimator. Secundárias: Owner-Operator (aprovação), Technician (impacto na SO pausada).
+**Princípio respeitado:** P5 (insurance-first).
+**Origem:** `ANALISE_NETSUITE_vs_BUSSOLA_v1.md` §2.4 + §5 — adaptação de NetSuite Payment Hold.
+
+### Descrição
+
+Implementar estado `disputed` em estimates com campos específicos de dispute, bloqueio de progressão da SO vinculada, e notificação automática ao Owner. Evita que o shop continue trabalho (e custos) enquanto claim está travado com adjuster.
+
+### Regras de Negócio
+
+- **RN1** — Campos adicionais em `estimates` (via migration):
+  - `dispute_reason` TEXT NULL (ENUM: `adjuster_underpayment | supplement_rejected | claim_denied | total_loss_dispute | other`)
+  - `dispute_notes` TEXT NULL
+  - `dispute_opened_at` TIMESTAMPTZ NULL
+  - `dispute_resolved_at` TIMESTAMPTZ NULL
+  - `blocks_so_progression` BOOLEAN NOT NULL DEFAULT true
+- **RN2** — Quando estimate vai para status `disputed` (transição do RF-005):
+  1. Service Orders vinculadas ficam com flag `is_paused_by_dispute = true` no record
+  2. Transitions de SO status são bloqueadas se `is_paused_by_dispute = true`, exceto com override explícito do Owner (endpoint `POST /service-orders/:id/force-progress` com reason obrigatório)
+  3. Notification criada para Owner (via `notifications` existente) com severity `high`
+- **RN3** — SLA de dispute: > 14 dias em aberto = alerta ao Owner; > 30 dias = alerta P1 (escalação visual no Cockpit).
+- **RN4** — Quando estimate sai de `disputed` (transição válida: `approved` | `approved_with_supplement` | `rejected` | `closed`):
+  1. `dispute_resolved_at = now()`
+  2. SOs vinculadas voltam a `is_paused_by_dispute = false`
+- **RN5** — Histórico completo de disputes vira parte do Customer 360 Activity timeline (RF-004).
+- **RN6** — Dashboard do Owner (futuro Cockpit, Gap 4) exibe contador "Disputes abertos" — RF de Cockpit quando for escrito usa esta fonte.
+
+### Módulos impactados
+
+**Backend:**
+- Migration 015: ALTER estimates + ALTER service_orders (add `is_paused_by_dispute`)
+- `estimates.service.ts` — método `openDispute(id, reason, notes)`, `resolveDispute(id, resolution_status)`
+- `service-orders.service.ts` — guard de progression baseado em `is_paused_by_dispute`
+- Novo endpoint: `POST /service-orders/:id/force-progress` (owner-only, require reason)
+
+**Frontend:**
+- Modal "Abrir Dispute" no detail de estimate (quando status permite)
+- Badge "🔒 Paused by Dispute" em SO quando aplicável
+- Botão "Force Progress" visível só para Owner com confirmação em 2 passos
+
+### Migrations
+
+**Sim.** Migration `015_estimate_dispute.sql` — adiciona 5 campos a estimates + 1 campo a service_orders + ENUM `dispute_reason`. Não usar CASCADE DELETE (Regra 6 CLAUDE.md — tabela financeira).
+
+### Critérios de Aceite
+
+- [ ] CA1 — Abrir dispute em estimate transiciona status para `disputed` e preenche os 4 campos obrigatórios
+- [ ] CA2 — SO vinculada a estimate em dispute não avança de status (retorna 409 Conflict com mensagem clara)
+- [ ] CA3 — Owner consegue forçar progression via endpoint dedicado; operação é logada em audit_logs
+- [ ] CA4 — Resolve dispute limpa flags nas SOs e permite avanço novamente
+- [ ] CA5 — Notification criada para Owner no momento do open dispute
+- [ ] CA6 — SLA alert disparado em > 14 dias de dispute aberto (teste com time mock)
+- [ ] CA7 — RF-004 Activity timeline inclui entries de dispute_opened / dispute_resolved
+- [ ] CA8 — Cobertura ≥ 80%; testes de guard de progression + edge cases (estimate sem SO, múltiplas SOs)
+- [ ] CA9 — PR descreve persona Estimator + Gap 5 — Regra 16
+
+### Subagentes obrigatórios
+
+`db-reviewer` (migration 015 + ENUM) + `security-reviewer` (force-progress endpoint precisa ser owner-only e audit-logged — risco alto se ficar disponível a outros roles) + `test-runner` (core é o guard; muitos edge cases) + `frontend-reviewer` (modal + badge).
+
+### Complexidade estimada
+
+**M (médio).** PO assessment — DM deve validar.
+
+Justificativa: migration contida, lógica de guard é clara, UI relativamente simples. Não é trivial porque envolve 2 módulos (estimates + service-orders) e tem impacto em cascata.
+
+### Dependências
+
+- **RF-005** — precisa do estado `disputed` introduzido na state machine. RF-006 não pode entrar antes de RF-005.
+- **RF-004** (fraca) — Activity timeline fica mais rica com RF-006, mas RF-006 pode ir sem RF-004.
+
+### Notas de implementação
+
+- Considerar campo `resolution_outcome` ao fechar dispute (accepted | rejected | settled | escalated_to_legal) — decisão DM se entra agora ou em refinamento posterior.
+- **Risco:** tenants podem começar a abrir disputes para "pausar" SOs por motivo não-insurance (abuso de fluxo). Monitor via evento activation: `dispute_opened` count vs dispute_resolved com resolution outcome.
+
+---
+
+## RF-007 — Case Management simplificado
+
+**Status:** APPROVED
+**Prioridade:** P2
+**Fase:** 2
+**Aprovado em:** 2026-04-21 (sessão PO, via ADR-012)
+**Gap fechado:** complementa Gap 5 e serve customer complaints em geral — estrutura leve, não é CRM ticket full. NetSuite Case Management é a inspiração, mas com 13ª anti-recomendação explícita (`ANALISE §7.13`): sem tipos/origens/regras/territórios/auto-assignment.
+**Persona primária:** Estimator (abre casos). Secundárias: Owner-Operator (revisa), Customer (subject).
+**Princípio respeitado:** P7 (complexidade proporcional ao ICP).
+**Origem:** `ANALISE_NETSUITE_vs_BUSSOLA_v1.md` §2.6 + §5.
+
+### Descrição
+
+Entidade `cases` leve para rastrear complaints de customers e disputes não-estimate (ex: qualidade de reparo anterior, pedido de refund). Intencionalmente simples — manual assignment, sem regras automáticas.
+
+### Regras de Negócio
+
+- **RN1** — Tabela `cases`:
+  - `id` UUID v7 PK
+  - `tenant_id` UUID NOT NULL (RLS obrigatório — Regra 3 CLAUDE.md)
+  - `case_type` TEXT NOT NULL (ENUM: `complaint | quality_issue | refund_request | general_inquiry | other`)
+  - `opened_by_user_id` UUID NOT NULL
+  - `customer_id` UUID NULL (FK)
+  - `vehicle_id` UUID NULL (FK)
+  - `related_estimate_id` UUID NULL (FK)
+  - `related_so_id` UUID NULL (FK)
+  - `title` TEXT NOT NULL
+  - `body` TEXT NOT NULL
+  - `status` TEXT NOT NULL DEFAULT 'open' (ENUM: `open | in_progress | resolved | closed`)
+  - `priority` TEXT NOT NULL DEFAULT 'medium' (ENUM: `low | medium | high`)
+  - `assigned_to_user_id` UUID NULL (manual assignment)
+  - `opened_at` TIMESTAMPTZ NOT NULL DEFAULT now()
+  - `resolved_at` TIMESTAMPTZ NULL
+  - `resolution_notes` TEXT NULL
+  - `created_at`, `updated_at` padrão
+
+- **RN2** — Escopo deliberado: **sem** case types customizáveis, **sem** origins, **sem** routing rules, **sem** territórios, **sem** auto-assignment, **sem** SLA por tipo. Anti-recomendação #13 do `ANALISE_NETSUITE_vs_BUSSOLA_v1.md`.
+- **RN3** — Relação com RF-006: `dispute` não é um case type aqui — disputes de estimate têm fluxo próprio (RF-006). **Decisão DM**: avaliar se faz sentido unificar via campo discriminator futuramente, mas v0.1 fica separado.
+- **RN4** — Lista em `/app/cases` (rota secundária, não workspace próprio).
+- **RN5** — Filtros: status, priority, assigned_to, customer.
+- **RN6** — Case não tem comments/notes thread em v0.1 — apenas `body` + `resolution_notes`. Thread vira ENH P3 futura se demanda emergir.
+- **RN7** — Audit log em todas as mudanças de status/assigned_to.
+
+### Módulos impactados
+
+**Backend:**
+- Migration 016: `cases.sql` + ENUMs + RLS policies (Regra 3 CLAUDE.md)
+- Novo módulo `apps/api/src/modules/cases/`: module, service, controller, DTOs
+- Endpoints: `GET /cases`, `GET /cases/:id`, `POST /cases`, `PATCH /cases/:id`, `POST /cases/:id/resolve`
+
+**Frontend:**
+- Nova rota `/app/cases/page.tsx` (lista) + `/app/cases/[id]/page.tsx` (detail)
+- Componentes: `cases-table.tsx`, `case-detail.tsx`, `case-form-modal.tsx`
+
+### Migrations
+
+**Sim.** Migration `016_cases.sql` — tabela + ENUMs + RLS policies + indexes em (`tenant_id`, `status`), (`tenant_id`, `customer_id`), (`tenant_id`, `assigned_to_user_id`).
+
+### Critérios de Aceite
+
+- [ ] CA1 — CRUD de cases funciona; criação respeita tenant_id + RLS
+- [ ] CA2 — Filtros na listagem (status, priority, customer) funcionam
+- [ ] CA3 — Transition open → in_progress → resolved → closed validada no service
+- [ ] CA4 — Resolve gera audit_log entry
+- [ ] CA5 — Case linkado a customer aparece no Customer 360 Activity (RF-004 dependency — pode ficar atrás de feature flag se RF-004 não estiver DONE)
+- [ ] CA6 — Cobertura ≥ 80%
+- [ ] CA7 — PR descreve persona Estimator + Gap 5 parcial — Regra 16
+
+### Subagentes obrigatórios
+
+`db-reviewer` (migration 016 + RLS) + `security-reviewer` (RLS é crítico; novo módulo precisa PlanGuard) + `test-runner` + `frontend-reviewer`.
+
+### Complexidade estimada
+
+**M (médio).** PO assessment — DM deve validar.
+
+Justificativa: módulo novo + migration + CRUD frontend + integração leve com Customer 360. Não é trivial mas é padrão (parecido com estrutura de `contractors` ou `notifications`).
+
+### Dependências
+
+- **RF-004** (fraca) — CA5 depende; pode ir com feature flag.
+- **PlanGuard update**: adicionar `cases` em `PLAN_FEATURES` conforme Regra 8 CLAUDE.md. Plano mínimo: starter (ou free? **decisão DM**).
+
+### Notas de implementação
+
+- **Anti-recomendação explícita (do `ANALISE §7.13`):** não permitir que o DM introduza features de Case Management full do NetSuite. Se demanda real emergir (>10 tenants pedindo tipos customizáveis), reabrir decisão.
+- Comments/notes thread em v0.1 está fora. Não adicionar mesmo se parecer "fácil".
+
+---
+
 ## Próximos RFs (a criar em sessões PO futuras)
 
 Da Bússola §8, ainda PENDENTES de virar RF:
 
-- **RF futuro — Cockpit do Owner (Gap 4)** — KPIs gerenciais. P1 60–90 dias.
-- **RF futuro — Insurance workflow visual (Gap 5)** — state machine + inbox do Estimator. P1 60–90 dias.
-- **RF futuro — Mobile PWA Technician (Gap 2)** — minhas SOs + timer + fotos. P1 90–120 dias.
+- **RF futuro — Cockpit do Owner (Gap 4)** — KPIs gerenciais. P1 60–90 dias. **Ajuste obrigatório via ADR-012:** incluir Available Balance distinto de Cash Balance.
+- **RF futuro — Mobile PWA Technician (Gap 2)** — minhas SOs + timer + fotos. P1 90–120 dias. **Ajuste obrigatório via P8:** offline-first com sync queue.
 - **RF futuro — Export básico Accountant (Gap 7 parcial)** — GL + TB + JE em CSV/XLSX. P2 90–120 dias.
 - **RF futuro — Descope FAM 3 métodos extras (Gap 6)** — ADR de descope. P2 120–150 dias.
+- **RF futuro — Global Search (Cmd/Ctrl+K)** — validar com DM se já existe; se não, ENH P1 independente. Originado do `ANALISE §2.8`.
+- **RF futuro — Half-Year convention MACRS** — validar com DM se já implementado em FAM. Se não, compliance IRS P1. Originado do `ANALISE §2.3`.
+- **RF futuro — Reversing Journal Entries** — validar com DM. Se ausente, ENH P2 fase-3-accounting. Originado do `ANALISE §2.2`.
 
 ---
 

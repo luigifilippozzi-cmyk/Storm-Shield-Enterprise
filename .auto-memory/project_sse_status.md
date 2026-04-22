@@ -6,29 +6,27 @@ type: project
 
 # SSE Project Status — 2026-04-22 (DM Agent — sessão hotfix deploy API)
 
-## Revisão DM — 2026-04-22 (pós-fix T-20260421-10)
+## Revisão DM — 2026-04-22 (RF-004 PR #44 aberto)
 
-**Saúde: VERDE** — Deploy API (Fly.io) VERDE. `curl /health → {"status":"ok"}` em staging. Máquina `1/1` checks. T-20260421-10 COMPLETED (9 dias de bloqueio resolvidos).
+**Saúde: VERDE** — Deploy API VERDE. T-20260421-10 COMPLETED. RF-004 Customer 360 View PR #44 aberto, aguarda review+merge.
 
-**Fase 1:** ~96% | Módulos: 13/15 | Testes: 363 | Endpoints: 108 | Migrations: 14 | ADRs: 11
+**Fase 1:** ~96% | Módulos: 13/15 | Testes: 368 | Endpoints: 110 | Migrations: 14 | ADRs: 12
 
 **CI:** VERDE | **Deploy Web:** VERDE | **Deploy API:** VERDE | **PRs abertos:** 0 | **PRs merged:** 39+
 
-### Novidades desde última revisão (sessão tarde → noite)
+### Novidades desde última revisão
+- PR #44 aberto: feat(web,api) RF-004 Customer 360 View (SSE-053) — 7 tabs, 2 endpoints novos, 368 testes
+- T-20260421-2 COMPLETED (branch+PR abertos, aguarda merge)
+- RF-004 status: APPROVED → IN_PROGRESS em RF_BACKLOG.md
 - PR #38 merged: fix(tenants) AuthGuard POST /tenants — HIGH security fix (SSE-052)
 - ADR-012 Accepted: Incorporação parcial NetSuite → Bússola v1.1
-- Bússola v1.1 publicada (§5 §6 §7 §8 §9 atualizados)
-- RF-004..007 APPROVED via ADR-012 (4 novas tasks DM)
-- T-20260421-1..9 criadas no dm_queue.md (9 tasks novas)
-- Causa real deploy API identificada: ESM resolution bug (T-20260412-1 SUPERSEDED)
-- Dashboard NetSuite↔Bússola adotado como artefato vivo (T-20260421-1 standing task)
+- T-20260421-10 COMPLETED: Deploy API VERDE (4 crashes corrigidos)
 
 ### Prioridades P0/P1 para Dev Manager
-1. **P1** — T-20260421-2: RF-004 Customer 360 View (Estimator, 7 abas, complexidade L — validar split antes).
+1. **P1** — RF-004 PR #44: aguarda review subagentes (frontend-reviewer + security-reviewer + test-runner) → merge.
 2. **P1** — T-20260421-3: RF-005 Estimate State Machine + Inbox (XL — split obrigatório antes de abrir branch).
 3. **P2** — T-20260421-6: Bússola v1.2 + ADR-013 patches (doc-only, desbloqueia T-7,8,9).
 4. **P2** — Marcar COMPLETED: T-20260412-3 e T-20260417-4.
-5. **P2** — ADR-011 redigir (desbloqueado agora que /health verde).
 
 ### Alertas
 - T-20260421-3 (RF-005): XL → split recomendado antes de branch
