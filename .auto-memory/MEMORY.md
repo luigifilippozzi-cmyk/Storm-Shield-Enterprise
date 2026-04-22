@@ -18,8 +18,9 @@
 ## Referências cruzadas
 
 - Protocolo operacional: `docs/process/HANDOFF_PROTOCOL.md`
-- Bússola estratégica: `docs/strategy/BUSSOLA_PRODUTO_SSE.md`
-- Adoção formal: `docs/decisions/009-adocao-bussola-de-produto.md`
+- Bússola estratégica: `docs/strategy/BUSSOLA_PRODUTO_SSE.md` — v1.2 (ADR-013): §6.1 P1–P8, §6.2 PV1–PV6, §6.3 PUX1–PUX6
+- Adoção formal Bússola: `docs/decisions/009-adocao-bussola-de-produto.md`
+- Incorporação parcial PV/PUX: `docs/decisions/013-incorporacao-parcial-pv-pux.md` — frontend-reviewer expandido 20 itens, Regra 19 CLAUDE.md
 - Squad architecture: `docs/decisions/007-agent-squad-architecture.md`
 
 ## Dashboards estratégicos (leitura contínua)
