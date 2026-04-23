@@ -6,6 +6,64 @@ type: project
 > **Nota:** "NS" = ERP de referência externo. Nome substituído por precaução (ADR-014).
 
 
+# SSE Project Status — 2026-04-25 (PM Agent — revisão diária)
+
+## Revisão PM — 2026-04-25
+
+**Saúde: VERDE** — CI VERDE. Deploy API VERDE (/ready 200). Deploy Web VERDE. 0 PRs abertos. 52 merged.
+
+**Fase 1:** ~99.5% | Módulos: 13/15 | Testes: 512 | Endpoints: 114 | Migrations: 17 | ADRs: 14 | Controllers: 16 | Pages: 38 | Specs: 25
+
+**CI:** VERDE | **Deploy Web:** VERDE | **Deploy API:** VERDE | **PRs abertos:** 0 | **PRs merged:** 52
+
+### Novidades desde última revisão PM (2026-04-24)
+- **PR #51 merged:** feat(estimates) RF-006 payment hold / disputed estimate workflow (SSE-056). Migration 016, openDispute/resolveDispute/forceProgress(), SO guard, 3 modais frontend. 501 testes. T-20260421-4 COMPLETED.
+- **PR #52 merged:** feat(estimates) RF-005c kanban drag-drop + SLA alerts + estimator ownership (SSE-057). EstimatesKanban dnd-kit, SlaNotificationService @Cron, hero strip, age badges (PV3/PV4/PUX1/PUX6), updateStatus ownership guard. 512 testes (25 suites). T-20260421-3c COMPLETED. RF-005 FULLY DONE.
+- **RF-005 (3a+3b+3c) e RF-006 inteiramente concluídos.**
+
+### Prioridades P0/P1 para Dev Manager
+1. **P1 (DM — URGENTE)** — Commitar 18 linhas não-commitadas em estimates: `findOne` ownership guard + 1 teste + controller. Abrir PR pequeno ou incluir no próximo ciclo.
+2. **P2 (DM)** — T-20260421-5: RF-007 Case Management simplificado. Próximo RF aprovado, independente.
+3. **P2 (DM)** — T-20260421-9: Sync NS dashboard com Bússola v1.2 (bloqueio removido há 3+ dias). PR doc-only ~30min.
+4. **P2 (DM)** — T-036: Accounting frontend pages (COA + JE) — fechar Fase 3.
+
+### Alertas
+- **Código não-commitado:** 18 linhas em `apps/api/src/modules/estimates/` (findOne ownership guard para Estimator + 1 teste + controller `@CurrentUser`). Não está em nenhum PR merged. Risco de perda se branch local for descartada.
+- Coverage <80% branches: contractors (77.77%), customers (71.79%), financial (66.66%) — standing issue.
+- T-20260421-9: PENDING sem movimentação há 3+ dias — bloqueio T-6 já removido.
+- T-20260412-2: Legacy PENDING há 13 dias — aguarda ratificação PO.
+
+### Alinhamento Bússola (regras 15-18)
+Sem violações. PR #51 cita Manager/Owner+Estimator + Gap 5. PR #52 cita Estimator+Owner-Operator + Gap 5. dm_queue.md usa template canônico §4. Stubs deprecated não escritos.
+
+### Verificação Regras CLAUDE.md §10
+- Regra 4 (KNEX_CONNECTION direto): OK
+- Regra 5 (FLOAT em migrations): OK
+- Regra 6 (CASCADE em financeiro/contábil): OK
+- Regra 9 (secrets hardcoded): OK
+- Regras 15-18: OK — PRs #51 e #52 conformes
+
+### Gaps P2 Fase 1 remanescentes
+- B1-3: Vehicle detail — estimates vinculados
+- B2-2: Estimate form — wizard multi-step completo
+- B3-4: Financial — breakdown por categoria
+
+### Inconsistências
+- Código não-commitado em estimates (findOne ownership guard) — NOVA, detectada 2026-04-25.
+- T-20260421-9: parado há 3+ dias sem bloqueio real.
+- Gaps B1-3/B2-2/B3-4: sem task explícita em dm_queue.
+- T-20260412-2: aguarda decisão PO há 13 dias.
+
+### Handoff DM aberto (dm_queue.md)
+- **COMPLETED:** T-20260422-1, T-20260421-10, T-20260421-2, T-20260421-6/7/8, T-20260421-3a, T-20260421-3b, T-20260421-4, **T-20260421-3c**
+- **PENDING P2:** T-20260421-1 (standing), T-20260421-5 (RF-007), T-20260421-9 (NS dashboard v1.2), T-036 (accounting frontend)
+- **Legacy:** T-20260412-2 (ratificação PO pendente)
+
+### Última sessão PM: 2026-04-25
+### Última sessão DM: 2026-04-25 (RF-005c PR #52 + RF-006 PR #51)
+
+---
+
 # SSE Project Status — 2026-04-25 (DM Agent — T-20260421-4 COMPLETED)
 
 ## Revisão DM — 2026-04-25 (RF-006 Payment Hold / Disputed Estimate)
