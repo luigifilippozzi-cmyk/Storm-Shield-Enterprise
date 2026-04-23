@@ -6,24 +6,23 @@ type: project
 > **Nota:** "NS" = ERP de referência externo. Nome substituído por precaução (ADR-014).
 
 
-# SSE Project Status — 2026-04-25 (DM Agent — sessão autônoma)
+# SSE Project Status — 2026-04-23 (DM Agent — sessão autônoma)
 
-## Revisão DM — 2026-04-25 (PR #53 + PR #54 + PR #55)
+## Revisão DM — 2026-04-23 (PR #56)
 
-**Saúde: VERDE** — CI VERDE. Deploy API VERDE. Deploy Web VERDE. 0 PRs abertos. 55 merged.
+**Saúde: VERDE** — CI pendente (PR #56 aberto). Deploy API VERDE. Deploy Web VERDE. 1 PR aberto. 55 merged.
 
-**Fase 1:** ~99.8% | Módulos: 13/15 | Testes: 514 | Endpoints: 114 | Migrations: 17 | ADRs: 14 | Controllers: 16 | Pages: 38 | Specs: 25
+**Fase 1:** ~99.9% | Módulos: 14/15 | Testes: 543 | Endpoints: 120 | Migrations: 17 | ADRs: 14 | Controllers: 17 | Pages: 40 | Specs: 26
 
-**CI:** VERDE | **Deploy Web:** VERDE | **Deploy API:** VERDE | **PRs abertos:** 0 | **PRs merged:** 55
+**CI:** pendente | **Deploy Web:** VERDE | **Deploy API:** VERDE | **PRs abertos:** 1 | **PRs merged:** 55
 
-### Novidades desta sessão (2026-04-25)
-- **PR #53 merged:** fix(estimates) SSE-058 — Estimator ownership guard em `findOne()` + hardening user.id (security-reviewer Medium corrigido). 514 testes.
-- **PR #54 merged:** docs(strategy) T-20260421-9 — NS dashboard sincronizado com Bússola v1.2 (card ADR-013, RF-004/005/006 DONE badges, roadmap atualizado). T-20260421-9 COMPLETED.
-- **PR #55 merged:** fix(security) SSE-059 — `.del()` de `estimate_documents` e `vehicle_photos` agora escopados por `tenant_id`. Auditoria completa de 6 `.del()` calls — 4 já corretos, 2 corrigidos.
-- **Código não-commitado resolvido:** 18 linhas P1 confirmadas em PR #53.
+### Novidades desta sessão (2026-04-23)
+- **PR #56 aberto:** feat(cases) SSE-060 — RF-007 Case Management simplificado. Migration 017_cases.sql, CasesModule (service+controller+4 DTOs+26-test spec), /cases + /cases/[id] frontend, use-cases.ts hooks, sidebar links. 543 testes (514→543).
+- **fix(plan-guard):** RequirePlanFeature migrado para SetMetadata; PlanGuard usa getAllAndOverride([handler, class]).
+- **Security:** RLS WITH CHECK, schema-qualified ENUM idempotency, explicit field mapping (no ...dto spread), remove() passa userId para audit log, @MaxLength em body/resolution_notes.
 
-### Prioridades P0/P1 para próxima sessão DM
-1. **P2** — T-20260421-5: RF-007 Case Management simplificado (próximo RF aprovado, independente)
+### Prioridades para próxima sessão DM
+1. **P2** — T-20260421-5: Mergear PR #56 após CI verde; marcar RF-007 DONE em RF_BACKLOG.md
 2. **P2** — T-036: Accounting frontend pages (COA + JE)
 3. **P2** — Coverage <80% branches: contractors (77.77%), customers (71.79%), financial (66.66%) — standing issue
 
@@ -33,28 +32,28 @@ type: project
 - Módulos ausentes: inventory, rental, notifications (não bloqueantes para Fase 1)
 
 ### Alinhamento Bússola (regras 15-18)
-Sem violações. PR #53 e #55 são fixes internos (Regra 16 N/A). PR #54 é doc-only (N/A). dm_queue.md usa template canônico §4.
+PR #56: Persona primária = Estimator (Bússola §2), Gap 5 parcial fechado (Bússola §4). Regra 16 cumprida na descrição do PR.
 
 ### Verificação Regras CLAUDE.md §10
-- Regra 2 (tenant_id em queries): OK — PR #55 fechou gap residual
-- Regra 4 (KNEX_CONNECTION direto): OK
-- Regra 5 (FLOAT em migrations): OK
-- Regra 6 (CASCADE em financeiro/contábil): OK
+- Regra 2 (tenant_id em queries): OK — RLS + explicit where({ tenant_id })
+- Regra 4 (KNEX_CONNECTION direto): OK — usa TenantDatabaseService
+- Regra 5 (FLOAT em migrations): OK — sem campos monetários em cases
+- Regra 6 (CASCADE em financeiro/contábil): N/A
 - Regra 9 (secrets hardcoded): OK
 - Regras 15-18: OK
 
 ### Handoff DM (dm_queue.md)
-- **COMPLETED esta sessão:** T-20260421-9 (NS dashboard v1.2 sync)
-- **PENDING P2:** T-20260421-1 (standing), T-20260421-5 (RF-007), T-036 (accounting frontend)
+- **IN_REVIEW esta sessão:** T-20260421-5 (RF-007, PR #56)
+- **PENDING P2:** T-20260421-1 (standing), T-036 (accounting frontend)
 - **Legacy:** T-20260412-2 (ratificação PO pendente)
 
 ### Subagentes acionados esta sessão
-- test-runner: PASS 513→514/514
-- security-reviewer: PASS após correção Medium (PR #53)
-- db-reviewer: N/A
-- frontend-reviewer: N/A
+- test-runner: PASS 514→543/543
+- security-reviewer: PASS após correção 2 Critical, 4 High
+- db-reviewer: PASS após correção trigger name + RLS WITH CHECK + ENUM schema-qualified
+- frontend-reviewer: PASS após remoção tenant_id da interface Case
 
-### Última sessão DM: 2026-04-25 (PR #53 SSE-058 + PR #54 T-9 + PR #55 SSE-059)
+### Última sessão DM: 2026-04-23 (PR #56 SSE-060 RF-007 Cases)
 
 ---
 

@@ -5,6 +5,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { SetMetadata } from '@nestjs/common';
 
 /**
  * Subscription plan limits per feature.
@@ -55,16 +56,16 @@ export const PLAN_FEATURES: Record<string, string[]> = {
   ],
   starter: [
     'customers', 'vehicles', 'estimates', 'service-orders', 'financial',
-    'insurance', 'contractors', 'reports',
+    'insurance', 'contractors', 'reports', 'cases',
   ],
   pro: [
     'customers', 'vehicles', 'estimates', 'service-orders', 'financial',
-    'insurance', 'contractors', 'reports', 'accounting', 'fixed-assets',
+    'insurance', 'contractors', 'reports', 'cases', 'accounting', 'fixed-assets',
     'inventory', 'notifications',
   ],
   enterprise: [
     'customers', 'vehicles', 'estimates', 'service-orders', 'financial',
-    'insurance', 'contractors', 'reports', 'accounting', 'fixed-assets',
+    'insurance', 'contractors', 'reports', 'cases', 'accounting', 'fixed-assets',
     'inventory', 'notifications', 'rental', 'api-access', 'integrations',
   ],
 };
@@ -75,12 +76,7 @@ export const PLAN_REQUIRED_KEY = 'plan_feature';
  * Decorator to mark an endpoint as requiring a specific plan feature.
  * Usage: @RequirePlanFeature('accounting')
  */
-export const RequirePlanFeature = (feature: string) =>
-  (target: any, key?: string, descriptor?: PropertyDescriptor) => {
-    const reflector = new Reflector();
-    Reflect.defineMetadata(PLAN_REQUIRED_KEY, feature, descriptor?.value ?? target);
-    return descriptor ?? target;
-  };
+export const RequirePlanFeature = (feature: string) => SetMetadata(PLAN_REQUIRED_KEY, feature);
 
 /**
  * Guard that checks if the current tenant's subscription plan
@@ -92,10 +88,10 @@ export class PlanGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const requiredFeature = this.reflector.get<string>(
-      PLAN_REQUIRED_KEY,
+    const requiredFeature = this.reflector.getAllAndOverride<string>(PLAN_REQUIRED_KEY, [
       context.getHandler(),
-    );
+      context.getClass(),
+    ]);
 
     if (!requiredFeature) {
       return true;
