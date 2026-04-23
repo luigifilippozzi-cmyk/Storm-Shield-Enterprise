@@ -15,6 +15,25 @@ type: project
 
 ---
 
+## T-20260423-1 — T-036 Accounting Frontend Pages (COA + JE)
+
+**Origin:** PM (backlog standing)
+**Priority:** P2
+**Status:** COMPLETED
+**Created:** 2026-04-23
+**Claimed:** DM Agent (sessão 2026-04-23)
+**Closed:** 2026-04-23
+**Branch:** `feature/SSE-061-t036-accounting-frontend-coa-je`
+**PR:** #57 (merged 2026-04-23)
+
+### Objetivo
+Fechar gap de frontend no módulo Accounting: criar páginas `/accounting/chart-of-accounts` e `/accounting/journal-entries` com filtros, paginação e tabelas. Hooks React Query correspondentes. Sidebar `books` atualizada com COA.
+
+### Persona servida
+Accountant (Bússola §2) — operações diárias de browse COA e JE.
+
+---
+
 ## T-20260422-1 — P2 Substituição de marca registrada de ERP externo por sigla NS (trademark hygiene)
 
 **Origin:** PO (sessão 2026-04-22)
@@ -634,11 +653,12 @@ Complemento a Gap 5 (Insurance workflow) — Bússola §4.
 
 **Origin:** PO
 **Priority:** P2
-**Status:** IN_REVIEW
+**Status:** COMPLETED
 **Created:** 2026-04-21
 **Claimed:** 2026-04-23
+**Closed:** 2026-04-23
 **Branch:** `feature/SSE-060-rf-007-case-management`
-**PR:** #56 (open — CI pending)
+**PR:** #56 (merged 2026-04-23)
 
 ### Objetivo
 Implementar RF-007 conforme spec em `docs/strategy/RF_BACKLOG.md` (v0.2) — módulo leve de Case Management (não ticketing full) para registrar follow-ups, dúvidas de cliente, supplements de insurance que não são disputa. Intencionalmente enxuto: 3 status (Open, In Progress, Closed), vinculação a customer+optional vehicle/estimate, notas + anexos.

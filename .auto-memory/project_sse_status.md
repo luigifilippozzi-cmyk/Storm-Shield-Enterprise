@@ -6,7 +6,38 @@ type: project
 > **Nota:** "NS" = ERP de referência externo. Nome substituído por precaução (ADR-014).
 
 
-# SSE Project Status — 2026-04-23 (DM Agent — sessão autônoma)
+# SSE Project Status — 2026-04-23 (DM Agent — sessão agendada autônoma)
+
+## Revisão DM — 2026-04-23 (PRs #56 + #57 merged)
+
+**Saúde: VERDE** — CI VERDE. Deploy API VERDE. Deploy Web in_progress (normal pós-merge). 0 PRs abertos. 57 merged.
+
+**Fase 1:** ~100% | Módulos: 14/15 | Testes: 543 | Endpoints: 120 | Migrations: 18 | ADRs: 15 | Controllers: 17 | Pages: 42 | Specs: 26
+
+### Novidades desta sessão (2026-04-23 — agendada autônoma)
+- **PR #56 merged:** fix 4 erros TS (SetMetadata import + DTO definite assignment) que bloqueavam CI do RF-007 Cases. RF-007 marcado DONE. T-20260421-5 COMPLETED.
+- **PR #57 merged (T-036):** /accounting/chart-of-accounts + /accounting/journal-entries pages, hooks, sidebar books atualizada.
+- **Subagentes:** test-runner PASS 543/543 (branches 81.09%) | frontend-reviewer PASS | sec/db N/A
+
+### Prioridades para próxima sessão DM
+1. P2 — T-20260421-1: NS dashboard (aguarda gatilho)
+2. P2 — Coverage <80% branches: contractors (77.77%), customers (71.79%), financial (66.66%)
+3. P2 — Gaps B1-3/B2-2/B3-4 (sem task explícita)
+
+### Alertas
+- Coverage <80% branches em 3 services: standing issue
+- T-20260412-2: aguarda ratificação PO há 14+ dias
+
+### Handoff DM (dm_queue.md)
+- **COMPLETED esta sessão:** T-20260421-5, T-20260423-1 (T-036)
+- **PENDING P2:** T-20260421-1 (standing)
+- **Legacy:** T-20260412-2
+
+### Última sessão DM: 2026-04-23 (PRs #56 + #57 — sessão agendada)
+
+---
+
+# SSE Project Status — 2026-04-23 (DM Agent — sessão anterior)
 
 ## Revisão DM — 2026-04-23 (PR #56)
 
