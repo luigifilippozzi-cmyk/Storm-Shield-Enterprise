@@ -193,6 +193,14 @@ describe('EstimatesService', () => {
         service.findOne(TENANT_ID, ESTIMATE_ID, { id: ESTIMATOR_ID, roles: ['estimator'] }),
       ).rejects.toThrow(ForbiddenException);
     });
+
+    it('should throw ForbiddenException when estimator context has no resolved user id', async () => {
+      knex._chain.first.mockReturnValueOnce({ id: ESTIMATE_ID, status: 'draft', estimated_by: null });
+
+      await expect(
+        service.findOne(TENANT_ID, ESTIMATE_ID, { id: undefined as unknown as string, roles: ['estimator'] }),
+      ).rejects.toThrow(ForbiddenException);
+    });
   });
 
   describe('update', () => {

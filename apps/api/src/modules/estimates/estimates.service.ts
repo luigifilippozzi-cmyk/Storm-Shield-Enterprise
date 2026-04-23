@@ -212,8 +212,12 @@ export class EstimatesService {
       .first();
     if (!estimate) throw new NotFoundException('Estimate not found');
 
-    if (user?.roles?.includes('estimator') && estimate.estimated_by !== user.id) {
-      throw new ForbiddenException('Estimators can only view their own estimates');
+    const isEstimator = user?.roles?.includes('estimator') ?? false;
+    if (isEstimator) {
+      if (!user?.id) throw new ForbiddenException('Estimator context requires a resolved user identity');
+      if (estimate.estimated_by !== user.id) {
+        throw new ForbiddenException('Estimators can only view their own estimates');
+      }
     }
 
     const lines = await knex('estimate_lines')
