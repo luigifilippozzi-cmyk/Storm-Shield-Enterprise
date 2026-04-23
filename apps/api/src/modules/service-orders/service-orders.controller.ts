@@ -8,10 +8,12 @@ import { CreateServiceOrderDto } from './dto/create-service-order.dto';
 import { UpdateServiceOrderDto } from './dto/update-service-order.dto';
 import { QueryServiceOrderDto } from './dto/query-service-order.dto';
 import { UpdateServiceOrderStatusDto } from './dto/update-status.dto';
+import { ForceProgressDto } from './dto/force-progress.dto';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { TenantGuard } from '../../common/guards/tenant.guard';
 import { RbacGuard } from '../../common/guards/rbac.guard';
 import { CurrentTenant } from '../../common/decorators/current-tenant.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RequirePermissions } from '../../common/decorators/permissions.decorator';
 
 @ApiTags('service-orders')
@@ -83,5 +85,21 @@ export class ServiceOrdersController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.serviceOrdersService.remove(tenantId, id);
+  }
+
+  // RF-006: Owner-only override for dispute-locked service orders
+  @Post(':id/force-progress')
+  @ApiOperation({ summary: 'Force progress a service order paused by dispute (Owner only — requires audit reason)' })
+  @ApiResponse({ status: 201, description: 'Progress forced; audit log created' })
+  @ApiResponse({ status: 400, description: 'Not paused by dispute or invalid target status' })
+  @ApiResponse({ status: 403, description: 'Owner role required' })
+  @RequirePermissions('service-orders:write:update')
+  forceProgress(
+    @CurrentTenant() tenantId: string,
+    @CurrentUser() user: { id: string; roles?: string[] },
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: ForceProgressDto,
+  ) {
+    return this.serviceOrdersService.forceProgress(tenantId, id, dto, user);
   }
 }

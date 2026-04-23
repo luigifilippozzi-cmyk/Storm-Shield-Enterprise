@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { NotFoundException, BadRequestException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { ServiceOrdersService } from './service-orders.service';
 import { TenantDatabaseService } from '../../config/tenant-database.service';
 import { ActivationEventsService } from '../admin/activation/activation.service';
@@ -322,6 +322,79 @@ describe('ServiceOrdersService', () => {
       knex._chain.first.mockReturnValueOnce(null);
 
       await expect(service.remove(TENANT_ID, SO_ID)).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  // ── RF-006: Dispute guard + forceProgress tests ──
+
+  describe('updateStatus — dispute guard', () => {
+    it('should throw ConflictException when order is paused by dispute', async () => {
+      const mockOrder = { id: SO_ID, status: 'in_progress', is_paused_by_dispute: true };
+      knex._chain.first.mockReturnValueOnce(mockOrder);
+
+      await expect(
+        service.updateStatus(TENANT_ID, SO_ID, { status: 'completed' as any }),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('should allow transition when order is NOT paused by dispute', async () => {
+      const mockOrder = { id: SO_ID, status: 'in_progress', is_paused_by_dispute: false };
+      const mockUpdated = { ...mockOrder, status: 'completed' };
+      knex._chain.first.mockReturnValueOnce(mockOrder);
+      knex._chain.returning.mockReturnValueOnce([mockUpdated]);
+
+      const result = await service.updateStatus(TENANT_ID, SO_ID, { status: 'completed' as any });
+
+      expect(result).toEqual(mockUpdated);
+    });
+  });
+
+  describe('forceProgress', () => {
+    const OWNER_USER = { id: '00000000-0000-0000-0000-000000000099', roles: ['owner'] };
+
+    it('should force-progress a dispute-paused order for owner', async () => {
+      const mockOrder = { id: SO_ID, status: 'in_progress', is_paused_by_dispute: true };
+      const mockUpdated = { ...mockOrder, status: 'completed', is_paused_by_dispute: false };
+      knex._chain.first.mockReturnValueOnce(mockOrder);
+      knex._chain.returning.mockReturnValueOnce([mockUpdated]);
+      // audit_logs insert is non-blocking (catch swallowed)
+
+      const result = await service.forceProgress(TENANT_ID, SO_ID, { target_status: 'completed', reason: 'Insurance resolved verbally with adjuster' }, OWNER_USER);
+
+      expect(result).toEqual(mockUpdated);
+      expect(knex._chain.update).toHaveBeenCalledWith(
+        expect.objectContaining({ is_paused_by_dispute: false, status: 'completed' }),
+      );
+    });
+
+    it('should throw ForbiddenException if user is not owner', async () => {
+      await expect(
+        service.forceProgress(TENANT_ID, SO_ID, { target_status: 'completed', reason: 'some long reason here' }, { id: 'u1', roles: ['manager'] }),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should throw NotFoundException when order not found', async () => {
+      knex._chain.first.mockReturnValueOnce(null);
+
+      await expect(
+        service.forceProgress(TENANT_ID, SO_ID, { target_status: 'completed', reason: 'valid reason text here' }, OWNER_USER),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw BadRequestException if order is not paused by dispute', async () => {
+      knex._chain.first.mockReturnValueOnce({ id: SO_ID, status: 'in_progress', is_paused_by_dispute: false });
+
+      await expect(
+        service.forceProgress(TENANT_ID, SO_ID, { target_status: 'completed', reason: 'valid reason text here' }, OWNER_USER),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException if target_status transition is invalid', async () => {
+      knex._chain.first.mockReturnValueOnce({ id: SO_ID, status: 'delivered', is_paused_by_dispute: true });
+
+      await expect(
+        service.forceProgress(TENANT_ID, SO_ID, { target_status: 'in_progress', reason: 'some long reason here' }, OWNER_USER),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 });

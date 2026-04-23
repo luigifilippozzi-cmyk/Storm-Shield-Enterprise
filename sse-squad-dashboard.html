@@ -289,32 +289,35 @@
 <script>
 // <!--METRICS_START-->
 const D = {
-  lastUpdated: "2026-04-23 (Dev Manager — T-20260421-3a RF-005a)",
-  updatedBy: "Dev Manager",
+  lastUpdated: "2026-04-25 (DM Agent — RF-005b COMPLETED)",
+  updatedBy: "DM Agent",
   health: "green",
-  healthText: "VERDE. Deploy API VERDE (migrations 014+015 RF-005a aplicadas). CI VERDE. Deploy Web VERDE. 0 PRs abertos. 49 merged. T-20260421-3a COMPLETED. EstimateStateMachineService: 482 testes, 114 state-machine. 3b/3c/RF-006 desbloqueados. /ready 503 pendente (DATABASE_URL+REDIS_URL — acao Luigi).",
+  healthText: "VERDE. Deploy API VERDE. CI VERDE. Deploy Web VERDE. 0 PRs abertos. 50 merged. T-3b COMPLETED (PR #50 RF-005b). T-3c unblocked (soft-dep satisfeita). T-4 (RF-006) P1 pendente. Coverage <80% branches em 3 services — standing issue.",
   activeFase: "2",
   kpis: {
     backendModules: 13,
     controllers: 16,
     endpoints: 112,
-    frontendPages: 38,
+    frontendPages: 39,
     specFiles: 24,
-    tests: 482,
+    tests: 487,
     migrations: 16,
     adrs: 14,
     excelTotal: 36,
-    excelDone: 31
+    excelDone: 32
   },
   agents: [
-    { name: "PM Agent", role: "Status Diario + Metricas", color: "var(--blue)", bg: "var(--blue-bg)", icon: "clipboard", status: "active", statusText: "Revisao 2026-04-21 noite — dados frescos pos-sessao PO noite parte 3", stats: [["Frequencia","Diario"],["Escopo","Read-only"],["Output","Relatorio + Dashboard"]] },
-    { name: "Dev Manager", role: "Implementacao + Orquestracao", color: "var(--accent2)", bg: "var(--teal-bg)", icon: "gear", status: "active", statusText: "Sessao 2026-04-23 — T-20260421-3a COMPLETED: PR #48 (RF-005a) + PR #49 (migration fix PG 55P04). 3 subagentes PASS. 482 testes. Deploy API VERDE. 3b/3c/RF-006 desbloqueados.", stats: [["Autoridade","Execucao tecnica"],["Subagentes","4 configurados"],["PRs merged","#48 + #49"]] },
+    { name: "PM Agent", role: "Status Diario + Metricas", color: "var(--blue)", bg: "var(--blue-bg)", icon: "clipboard", status: "active", statusText: "Revisao 2026-04-24 — /ready 200 confirmado. Saude VERDE. Regras 1-18 OK. Sem violacoes Bussola. Proximos P1 DM: T-3b (RF-005b inbox) + T-20260421-4 (RF-006 payment hold).", stats: [["Frequencia","Diario"],["Escopo","Read-only"],["Output","Relatorio + Dashboard"]] },
+    { name: "Dev Manager", role: "Implementacao + Orquestracao", color: "var(--accent2)", bg: "var(--teal-bg)", icon: "gear", status: "active", statusText: "Sessao 2026-04-25 — T-20260421-3b COMPLETED: PR #50 (RF-005b inbox tabela + EstimateStatusBadge + ownership). 3 subagentes PASS. 487 testes. Deploy API+Web VERDE. T-3c unblocked.", stats: [["Autoridade","Execucao tecnica"],["Subagentes","4 configurados"],["PRs merged","#50"]] },
     { name: "test-runner", role: "Jest + Coverage", color: "var(--green)", bg: "var(--green-bg)", icon: "check", status: "active", statusText: "482 testes, 24 suites — GREEN (2026-04-23). estimate-state-machine: 114/114, 100% statements/functions.", stats: [["Framework","Jest + ts-jest"],["Specs","24 test suites"],["Trigger","Sempre pre-PR"]] },
     { name: "security-reviewer", role: "RLS + XSS + Auth", color: "var(--red)", bg: "var(--red-bg)", icon: "shield", status: "active", statusText: "HARDENED — regras 15-18 + comandos destrutivos. PR #38 fix AuthGuard validado.", stats: [["Foco","tenant_id, RLS, AES"],["Checks","OWASP Top 10 + regras 15-18"],["Trigger","auth/db changes"]] },
-    { name: "db-reviewer", role: "Migrations + Schema", color: "var(--purple)", bg: "var(--purple-bg)", icon: "database", status: "active", statusText: "Baseline atualizado — 000-013 (14 SQL files), dinamico via ls", stats: [["Foco","RLS, indexes, FK"],["Migrations","14 SQL files"],["Trigger","Schema changes"]] },
+    { name: "db-reviewer", role: "Migrations + Schema", color: "var(--purple)", bg: "var(--purple-bg)", icon: "database", status: "active", statusText: "Baseline atualizado — 000-015 (16 SQL files), dinamico via ls", stats: [["Foco","RLS, indexes, FK"],["Migrations","16 SQL files"],["Trigger","Schema changes"]] },
     { name: "frontend-reviewer", role: "Next.js + shadcn/ui", color: "var(--cyan)", bg: "rgba(6,182,212,.12)", icon: "layout", status: "active", statusText: "Checklist expandido: 20 itens (8 base + 6 PV + 6 PUX via ADR-013). PR #44 FAIL→PASS (B1 Suspense, B2 ARIA, B3 customer_id). Regra 19 vigente.", stats: [["Framework","Next.js 15 + React 19"],["Checklist","20 itens (ADR-013)"],["Trigger","UI/component changes — Regra 19"]] }
   ],
   activity: [
+    { time: "Abr 25", color: "var(--accent2)", msg: "<strong>Dev Manager</strong> sessao autonoma — T-20260421-3b COMPLETED: PR #50 (feat RF-005b: /app/estimates/inbox tabela + EstimateStatusBadge 10 estados + multi-status filter + ownership Estimator RN5 + adjuster/date filters). 487/487 testes. Deploy API+Web VERDE. Subagentes: test[PASS 487], security[PASS — 2 issues corrigidos: ForbiddenException estimator sem id + enum validation statuses], frontend[PASS — 6 WARN nao-bloqueantes]. T-3c unblocked. T-20260421-4 P1 proximo.", tag: "dm" },
+    { time: "Abr 25", color: "var(--accent2)", msg: "<strong>PR #50 merged</strong> feat(estimates): RF-005b Estimates Inbox tabela + EstimateStatusBadge + ownership (SSE-055) — /app/estimates/inbox (scope toggle mine/all, status chips multi-select, adjuster select, date range, sortable table). EstimateStatusBadge 10 estados. estimates/page.tsx + customer360 migrados. 487 testes. Estimator / Gap 5.", tag: "merge" },
+    { time: "Abr 24", color: "var(--blue)", msg: "<strong>PM Agent</strong> revisao diaria — Saude VERDE. /ready 200 confirmado (Fly secrets DATABASE_URL+REDIS_URL configurados). CI VERDE. Deploy Web VERDE. 0 PRs abertos. 482 testes, 24 suites, 16 migrations, 14 ADRs. Regras 1-18 OK. Sem violacoes Bussola. Proximos P1 DM: T-3b (RF-005b inbox tabela) + T-20260421-4 (RF-006, paralelo). Coverage <80% branches em 3 services — standing issue.", tag: "pm" },
     { time: "Abr 23", color: "var(--accent2)", msg: "<strong>Dev Manager</strong> sessao autonoma — T-20260421-3a COMPLETED: PR #48 (feat RF-005a: EstimateStateMachineService + migration 014) + PR #49 (fix migration split PG 55P04). 482/482 testes. Deploy API VERDE (migrations 014+015 aplicadas). Subagentes: test[PASS 482], security[PASS], db[FAIL→PASS 2 fixes: ON DELETE RESTRICT + FOR SELECT]. T-3b, T-3c, T-20260421-4 desbloqueados.", tag: "dm" },
     { time: "Abr 23", color: "var(--accent2)", msg: "<strong>PR #49 merged</strong> fix(db): split migration 014 — ENUM ADD VALUE em transacao separada (PG constraint 55P04). 014_estimate_status_enum_expand.sql + 015_estimate_status_changes.sql. Deploy API VERDE apos merge.", tag: "merge" },
     { time: "Abr 23", color: "var(--accent2)", msg: "<strong>PR #48 merged</strong> feat(estimates): RF-005a state machine backend — EstimateStateMachineService (10 estados, 22 transitions validas, 114 testes), migration 014, EstimateStatus enum expandido, ALLOWED_STATUS_TRANSITIONS atualizado. Zero UI. Estimator / Gap 5.", tag: "merge" },
@@ -347,7 +350,7 @@ const D = {
   ],
   fases: [
     { id: "1A", nome: "Hardening & Tests", total: 10, done: 10, saude: "green", desc: "Jest config + 7 unit test suites + error handler DONE. Coverage 82% para estimates+vehicles. T-008 (enums) + T-009 (date validation) verificados como JA implementados em sessoes anteriores — Fase 1A 10/10." },
-    { id: "1B", nome: "Deploy Staging", total: 9, done: 9, saude: "green", desc: "Fly.io, Redis, migrations, health, GH Actions, Neon, Vercel DONE. Deploy API VERDE 2026-04-22 (T-20260421-10 COMPLETED). T-019 smoke test DONE (/health {status:ok} em staging)." },
+    { id: "1B", nome: "Deploy Staging", total: 9, done: 9, saude: "green", desc: "Fly.io, Redis, migrations, health, GH Actions, Neon, Vercel DONE. Deploy API VERDE 2026-04-22 (T-20260421-10 COMPLETED). T-019 smoke test DONE. /ready 200 confirmado 2026-04-24 (Fly secrets DATABASE_URL+REDIS_URL configurados — full staging health)." },
     { id: "2", nome: "Frontend Polish + Fase 2 RFs", total: 13, done: 6, saude: "green", desc: "T-020/021/022 DONE. RF-001 (Gap 1) DONE. RF-002 (Gap 3) DONE. RF-003 (Gap 8) DONE. RF-004 (Customer 360, P1) + RF-005 (Estimate State Machine, P1) + RF-006 (Payment Hold, P1 BLOCKED) + RF-007 (Case Management, P2) APPROVED via ADR-012 — aguardam implementacao DM." },
     { id: "3", nome: "Accounting & FAM", total: 8, done: 7, saude: "green", desc: "COA + JE + Fiscal Periods + FAM + Reports (P&L, Balance Sheet, Trial Balance) DONE. Falta apenas T-036 (frontend pages COA/JE)." }
   ],
@@ -369,27 +372,26 @@ const D = {
   pipeline: [
     { label: "CI", desc: "Lint + Test + Build (GitHub Actions) — SUCCESS PR #49 (2026-04-23). 482/482 testes.", status: "green", date: "2026-04-23" },
     { label: "Deploy Staging (Web)", desc: "Vercel — SUCCESS 2026-04-23 (PR #49 merge)", status: "green", date: "2026-04-23" },
-    { label: "Deploy API", desc: "Fly.io — SUCCESS 2026-04-23. Migrations 014+015 RF-005a aplicadas. /health {status:ok}. /ready 503 pendente (DATABASE_URL+REDIS_URL — acao Luigi).", status: "green", date: "2026-04-23" },
+    { label: "Deploy API", desc: "Fly.io — SUCCESS 2026-04-23. Migrations 014+015 aplicadas. /health {status:ok} + /ready 200 CONFIRMADO 2026-04-24 (Fly secrets configurados — full staging health).", status: "green", date: "2026-04-24" },
     { label: "Deploy Web", desc: "Vercel — SUCCESS 2026-04-23 (consistente)", status: "green", date: "2026-04-23" },
-    { label: "PRs Abertos", desc: "0 PRs abertos. 49 total merged. Ultimo: #49 fix migration split PG 55P04 (2026-04-23).", status: "green", date: "2026-04-23" }
+    { label: "PRs Abertos", desc: "0 PRs abertos. 50 total merged. Ultimo: #50 feat RF-005b Estimates Inbox (2026-04-25).", status: "green", date: "2026-04-25" }
   ],
   alertas: {
     bloqueantes: [],
     overdue: [],
     emRisco: [
-      { titulo: "/ready retorna 503 em staging", desc: "DATABASE_URL e REDIS_URL nao configurados como Fly secrets. /health OK (liveness), /ready falha (readiness). App funcional mas sem DB/Redis no staging.", acao: "Luigi: fly secrets set DATABASE_URL=<neon-pooled> REDIS_URL=<upstash> --app sse-api-staging" },
       { titulo: "Coverage < 80% branches em 3 services", desc: "contractors: 77.77% branches, customers: 71.79%, financial: 66.66%. Statements/lines todos >94%. Meta CLAUDE.md §10 regra 6.", acao: "Criar tasks P2 para cobertura de edge cases nos 3 services acima" }
     ],
     proximos7: [
-      { titulo: "T-20260421-3b (P1 desbloqueado): RF-005b Inbox tabela + filtros", desc: "Gap 5 Bussola. /app/estimates/inbox com tabela + filtros (status, adjuster, data). estimate-status-badge.tsx reutilizavel. Ownership Estimator vs Owner. Desbloqueado por T-3a COMPLETED." },
       { titulo: "T-20260421-4 (P1 desbloqueado): RF-006 Payment Hold / Disputed", desc: "Gap 5 Bussola. Bloqueio automatico de pagamentos quando estimate entra em disputed. Desbloqueado por T-3a COMPLETED." },
-      { titulo: "T-20260421-9 (P2): Sync NS dashboard com Bussola v1.2", desc: "Gatilho #2 desbloqueado (ADR-013 merged). PR doc-only simples." },
-      { titulo: "Luigi (acao manual): configurar Fly secrets", desc: "DATABASE_URL (Neon pooled, usuario sse_app) + REDIS_URL (Upstash free). Desbloqueia /ready verde e full staging health." }
+      { titulo: "T-20260421-3c (P1 unblocked): RF-005c Kanban drag-drop + SLA alerts", desc: "Gap 5 Bussola. Soft-dep satisfeita por T-3b COMPLETED. estimate-status-badge reutilizavel. Kanban board + SLA cron jobs." },
+      { titulo: "T-20260421-9 (P2): Sync NS dashboard com Bussola v1.2", desc: "Gatilho #2 desbloqueado (ADR-013 merged). PR doc-only simples." }
     ],
     alinhamentoBussola: []
   },
   inconsistencias: [
     { tipo: "POST /tenants sem AuthGuard — RESOLVIDO", desc: "PR #38 merged 2026-04-21 — fix(tenants): add AuthGuard to POST /tenants endpoint (SSE-052). Issue HIGH fechada." },
+    { tipo: "/ready 503 — RESOLVIDO", desc: "Confirmado 2026-04-24: /ready retorna 200. Fly secrets DATABASE_URL+REDIS_URL configurados por Luigi. Full staging health ativo." },
     { tipo: "T-20260417-4 (Discovery Gaps P0) — inconsistente", desc: "Status PENDING em dm_queue mas todos 3 RFs implementados (Gaps 1+3+8). PO deve marcar como COMPLETED." },
     { tipo: "T-20260412-3 (T-008+T-009) — inconsistente", desc: "VERIFICADO 2026-04-21 — ja implementados. DM confirmou: imports @sse/shared-types OK + @IsISO8601 OK. Marcar COMPLETED." },
     { tipo: "T-20260412-1 — SUPERSEDED", desc: "Diagnostico anterior (secrets/DATABASE_URL) estava errado. Substituida por T-20260421-10 (ESM resolution). Marcar SUPERSEDED no dm_queue." },
@@ -397,15 +399,16 @@ const D = {
     { tipo: "Gaps P2 Fase 1 nao resolvidos", desc: "B1-3 (vehicle detail + estimates vinculados), B2-2 (estimate wizard multi-step), B3-4 (financial breakdown por categoria) — sem task criada explicitamente." }
   ],
   recomendacoes: [
-    { prioridade: "P1 (DM)", texto: "T-20260421-3b (RF-005b): Inbox tabela /app/estimates/inbox + filtros + estimate-status-badge.tsx + ownership Estimator vs Owner. DESBLOQUEADO por T-3a COMPLETED." },
-    { prioridade: "P1 (DM)", texto: "T-20260421-4 (RF-006): Payment Hold / Disputed Estimate. DESBLOQUEADO por T-3a COMPLETED. Pode rodar em paralelo com 3b." },
-    { prioridade: "P1 (Luigi)", texto: "Configurar Fly secrets: fly secrets set DATABASE_URL=<neon-pooled> REDIS_URL=<upstash> --app sse-api-staging. Desbloqueara /ready verde e full staging health check." }
+    { prioridade: "P1 (DM)", texto: "T-20260421-4 (RF-006): Payment Hold / Disputed Estimate. DESBLOQUEADO por T-3a COMPLETED." },
+    { prioridade: "P1 (DM)", texto: "T-20260421-3c (RF-005c): Kanban drag-drop + SLA alerts. UNBLOCKED por T-3b COMPLETED. estimate-status-badge reutilizavel." },
+    { prioridade: "P2 (DM)", texto: "Coverage <80% branches em 3 services: contractors (77.77%), customers (71.79%), financial (66.66%). Criar tasks P2 para cobertura de edge cases." },
+    { prioridade: "P2 (DM)", texto: "T-20260421-9: Sync NS dashboard com Bussola v1.2 (gatilho #2 desbloqueado — ADR-013 merged). PR doc-only." }
   ],
   backlog: [
     { id: "RF-004", task: "Customer 360 View (7 abas)", fase: "2", prio: "P1", status: "Concluido", nota: "PR #44 merged 2026-04-22. 368 testes. 2 endpoints novos (/summary + /activity-timeline). 7 abas + ARIA + Suspense. Critical+High+3 Medium corrigidos via subagentes." },
     { id: "RF-005a", task: "Estimate State Machine — backend (10 estados)", fase: "2", prio: "P1", status: "Concluido", nota: "PR #48+#49 merged 2026-04-23. EstimateStateMachineService, migration 014+015, 114 testes. Desbloqueia 3b/3c/RF-006." },
-    { id: "RF-005b", task: "Estimate Inbox tabela + filtros", fase: "2", prio: "P1", status: "Pendente", nota: "DESBLOQUEADO por RF-005a. T-20260421-3b. /app/estimates/inbox + estimate-status-badge.tsx." },
-    { id: "RF-005c", task: "Estimate Kanban drag-drop + SLA", fase: "2", prio: "P1", status: "Bloqueado", nota: "Aguarda 3b (soft-dep). T-20260421-3c." },
+    { id: "RF-005b", task: "Estimate Inbox tabela + filtros", fase: "2", prio: "P1", status: "Concluido", nota: "PR #50 merged 2026-04-25. /app/estimates/inbox + EstimateStatusBadge 10 estados + multi-status + ownership + adjuster/date. 487 testes. Estimator / Gap 5." },
+    { id: "RF-005c", task: "Estimate Kanban drag-drop + SLA", fase: "2", prio: "P1", status: "Pendente", nota: "UNBLOCKED por T-3b COMPLETED. Soft-dep satisfeita. T-20260421-3c." },
     { id: "RF-006", task: "Payment Hold / Disputed Estimate", fase: "2", prio: "P1", status: "Pendente", nota: "ADR-012. Gap 5. DESBLOQUEADO por RF-005a. T-20260421-4." },
     { id: "RF-007", task: "Case Management simplificado", fase: "2", prio: "P2", status: "Aprovado", nota: "ADR-012. Gap 5. Anti-rec #13 (nao ticketing full). T-20260421-5." },
     { id: "RF-001", task: "Landing por Persona + Workspaces", fase: "2", prio: "P0", status: "Concluido", nota: "Gap 1 Bussola. PR #31 merged 2026-04-20." },

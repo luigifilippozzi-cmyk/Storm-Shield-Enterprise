@@ -3,7 +3,10 @@
 import { use, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEstimate, useUpdateEstimateStatus, useDeleteEstimate, useCreateSupplement } from '@/hooks/use-estimates';
+import {
+  useEstimate, useUpdateEstimateStatus, useDeleteEstimate,
+  useCreateSupplement, useOpenDispute, useResolveDispute,
+} from '@/hooks/use-estimates';
 import { EstimateDocuments } from '@/components/estimates/estimate-documents';
 import { StatusTimeline } from '@/components/estimates/status-timeline';
 import { SupplementForm, type SupplementFormData } from '@/components/estimates/supplement-form';
@@ -21,21 +24,34 @@ interface EstimateLineItem {
 
 const STATUS_COLORS: Record<string, string> = {
   draft: 'bg-gray-100 text-gray-800',
-  sent: 'bg-blue-100 text-blue-800',
+  submitted_to_adjuster: 'bg-blue-100 text-blue-800',
+  awaiting_approval: 'bg-yellow-100 text-yellow-800',
   approved: 'bg-green-100 text-green-800',
+  supplement_pending: 'bg-orange-100 text-orange-800',
+  approved_with_supplement: 'bg-emerald-100 text-emerald-800',
   rejected: 'bg-red-100 text-red-800',
+  disputed: 'bg-red-200 text-red-900',
+  paid: 'bg-green-200 text-green-900',
+  closed: 'bg-gray-200 text-gray-900',
+  // legacy
+  sent: 'bg-blue-100 text-blue-800',
   supplement_requested: 'bg-yellow-100 text-yellow-800',
   converted: 'bg-purple-100 text-purple-800',
 };
 
-const STATUS_TRANSITIONS: Record<string, { label: string; next: string }[]> = {
-  draft: [{ label: 'Send to Customer', next: 'sent' }],
-  sent: [{ label: 'Mark Approved', next: 'approved' }, { label: 'Mark Rejected', next: 'rejected' }],
-  approved: [{ label: 'Convert to Service Order', next: 'converted' }],
-  rejected: [{ label: 'Reopen as Draft', next: 'draft' }],
-  supplement_requested: [{ label: 'Mark Approved', next: 'approved' }],
-  converted: [],
-};
+const DISPUTE_REASONS = [
+  { value: 'adjuster_underpayment', label: 'Adjuster Underpayment' },
+  { value: 'supplement_rejected', label: 'Supplement Rejected' },
+  { value: 'claim_denied', label: 'Claim Denied' },
+  { value: 'total_loss_dispute', label: 'Total Loss Dispute' },
+  { value: 'other', label: 'Other' },
+];
+
+const RESOLVE_TARGETS = [
+  { value: 'awaiting_approval', label: 'Return to Awaiting Approval' },
+  { value: 'paid', label: 'Mark as Paid' },
+  { value: 'closed', label: 'Close Estimate' },
+];
 
 function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
   if (!value) return null;
@@ -47,6 +63,120 @@ function DetailRow({ label, value }: { label: string; value: React.ReactNode }) 
   );
 }
 
+function DisputeModal({ estimateId, onClose }: { estimateId: string; onClose: () => void }) {
+  const openDispute = useOpenDispute(estimateId);
+  const [reason, setReason] = useState('adjuster_underpayment');
+  const [notes, setNotes] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await openDispute.mutateAsync({ dispute_reason: reason, dispute_notes: notes || undefined });
+    onClose();
+  };
+
+  return (
+    <div role="dialog" aria-modal="true" aria-labelledby="dispute-modal-title" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="w-full max-w-md rounded-lg bg-background p-6 shadow-xl">
+        <h2 id="dispute-modal-title" className="mb-4 text-lg font-semibold">Open Dispute</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="dispute-reason" className="mb-1 block text-sm font-medium">Dispute Reason</label>
+            <select
+              id="dispute-reason"
+              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+            >
+              {DISPUTE_REASONS.map((r) => (
+                <option key={r.value} value={r.value}>{r.label}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="dispute-notes" className="mb-1 block text-sm font-medium">Notes (optional)</label>
+            <textarea
+              id="dispute-notes"
+              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+              rows={3}
+              maxLength={2000}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Describe the dispute in detail..."
+            />
+          </div>
+          {openDispute.error && (
+            <p className="text-sm text-destructive">{openDispute.error instanceof Error ? openDispute.error.message : 'Failed to open dispute'}</p>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={onClose} disabled={openDispute.isPending}>Cancel</Button>
+            <Button type="submit" variant="destructive" disabled={openDispute.isPending}>
+              {openDispute.isPending ? 'Opening...' : 'Open Dispute'}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function ResolveDisputeModal({ estimateId, onClose }: { estimateId: string; onClose: () => void }) {
+  const resolveDispute = useResolveDispute(estimateId);
+  const [target, setTarget] = useState('awaiting_approval');
+  const [notes, setNotes] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await resolveDispute.mutateAsync({ resolution_status: target, notes: notes || undefined });
+    onClose();
+  };
+
+  return (
+    <div role="dialog" aria-modal="true" aria-labelledby="resolve-modal-title" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="w-full max-w-md rounded-lg bg-background p-6 shadow-xl">
+        <h2 id="resolve-modal-title" className="mb-4 text-lg font-semibold">Resolve Dispute</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="resolve-target" className="mb-1 block text-sm font-medium">Resolution</label>
+            <select
+              id="resolve-target"
+              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+              value={target}
+              onChange={(e) => setTarget(e.target.value)}
+            >
+              {RESOLVE_TARGETS.map((r) => (
+                <option key={r.value} value={r.value}>{r.label}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="resolve-notes" className="mb-1 block text-sm font-medium">Notes (optional)</label>
+            <textarea
+              id="resolve-notes"
+              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+              rows={3}
+              maxLength={2000}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Resolution notes..."
+            />
+          </div>
+          {resolveDispute.error && (
+            <p className="text-sm text-destructive">{resolveDispute.error instanceof Error ? resolveDispute.error.message : 'Failed to resolve dispute'}</p>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={onClose} disabled={resolveDispute.isPending}>Cancel</Button>
+            <Button type="submit" disabled={resolveDispute.isPending}>
+              {resolveDispute.isPending ? 'Resolving...' : 'Resolve Dispute'}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+const DISPUTABLE_STATUSES = new Set(['awaiting_approval', 'approved', 'approved_with_supplement']);
+
 export default function EstimateDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
@@ -55,6 +185,8 @@ export default function EstimateDetailPage({ params }: { params: Promise<{ id: s
   const deleteEstimate = useDeleteEstimate();
   const createSupplement = useCreateSupplement(id);
   const [showSupplementForm, setShowSupplementForm] = useState(false);
+  const [showDisputeModal, setShowDisputeModal] = useState(false);
+  const [showResolveModal, setShowResolveModal] = useState(false);
 
   const handleDelete = async () => {
     if (!estimate) return;
@@ -72,29 +204,60 @@ export default function EstimateDetailPage({ params }: { params: Promise<{ id: s
     </div>
   );
 
-  const transitions = STATUS_TRANSITIONS[estimate.status] || [];
+  const canDispute = DISPUTABLE_STATUSES.has(estimate.status);
+  const isDisputed = estimate.status === 'disputed';
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
+      {showDisputeModal && <DisputeModal estimateId={estimate.id} onClose={() => setShowDisputeModal(false)} />}
+      {showResolveModal && <ResolveDisputeModal estimateId={estimate.id} onClose={() => setShowResolveModal(false)} />}
+
       <div className="flex items-start justify-between">
         <div>
           <Link href="/estimates" className="mb-2 inline-block text-sm text-muted-foreground hover:text-foreground">&larr; Back to Estimates</Link>
           <h1 className="text-3xl font-bold">Estimate {estimate.estimate_number}</h1>
         </div>
-        <div className="flex gap-2">
-          {transitions.map((t) => (
-            <Button key={t.next} variant="outline" onClick={() => updateStatus.mutate(t.next)} disabled={updateStatus.isPending}>
-              {t.label}
+        <div className="flex flex-wrap gap-2">
+          {canDispute && (
+            <Button variant="destructive" size="sm" onClick={() => setShowDisputeModal(true)}>
+              Open Dispute
             </Button>
-          ))}
+          )}
+          {isDisputed && (
+            <Button variant="outline" size="sm" onClick={() => setShowResolveModal(true)}>
+              Resolve Dispute
+            </Button>
+          )}
           <Link href={`/estimates/${estimate.id}/edit`}><Button variant="outline">Edit</Button></Link>
           <Button variant="destructive" onClick={handleDelete}>Delete</Button>
         </div>
       </div>
 
-      <Badge className={cn('border-transparent', STATUS_COLORS[estimate.status])}>
-        {estimate.status.replace('_', ' ').toUpperCase()}
-      </Badge>
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge className={cn('border-transparent', STATUS_COLORS[estimate.status])}>
+          {estimate.status.replace(/_/g, ' ').toUpperCase()}
+        </Badge>
+        {isDisputed && estimate.dispute_reason && (
+          <Badge className="border-transparent bg-red-100 text-red-800 text-xs">
+            {estimate.dispute_reason.replace(/_/g, ' ')}
+          </Badge>
+        )}
+      </div>
+
+      {/* Dispute info panel */}
+      {isDisputed && (
+        <section className="rounded-lg border border-red-200 bg-red-50">
+          <div className="border-b border-red-200 px-4 py-3">
+            <h2 className="font-semibold text-red-900">Dispute Active</h2>
+          </div>
+          <dl className="px-4">
+            <DetailRow label="Reason" value={estimate.dispute_reason?.replace(/_/g, ' ')} />
+            {estimate.dispute_notes && <DetailRow label="Notes" value={estimate.dispute_notes} />}
+            <DetailRow label="Opened" value={estimate.dispute_opened_at ? formatDate(estimate.dispute_opened_at) : null} />
+          </dl>
+          <p className="px-4 pb-3 text-sm text-red-700">Linked service orders are paused. Resolve the dispute to resume work.</p>
+        </section>
+      )}
 
       {/* Line Items */}
       {(estimate as any).lines && ((estimate as any).lines as EstimateLineItem[]).length > 0 && (
@@ -175,7 +338,7 @@ export default function EstimateDetailPage({ params }: { params: Promise<{ id: s
                     <td className="px-3 py-2 text-right">${parseFloat(s.amount).toFixed(2)}</td>
                     <td className="px-3 py-2">
                       <Badge className={cn('border-transparent text-xs', STATUS_COLORS[s.status] || 'bg-gray-100 text-gray-800')}>
-                        {s.status.replace('_', ' ').toUpperCase()}
+                        {s.status.replace(/_/g, ' ').toUpperCase()}
                       </Badge>
                     </td>
                     <td className="px-3 py-2 text-muted-foreground">{formatDate(s.created_at)}</td>
@@ -220,6 +383,8 @@ export default function EstimateDetailPage({ params }: { params: Promise<{ id: s
           <DetailRow label="Created" value={formatDate(estimate.created_at)} />
           <DetailRow label="Updated" value={formatDate(estimate.updated_at)} />
           {estimate.approved_at && <DetailRow label="Approved" value={formatDate(estimate.approved_at)} />}
+          {estimate.dispute_opened_at && <DetailRow label="Dispute Opened" value={formatDate(estimate.dispute_opened_at)} />}
+          {estimate.dispute_resolved_at && <DetailRow label="Dispute Resolved" value={formatDate(estimate.dispute_resolved_at)} />}
           <DetailRow label="ID" value={<code className="text-xs">{estimate.id}</code>} />
         </dl>
       </section>

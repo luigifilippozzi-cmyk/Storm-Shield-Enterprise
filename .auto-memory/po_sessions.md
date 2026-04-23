@@ -12,6 +12,16 @@ type: project
 
 ---
 
+## Sessão 2026-04-25 (DM Agent — session close T-20260421-4 COMPLETED)
+
+**T-20260421-4 COMPLETED** — RF-006 Payment Hold / Disputed Estimate (PR #51 aberto, aguarda CI+merge).
+
+**Implementação real vs spec original:** O spec original descrevia uma tabela `payment_holds` separada. A implementação adotou abordagem mais simples e direta: campo `is_paused_by_dispute` na tabela `service_orders` como gate de bloqueio, com 5 campos de disputa na tabela `estimates`. Sem tabela intermediária de holds — decisão DM registrada no PR #51.
+
+**Próxima prioridade DM:** T-20260421-3c (RF-005c Kanban + SLA) — P1.
+
+---
+
 ## Sessão 2026-04-22 (parte 2) — PO Cowork (Trademark hygiene — substituição de marca de ERP externo por sigla NS)
 
 **Contexto:** Luigi abriu a sessão para escopar a substituição de menções diretas à marca registrada de um ERP proprietário usado como referência comparativa na documentação do SSE. Motivação: reduzir exposição jurídica — o SSE não tem relação comercial, licenciamento nem endosso do fornecedor; o uso nominativo em repo versionado cria risco latente.
@@ -121,22 +131,47 @@ if ($residual.Count -eq 0) {
 
 ### Task list do acompanhamento (Cowork)
 
-9 tasks criadas, dependências configuradas:
-- #1 → #2 → #3 (PO): registro da tarefa, rascunho ADR-014, log da sessão — **concluídas nesta sessão**
-- #4 (Luigi): despachar ao PM/DM
+10 tasks criadas, dependências configuradas, **todas concluídas no mesmo dia**:
+- #1 → #2 → #3 (PO): registro da tarefa, rascunho ADR-014, log da sessão
+- #4 (Luigi): despachar ao PM/DM — **feito via script `Load-Briefing.ps1`**
 - #5 (DM): executar substituições + renames + stubs + publicar ADR-014
 - #6 (DM): rodar sweep GitHub (3 etapas)
-- #7 (DM): abrir PR + CI verde + mergear
+- #7 (DM): abrir PR + CI verde + mergear — **PR #47 merged**
 - #8 (PO): revisar PR
-- #9 (PO): atualizar MEMORY.md pós-merge + arquivar T-20260422-1
+- #9 (PO): atualizar MEMORY.md pós-merge — **feito pelo DM no próprio PR**
+- #10 (PO, acréscimo mid-session): criar toolkit `.ps1` do PO em `.auto-memory/scripts/`
 
 ### Alinhamento Bússola
 
 N/A — mudança de compliance/hygiene, não afeta personas, ICP ou métrica-norte. O ADR-014 é o veículo formal da decisão.
 
+### Fechamento (2026-04-22 fim de dia)
+
+**Entrega DM (PR #47 mergeado — `58a8c19`):**
+- ADR-014 publicado em `docs/decisions/014-remocao-mencao-marca-erp-referencia.md` (status Accepted)
+- 19 arquivos com substituição textual + disclaimer canônico aplicado
+- 3 renames com stubs de redirect de 60 dias: `ANALISE_NS_vs_BUSSOLA_v1.{md,html}` + `012-ns-incorporacao-parcial.md`
+- Sweep GitHub completo (Discovery → Execution → Verify) sem residuais
+- `.auto-memory/MEMORY.md`, `CLAUDE.md`, `docs/README.md`, ADRs 008/009/012/013 atualizados com novos paths
+- ADR-011 publicado em paralelo (T-20260421-10 destravou — release cadence pode ser considerada na próxima sessão estratégica)
+
+**Entrega PM:**
+- Issue #46 criada no GitHub (labels: `refactor`, `documentation`, `compliance`, `priority: P2`, `fase-1-mvp`)
+- T-20260421-1 atualizada em `dm_queue.md` com bloco de dependência invertida
+- `project_sse_status.md` seção Governança registra ADR-014
+
+**Entrega PO (lado Cowork):**
+- Toolkit `.auto-memory/scripts/` com `Invoke-PODiagnostic.ps1` (diagnóstico canônico de abertura) e `Load-Briefing.ps1` (carrega briefing PM/DM no clipboard). README.md + política de ownership. ASCII-only para evitar quebra de parser em Windows PowerShell 5.1.
+
+**Follow-up aberto e descartado dentro da sessão:**
+- Suspeitei de encoding drift em 17 arquivos locais (UTF-16/truncation vs UTF-8 em HEAD). Investigação com `git status` no Windows do Luigi mostrou working tree já limpo — o que eu via no sandbox Linux era uma view cached/inconsistente do mount. **Lição:** cruzar o view do sandbox com `git status` do Windows antes de construir narrativa de corrupção. Registrado como feedback para memória persistente.
+
 ### Próxima sessão
 
-Aguardar despacho de Luigi ao PM/DM. Próximo checkpoint: revisão do PR do DM (task #8). Sem dependência de Bússola ou de T-20260421-10 (independente do deploy API).
+- Fase 1 segue em 95%, sem novos bloqueios.
+- ADR-011 publicado abre janela para o ADR-011-reservado (release cadence) ser redigido — revisitar na próxima sessão.
+- T-20260421-1 (sync dashboard NS↔Bússola) executável pelo DM quando houver gatilho (nenhum acumulado no momento).
+- Nenhuma ação humana pendente.
 
 ---
 

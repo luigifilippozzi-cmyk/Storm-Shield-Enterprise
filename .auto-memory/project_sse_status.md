@@ -6,6 +6,144 @@ type: project
 > **Nota:** "NS" = ERP de referência externo. Nome substituído por precaução (ADR-014).
 
 
+# SSE Project Status — 2026-04-25 (DM Agent — T-20260421-4 COMPLETED)
+
+## Revisão DM — 2026-04-25 (RF-006 Payment Hold / Disputed Estimate)
+
+**Saúde: VERDE** — CI VERDE. Deploy Web VERDE. Deploy API VERDE. 1 PR aberto (#51). T-20260421-4 COMPLETED.
+
+**Fase 1:** ~99% | Módulos: 13/15 | Testes: 501 | Endpoints: ~116 | Migrations: 17 | ADRs: 14 | Controllers: 16 | Pages: 39 | Specs: 24
+
+**CI:** VERDE | **Deploy Web:** VERDE | **Deploy API:** VERDE | **PRs abertos:** 1 (#51) | **PRs merged:** 50
+
+### Novidades desta sessão (2026-04-25 — RF-006)
+- **PR #51 aberto:** feat(estimates) RF-006 payment hold / disputed estimate workflow (SSE-056)
+  - Migration 016: dispute_reason ENUM + 5 dispute fields on estimates + is_paused_by_dispute on service_orders
+  - EstimatesService: openDispute() + resolveDispute() + notifyOwners()
+  - ServiceOrdersService: dispute guard in updateStatus() + forceProgress() Owner-only override
+  - 3 DTOs: OpenDisputeDto, ResolveDisputeDto, ForceProgressDto
+  - 14 new unit tests → 501 total; build clean
+  - Frontend: DisputeModal, ResolveDisputeModal, ForceProgressModal; dispute info panel; "Paused by Dispute" badge
+  - Shared types: 5 dispute fields on Estimate + is_paused_by_dispute on ServiceOrder
+- **T-20260421-4 COMPLETED** (RF-006 done)
+- **Subagentes acionados:** security-reviewer [PASS], db-reviewer [PASS], frontend-reviewer [FAIL→PASS — unsafe error casts + ARIA fixed + api<any> eliminated]
+
+### Prioridades P0/P1 para próxima sessão DM
+1. **P1** — T-20260421-3c: RF-005c Kanban drag-drop + SLA alerts (soft-dep satisfeita após 3b)
+2. **P2** — T-20260421-9: sync NS dashboard com Bússola v1.2 (PR doc-only)
+3. **P2** — T-20260421-5: RF-007 Case Management simplificado
+
+### Alertas
+- PR #51 open — aguarda CI + merge
+- Coverage <80% branches em 3 services: contractors (77.77%), customers (71.79%), financial (66.66%) — standing issue
+- blocks_so_progression DEFAULT true em migration 016 — coluna informacional na tabela estimates (não afeta lógica de bloqueio — IS_PAUSED_BY_DISPUTE na SO é o gate real)
+
+### Handoff DM aberto (dm_queue.md)
+- **COMPLETED:** T-20260422-1, T-20260421-10, T-20260421-2, T-20260421-6/7/8, T-20260421-3a, T-20260421-3b, **T-20260421-4**
+- **PENDING P1:** T-20260421-3c (RF-005c kanban SLA)
+- **PENDING P2:** T-20260421-1 (standing), T-20260421-5 (RF-007), T-20260421-9 (NS dashboard v1.2), T-036 (accounting frontend)
+- **Legacy:** T-20260412-2 (ratificação PO pendente)
+
+### Última sessão DM: 2026-04-25 (RF-006 PR #51)
+
+---
+
+# SSE Project Status — 2026-04-25 (DM Agent — T-20260421-3b COMPLETED)
+
+## Revisão DM — 2026-04-25 (RF-005b Estimates Inbox)
+
+**Saúde: VERDE** — Deploy API VERDE. CI VERDE. Deploy Web VERDE. 0 PRs abertos. T-20260421-3b COMPLETED.
+
+**Fase 1:** ~98% | Módulos: 13/15 | Testes: 487 | Endpoints: 112 | Migrations: 16 | ADRs: 14 | Controllers: 16 | Pages: 39 | Specs: 24
+
+**CI:** VERDE | **Deploy Web:** VERDE | **Deploy API:** VERDE | **PRs abertos:** 0 | **PRs merged:** 50
+
+### Novidades desta sessão (2026-04-25)
+- **PR #50 merged:** feat(estimates) RF-005b — /app/estimates/inbox (scope toggle mine/all, status chips multi-select, adjuster select, date range, sortable table), EstimateStatusBadge 10 estados, QueryEstimateDto +3 campos (statuses/insurance_company_id/scope), EstimatesService.findAll() ownership enforcement RN5 + multi-status + adjuster filter, 5 novos testes (487 total, estimates branches 85.71%).
+- **T-20260421-3b COMPLETED**
+- **T-20260421-3c UNBLOCKED** (soft-dep satisfeita — estimate-status-badge disponível)
+- **Subagentes acionados:** test-runner [PASS 487/487], security-reviewer [PASS — 2 issues corrigidos: ForbiddenException estimator sem id + enum validation], frontend-reviewer [PASS — 6 WARN não-bloqueantes]
+
+### Prioridades P0/P1 para próxima sessão DM
+1. **P1 DESBLOQUEADO** — T-20260421-4: RF-006 Payment Hold / Disputed Estimate
+2. **P1 UNBLOCKED** — T-20260421-3c: RF-005c Kanban drag-drop + SLA alerts (soft-dep satisfeita)
+3. **P2** — T-20260421-9: sync NS dashboard com Bússola v1.2 (PR doc-only)
+
+### Alertas
+- Coverage <80% branches em 3 services: contractors (77.77%), customers (71.79%), financial (66.66%) — standing issue
+- WARN frontend-reviewer (não-bloqueantes): disputed/rejected badge cores idênticas, sortable th keyboard a11y, tr onClick não keyboard, scope toggle 320px, confirm() → AlertDialog
+
+### Alinhamento Bússola (regras 15-18)
+Sem violações. PR #50 cita Estimator (Bússola §2) + Gap 5 (Bússola §4). dm_queue.md usa template canônico §4.
+
+### Handoff DM aberto (dm_queue.md)
+- **COMPLETED:** T-20260422-1, T-20260421-10, T-20260421-2, T-20260421-6/7/8, T-20260421-3a, **T-20260421-3b**
+- **PENDING P1 DESBLOQUEADO:** T-20260421-4 (RF-006 payment hold)
+- **PENDING P1 UNBLOCKED:** T-20260421-3c (RF-005c kanban SLA)
+- **PENDING P2:** T-20260421-1 (standing), T-20260421-5 (RF-007), T-20260421-9 (NS dashboard v1.2), T-036 (accounting frontend)
+- **Legacy:** T-20260412-2 (ratificação PO pendente)
+
+### Última sessão DM: 2026-04-25 (RF-005b PR #50)
+
+---
+
+# SSE Project Status — 2026-04-24 (PM Agent — revisão diária)
+
+## Revisão PM — 2026-04-24
+
+**Saúde: VERDE** — Deploy API VERDE (/ready 200 confirmado — Fly secrets configurados). CI VERDE. Deploy Web VERDE. 0 PRs abertos. 49 merged.
+
+**Fase 1:** ~98% | Módulos: 13/15 | Testes: 482 | Endpoints: 110 | Migrations: 16 | ADRs: 14 | Controllers: 16 | Pages: 38 | Specs: 24
+
+**CI:** VERDE | **Deploy Web:** VERDE | **Deploy API:** VERDE (/ready 200) | **PRs abertos:** 0
+
+### Novidades desde última revisão PM (2026-04-23)
+- **/ready retorna 200** — Luigi configurou Fly secrets (DATABASE_URL+REDIS_URL). Full staging health ativo. Alerta "em risco" removido.
+- **T-20260421-3a COMPLETED** (PR #48+#49 merged na sessão DM 2026-04-23): RF-005a backend state machine, 482 testes (+114), migrations 014+015.
+- **T-20260421-3b e T-20260421-4 DESBLOQUEADOS** — próximos P1 para DM.
+
+### Prioridades P0/P1 para Dev Manager
+1. **P1 (DM)** — T-20260421-3b: RF-005b Inbox tabela /app/estimates/inbox + filtros + estimate-status-badge.tsx + ownership (Estimator vs Owner). Gap 5 Bússola.
+2. **P1 (DM)** — T-20260421-4: RF-006 Payment Hold / Disputed Estimate. Pode rodar em paralelo com 3b. Gap 5 Bússola.
+3. **P2 (DM)** — Coverage <80% branches: contractors (77.77%), customers (71.79%), financial (66.66%) — criar tasks P2.
+4. **P2 (DM)** — T-20260421-9: Sync NS dashboard com Bússola v1.2 (gatilho #2 desbloqueado). PR doc-only.
+
+### Alertas
+- Coverage <80% branches em 3 services: contractors (77.77%), customers (71.79%), financial (66.66%) — statements/lines todos >94%. Standing issue, sem task criada.
+- T-20260421-3c: BLOCKED (soft-dep em 3b) — aguarda RF-005b.
+
+### Alinhamento Bússola (regras 15-18)
+Sem violações. 0 PRs abertos. Últimos PRs (#48 RF-005a cita Estimator + Gap 5, #49 infra/fix N/A). dm_queue.md usa template canônico §4. Stubs deprecated não escritos.
+
+### Verificação Regras CLAUDE.md §10
+- Regra 4 (KNEX_CONNECTION direto): OK
+- Regra 5 (FLOAT em migrations): OK
+- Regra 6 (CASCADE em financeiro/contábil): OK
+- Regra 9 (secrets hardcoded): OK
+- Regras 15-18: OK — sem PRs abertos
+
+### Gaps P2 Fase 1 remanescentes
+- B1-3: Vehicle detail — estimates vinculados
+- B2-2: Estimate form — wizard multi-step completo
+- B3-4: Financial — breakdown por categoria
+
+### Inconsistências
+- /ready 503: RESOLVIDO 2026-04-24 — Fly secrets configurados por Luigi.
+- Coverage <80%: standing issue, sem task criada.
+
+### Handoff DM aberto (dm_queue.md)
+- **COMPLETED:** T-20260422-1, T-20260421-10, T-20260421-2, T-20260421-6/7/8, T-20260421-3a
+- **PENDING P1 DESBLOQUEADO:** T-20260421-3b (RF-005b inbox tabela)
+- **PENDING P1 DESBLOQUEADO:** T-20260421-4 (RF-006 payment hold, paralelo)
+- **BLOCKED (soft-dep 3b):** T-20260421-3c (RF-005c kanban SLA)
+- **PENDING P2:** T-20260421-1 (standing), T-20260421-5 (RF-007), T-20260421-9 (NS dashboard v1.2), T-036 (accounting frontend)
+- **Legacy:** T-20260412-2 (ratificação PO pendente)
+
+### Última sessão PM: 2026-04-24
+### Última sessão DM: 2026-04-23 (T-20260421-3a — RF-005a PR #48 + migration fix PR #49)
+
+---
+
 # SSE Project Status — 2026-04-23 (DM Agent — T-20260421-3a COMPLETED)
 
 ## Revisão DM — 2026-04-23 (RF-005a state machine backend)

@@ -17,6 +17,7 @@ export interface ServiceOrder {
   total_parts_cost: string;
   total_amount: string;
   notes: string | null;
+  is_paused_by_dispute: boolean;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;

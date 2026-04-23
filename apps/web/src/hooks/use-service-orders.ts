@@ -112,3 +112,25 @@ export function useDeleteServiceOrder() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['service-orders'] }),
   });
 }
+
+// ── RF-006: Force progress hook (Owner only) ──
+
+export interface ForceProgressInput {
+  target_status: string;
+  reason: string;
+}
+
+export function useForceProgress(id: string) {
+  const qc = useQueryClient();
+  const getHeaders = useApiHeaders();
+  return useMutation({
+    mutationFn: async (data: ForceProgressInput) => {
+      const { token } = await getHeaders();
+      return api<ServiceOrder>(`/service-orders/${id}/force-progress`, { method: 'POST', body: JSON.stringify(data), token });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['service-orders', id] });
+      qc.invalidateQueries({ queryKey: ['service-orders'] });
+    },
+  });
+}

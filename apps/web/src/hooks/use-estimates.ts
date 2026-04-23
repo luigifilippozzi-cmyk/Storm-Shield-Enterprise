@@ -200,3 +200,45 @@ export function useCreateSupplement(estimateId: string) {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['estimates', estimateId] }),
   });
 }
+
+// ── RF-006: Dispute hooks ──
+
+export interface OpenDisputeInput {
+  dispute_reason: string;
+  dispute_notes?: string;
+}
+
+export interface ResolveDisputeInput {
+  resolution_status: string;
+  notes?: string;
+}
+
+export function useOpenDispute(estimateId: string) {
+  const qc = useQueryClient();
+  const getHeaders = useApiHeaders();
+  return useMutation({
+    mutationFn: async (data: OpenDisputeInput) => {
+      const { token } = await getHeaders();
+      return api<Estimate>(`/estimates/${estimateId}/dispute`, { method: 'POST', body: JSON.stringify(data), token });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['estimates', estimateId] });
+      qc.invalidateQueries({ queryKey: ['estimates'] });
+    },
+  });
+}
+
+export function useResolveDispute(estimateId: string) {
+  const qc = useQueryClient();
+  const getHeaders = useApiHeaders();
+  return useMutation({
+    mutationFn: async (data: ResolveDisputeInput) => {
+      const { token } = await getHeaders();
+      return api<Estimate>(`/estimates/${estimateId}/resolve-dispute`, { method: 'POST', body: JSON.stringify(data), token });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['estimates', estimateId] });
+      qc.invalidateQueries({ queryKey: ['estimates'] });
+    },
+  });
+}
