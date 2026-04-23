@@ -7,6 +7,8 @@
 > **Data:** 2026-04-21
 > **Status:** ACCEPTED via ADR-012 (2026-04-21). Artefato vivo — manutenção governada por T-20260421-1 em `.auto-memory/dm_queue.md`. Próxima revisão trimestral da Bússola: 2026-07 (ADR-010 §4).
 > **Natureza:** Antes PROPOSTA — agora autoritativo. Ajustes incorporados à Bússola v1.1 + 4 RFs APPROVED em `RF_BACKLOG.md` v0.2 + 4 tasks DM em `dm_queue.md` (T-20260421-2/3/4/5).
+> **Changelog Bússola:** v1.1 (2026-04-21) via ADR-012 — §5 expandido (descopes + 1099-NEC + MACRS), P8 offline-first adicionado, 4 RFs aprovados (RF-004/005/006/007). v1.2 (2026-04-22) via ADR-013 — §6 reorganizado em §6.1 (P1–P8) / §6.2 (PV1–PV6) / §6.3 (PUX1–PUX6), princípios de valor e UX adotados.
+> **Status RFs (2026-04-25):** RF-004 ✓ DONE (PR #44) | RF-005 ✓ DONE (PRs #48/#49/#50/#52) | RF-006 ✓ DONE (PR #51) | RF-007 APPROVED — próxima sessão DM (T-20260421-5).
 > **Base NS:** `docs.oracle.com/en/cloud/saas/NS/ns-online-help/` — consultada via WebSearch em 2026-04-21 (allowlist bloqueou fetch direto).
 
 ---
