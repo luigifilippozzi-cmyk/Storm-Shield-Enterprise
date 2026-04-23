@@ -8,7 +8,12 @@ import type { Estimate } from '@sse/shared-types';
 export interface EstimateFilters {
   search?: string;
   status?: string;
+  statuses?: string;
   customer_id?: string;
+  insurance_company_id?: string;
+  scope?: 'mine' | 'all';
+  date_from?: string;
+  date_to?: string;
   page?: number;
   limit?: number;
   sort_by?: string;

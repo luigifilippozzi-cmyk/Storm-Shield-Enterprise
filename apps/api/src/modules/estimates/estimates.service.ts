@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { EstimateStatus } from '@sse/shared-types';
 import { TenantDatabaseService } from '../../config/tenant-database.service';
 import { StorageService } from '../../common/services/storage.service';
 import { generateId } from '@sse/shared-utils';
@@ -52,12 +53,30 @@ export class EstimatesService {
     private readonly activationEvents: ActivationEventsService,
   ) {}
 
-  async findAll(tenantId: string, query: QueryEstimateDto): Promise<PaginatedResult<any>> {
+  async findAll(
+    tenantId: string,
+    query: QueryEstimateDto,
+    user?: { id?: string; roles?: string[] },
+  ): Promise<PaginatedResult<any>> {
     const knex = await this.tenantDb.getConnection();
-    const { search, status, customer_id, vehicle_id, date_from, date_to, page = 1, limit = 20, sort_by = 'created_at', sort_order = 'desc' } = query;
+    const {
+      search, status, statuses, insurance_company_id, scope,
+      customer_id, vehicle_id, date_from, date_to,
+      page = 1, limit = 20, sort_by = 'created_at', sort_order = 'desc',
+    } = query;
 
     const baseQuery = knex('estimates')
       .where({ 'estimates.tenant_id': tenantId, 'estimates.deleted_at': null });
+
+    // Ownership enforcement (RN5): estimator role always scoped to own estimates.
+    // Guard: estimator without a resolved user.id would leak all tenant estimates — reject hard.
+    const isEstimator = user?.roles?.includes('estimator') ?? false;
+    if (isEstimator) {
+      if (!user?.id) throw new ForbiddenException('Estimator context requires a resolved user identity');
+      baseQuery.where('estimates.estimated_by', user.id);
+    } else if (scope === 'mine' && user?.id) {
+      baseQuery.where('estimates.estimated_by', user.id);
+    }
 
     if (search) {
       baseQuery.where(function () {
@@ -68,8 +87,26 @@ export class EstimatesService {
       });
     }
 
+    // Single status filter (backward compat)
     if (status) {
       baseQuery.where('estimates.status', status);
+    }
+
+    // Multi-status filter (comma-separated — takes precedence over single status).
+    // Each value is validated against EstimateStatus enum to prevent arbitrary strings reaching DB.
+    if (statuses) {
+      const validStatuses = Object.values(EstimateStatus);
+      const statusList = statuses
+        .split(',')
+        .map((s) => s.trim())
+        .filter((s) => validStatuses.includes(s as EstimateStatus));
+      if (statusList.length > 0) {
+        baseQuery.whereIn('estimates.status', statusList);
+      }
+    }
+
+    if (insurance_company_id) {
+      baseQuery.where('estimates.insurance_company_id', insurance_company_id);
     }
 
     if (customer_id) {
@@ -103,8 +140,10 @@ export class EstimatesService {
         knex.raw("customers.first_name || ' ' || customers.last_name as customer_name"),
       )
       .leftJoin('vehicles', 'estimates.vehicle_id', 'vehicles.id')
+      .leftJoin('insurance_companies', 'estimates.insurance_company_id', 'insurance_companies.id')
       .select(
         knex.raw("vehicles.year || ' ' || vehicles.make || ' ' || vehicles.model as vehicle_description"),
+        'insurance_companies.name as insurance_company_name',
       )
       .orderBy(`estimates.${sortColumn}`, sort_order)
       .limit(limit)

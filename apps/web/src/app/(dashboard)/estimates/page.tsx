@@ -7,26 +7,8 @@ import { useEstimates, useDeleteEstimate, type EstimateFilters } from '@/hooks/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { cn, formatDate } from '@/lib/utils';
-
-const STATUS_COLORS: Record<string, string> = {
-  draft: 'bg-gray-100 text-gray-800',
-  sent: 'bg-blue-100 text-blue-800',
-  approved: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-800',
-  supplement_requested: 'bg-yellow-100 text-yellow-800',
-  converted: 'bg-purple-100 text-purple-800',
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  draft: 'Draft',
-  sent: 'Sent',
-  approved: 'Approved',
-  rejected: 'Rejected',
-  supplement_requested: 'Supplement Req.',
-  converted: 'Converted',
-};
+import { formatDate } from '@/lib/utils';
+import { EstimateStatusBadge, ESTIMATE_STATUS_CONFIG } from '@/components/estimates/estimate-status-badge';
 
 export default function EstimatesPage() {
   const router = useRouter();
@@ -60,7 +42,7 @@ export default function EstimatesPage() {
         </form>
         <Select value={filters.status || ''} onChange={(e) => setFilters((p) => ({ ...p, status: e.target.value || undefined, page: 1 }))} className="w-48">
           <option value="">All Statuses</option>
-          {Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          {Object.entries(ESTIMATE_STATUS_CONFIG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
         </Select>
         {(filters.search || filters.status) && (
           <Button variant="ghost" onClick={() => { setSearchInput(''); setFilters({ page: 1, limit: 20, sort_by: 'created_at', sort_order: 'desc' }); }}>Clear</Button>
@@ -69,9 +51,11 @@ export default function EstimatesPage() {
 
       <div className="rounded-lg border">
         {isLoading ? (
-          <div className="flex items-center justify-center p-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>
+          <div className="flex items-center justify-center p-12">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" role="status" aria-label="Loading estimates" />
+          </div>
         ) : error ? (
-          <p className="p-8 text-center text-destructive">Failed to load estimates: {error.message}</p>
+          <p className="p-8 text-center text-destructive" role="alert">Failed to load estimates: {error.message}</p>
         ) : !data?.data.length ? (
           <div className="p-8 text-center text-muted-foreground">
             <p className="text-lg font-medium">No estimates found</p>
@@ -79,22 +63,22 @@ export default function EstimatesPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm" aria-label="Estimates list">
               <thead>
                 <tr className="border-b bg-muted/50">
-                  <th className="cursor-pointer px-4 py-3 text-left font-medium text-muted-foreground hover:text-foreground" onClick={() => handleSort('estimate_number')}>
+                  <th scope="col" className="cursor-pointer px-4 py-3 text-left font-medium text-muted-foreground hover:text-foreground" onClick={() => handleSort('estimate_number')}>
                     Estimate # {filters.sort_by === 'estimate_number' && (filters.sort_order === 'asc' ? '\u2191' : '\u2193')}
                   </th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Customer</th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Status</th>
-                  <th className="cursor-pointer px-4 py-3 text-right font-medium text-muted-foreground hover:text-foreground" onClick={() => handleSort('total')}>
+                  <th scope="col" className="px-4 py-3 text-left font-medium text-muted-foreground">Customer</th>
+                  <th scope="col" className="px-4 py-3 text-left font-medium text-muted-foreground">Status</th>
+                  <th scope="col" className="cursor-pointer px-4 py-3 text-right font-medium text-muted-foreground hover:text-foreground" onClick={() => handleSort('total')}>
                     Total {filters.sort_by === 'total' && (filters.sort_order === 'asc' ? '\u2191' : '\u2193')}
                   </th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Claim #</th>
-                  <th className="cursor-pointer px-4 py-3 text-left font-medium text-muted-foreground hover:text-foreground" onClick={() => handleSort('created_at')}>
+                  <th scope="col" className="px-4 py-3 text-left font-medium text-muted-foreground">Claim #</th>
+                  <th scope="col" className="cursor-pointer px-4 py-3 text-left font-medium text-muted-foreground hover:text-foreground" onClick={() => handleSort('created_at')}>
                     Created {filters.sort_by === 'created_at' && (filters.sort_order === 'asc' ? '\u2191' : '\u2193')}
                   </th>
-                  <th className="px-4 py-3 text-right font-medium text-muted-foreground">Actions</th>
+                  <th scope="col" className="px-4 py-3 text-right font-medium text-muted-foreground">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -103,11 +87,9 @@ export default function EstimatesPage() {
                     <td className="px-4 py-3 font-medium font-mono">{est.estimate_number}</td>
                     <td className="px-4 py-3 text-muted-foreground">{(est as any).customer_name || '\u2014'}</td>
                     <td className="px-4 py-3">
-                      <Badge className={cn('border-transparent', STATUS_COLORS[est.status] || STATUS_COLORS.draft)}>
-                        {STATUS_LABELS[est.status] || est.status}
-                      </Badge>
+                      <EstimateStatusBadge status={est.status} />
                     </td>
-                    <td className="px-4 py-3 text-right font-medium">${parseFloat(est.total).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                    <td className="px-4 py-3 text-right font-medium tabular-nums">${parseFloat(est.total).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
                     <td className="px-4 py-3 text-muted-foreground">{est.claim_number || '\u2014'}</td>
                     <td className="px-4 py-3 text-muted-foreground">{formatDate(est.created_at)}</td>
                     <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>

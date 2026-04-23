@@ -26,11 +26,15 @@ export class EstimatesController {
   constructor(private readonly estimatesService: EstimatesService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List estimates with pagination, search, and filters' })
+  @ApiOperation({ summary: 'List estimates with pagination, search, and filters. Use scope=mine to enforce ownership; estimator role enforces it automatically.' })
   @ApiResponse({ status: 200, description: 'Paginated estimate list' })
   @RequirePermissions('estimates:read:list')
-  findAll(@CurrentTenant() tenantId: string, @Query() query: QueryEstimateDto) {
-    return this.estimatesService.findAll(tenantId, query);
+  findAll(
+    @CurrentTenant() tenantId: string,
+    @Query() query: QueryEstimateDto,
+    @CurrentUser() user: { id?: string; roles?: string[] },
+  ) {
+    return this.estimatesService.findAll(tenantId, query, user);
   }
 
   @Post()
