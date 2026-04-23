@@ -37,9 +37,10 @@ const WORKSPACE_NAV: Record<WorkspaceId | 'default', NavItem[]> = {
   books: [
     { name: 'Books', href: '/app/books', icon: 'B' },
     { name: 'Financial', href: '/financial', icon: 'F' },
+    { name: 'Chart of Accounts', href: '/accounting/chart-of-accounts', icon: 'C' },
+    { name: 'Journal Entries', href: '/accounting/journal-entries', icon: 'J' },
     { name: 'Reports', href: '/accounting/reports', icon: 'R' },
     { name: 'Fixed Assets', href: '/accounting/fixed-assets', icon: 'A' },
-    { name: 'Journal Entries', href: '/accounting/journal-entries', icon: 'J' },
   ],
   default: [
     { name: 'Dashboard', href: '/dashboard', icon: 'H' },
