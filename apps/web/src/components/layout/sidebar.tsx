@@ -17,6 +17,7 @@ const WORKSPACE_NAV: Record<WorkspaceId | 'default', NavItem[]> = {
     { name: 'Vehicles', href: '/vehicles', icon: 'V' },
     { name: 'Estimates', href: '/estimates', icon: 'E' },
     { name: 'Service Orders', href: '/service-orders', icon: 'S' },
+    { name: 'Cases', href: '/cases', icon: 'K' },
     { name: 'Financial', href: '/financial', icon: 'F' },
     { name: 'Reports', href: '/accounting/reports', icon: 'R' },
   ],
@@ -26,6 +27,7 @@ const WORKSPACE_NAV: Record<WorkspaceId | 'default', NavItem[]> = {
     { name: 'Customers', href: '/customers', icon: 'C' },
     { name: 'Vehicles', href: '/vehicles', icon: 'V' },
     { name: 'Insurance', href: '/insurance', icon: 'I' },
+    { name: 'Cases', href: '/cases', icon: 'K' },
   ],
   'my-work': [
     { name: 'My Work', href: '/app/my-work', icon: 'W' },
@@ -45,6 +47,7 @@ const WORKSPACE_NAV: Record<WorkspaceId | 'default', NavItem[]> = {
     { name: 'Vehicles', href: '/vehicles', icon: 'V' },
     { name: 'Estimates', href: '/estimates', icon: 'E' },
     { name: 'Service Orders', href: '/service-orders', icon: 'S' },
+    { name: 'Cases', href: '/cases', icon: 'K' },
     { name: 'Financial', href: '/financial', icon: 'F' },
     { name: 'Reports', href: '/accounting/reports', icon: 'R' },
   ],
@@ -83,7 +86,7 @@ export function Sidebar({ workspace }: SidebarProps) {
                     : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                 }`}
               >
-                <span className="flex h-6 w-6 items-center justify-center rounded bg-muted text-xs">
+                <span aria-hidden="true" className="flex h-6 w-6 items-center justify-center rounded bg-muted text-xs">
                   {item.icon}
                 </span>
                 {item.name}
@@ -99,7 +102,7 @@ export function Sidebar({ workspace }: SidebarProps) {
               : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
           }`}
         >
-          <span className="flex h-6 w-6 items-center justify-center rounded bg-muted text-xs">
+          <span aria-hidden="true" className="flex h-6 w-6 items-center justify-center rounded bg-muted text-xs">
             {SETTINGS_ITEM.icon}
           </span>
           {SETTINGS_ITEM.name}
