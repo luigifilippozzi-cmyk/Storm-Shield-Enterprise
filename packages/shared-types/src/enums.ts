@@ -59,14 +59,18 @@ export enum VehicleCondition {
   POOR = 'poor',
 }
 
-// ── Estimate ──
+// ── Estimate ── (RF-005a canonical 10-state machine; ADR-012)
 export enum EstimateStatus {
   DRAFT = 'draft',
-  SENT = 'sent',
+  SUBMITTED_TO_ADJUSTER = 'submitted_to_adjuster',
+  AWAITING_APPROVAL = 'awaiting_approval',
   APPROVED = 'approved',
+  SUPPLEMENT_PENDING = 'supplement_pending',
+  APPROVED_WITH_SUPPLEMENT = 'approved_with_supplement',
   REJECTED = 'rejected',
-  SUPPLEMENT_REQUESTED = 'supplement_requested',
-  CONVERTED = 'converted',
+  DISPUTED = 'disputed',
+  PAID = 'paid',
+  CLOSED = 'closed',
 }
 
 export enum EstimateLineType {

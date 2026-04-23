@@ -29,13 +29,19 @@ export interface PaginatedResult<T> {
   };
 }
 
+// Legacy updateStatus — now delegates logic to EstimateStateMachineService (RF-005a).
+// Retained for backward compat; routes should prefer EstimateStateMachineService.transition().
 const ALLOWED_STATUS_TRANSITIONS: Record<string, string[]> = {
-  draft: ['sent'],
-  sent: ['approved', 'rejected'],
-  approved: ['supplement_requested', 'converted'],
+  draft: ['submitted_to_adjuster'],
+  submitted_to_adjuster: ['awaiting_approval', 'rejected'],
+  awaiting_approval: ['approved', 'supplement_pending', 'rejected', 'disputed'],
+  approved: ['approved_with_supplement', 'paid', 'disputed', 'closed'],
+  supplement_pending: ['awaiting_approval'],
+  approved_with_supplement: ['paid', 'disputed', 'closed'],
   rejected: ['draft'],
-  supplement_requested: ['sent'],
-  converted: [],
+  disputed: ['awaiting_approval', 'paid', 'closed'],
+  paid: ['closed'],
+  closed: [],
 };
 
 @Injectable()

@@ -166,15 +166,15 @@ describe('EstimatesService', () => {
   describe('updateStatus', () => {
     it('should allow valid status transition', async () => {
       knex._chain.first.mockReturnValueOnce({ id: ESTIMATE_ID, status: 'draft' });
-      knex._chain.returning.mockReturnValueOnce([{ id: ESTIMATE_ID, status: 'sent' }]);
+      knex._chain.returning.mockReturnValueOnce([{ id: ESTIMATE_ID, status: 'submitted_to_adjuster' }]);
 
-      const result = await service.updateStatus(TENANT_ID, ESTIMATE_ID, { status: 'sent' } as any);
+      const result = await service.updateStatus(TENANT_ID, ESTIMATE_ID, { status: 'submitted_to_adjuster' } as any);
 
-      expect(result.status).toBe('sent');
+      expect(result.status).toBe('submitted_to_adjuster');
     });
 
     it('should set approved_at when approving', async () => {
-      knex._chain.first.mockReturnValueOnce({ id: ESTIMATE_ID, status: 'sent' });
+      knex._chain.first.mockReturnValueOnce({ id: ESTIMATE_ID, status: 'awaiting_approval' });
       knex._chain.returning.mockReturnValueOnce([{ id: ESTIMATE_ID, status: 'approved' }]);
 
       await service.updateStatus(TENANT_ID, ESTIMATE_ID, { status: 'approved' } as any);
@@ -196,7 +196,7 @@ describe('EstimatesService', () => {
       knex._chain.first.mockReturnValueOnce(null);
 
       await expect(
-        service.updateStatus(TENANT_ID, ESTIMATE_ID, { status: 'sent' } as any),
+        service.updateStatus(TENANT_ID, ESTIMATE_ID, { status: 'submitted_to_adjuster' } as any),
       ).rejects.toThrow(NotFoundException);
     });
   });
