@@ -18,19 +18,19 @@ export enum CasePriority {
 export class CreateCaseDto {
   @ApiProperty({ enum: CaseType })
   @IsEnum(CaseType)
-  case_type: CaseType;
+  case_type!: CaseType;
 
   @ApiProperty({ maxLength: 255 })
   @IsString()
   @MinLength(1)
   @MaxLength(255)
-  title: string;
+  title!: string;
 
   @ApiProperty({ maxLength: 10000 })
   @IsString()
   @MinLength(1)
   @MaxLength(10000)
-  body: string;
+  body!: string;
 
   @ApiPropertyOptional({ enum: CasePriority, default: CasePriority.MEDIUM })
   @IsOptional()
