@@ -382,7 +382,7 @@ Justificativa: 7 abas no frontend (L), backend é principalmente reuso (S), endp
 
 ## RF-005 — Estimate State Machine + Inbox do Estimator
 
-**Status:** APPROVED — **SPLIT RATIFICADO (Split A) em 2026-04-22**
+**Status:** ✅ DONE — **SPLIT RATIFICADO (Split A) em 2026-04-22 — 3c mergeado 2026-04-25 (PR #52)**
 **Prioridade:** P1
 **Fase:** 2
 **Aprovado em:** 2026-04-21 (sessão PO, via ADR-012)

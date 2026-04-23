@@ -508,13 +508,14 @@ Gap 5 (Insurance workflow) — Bússola §4.
 
 **Origin:** PO (split ratificado 2026-04-22)
 **Priority:** P1
-**Status:** PENDING
+**Status:** COMPLETED
 **Created:** 2026-04-22
 **Unblocked (hard):** 2026-04-23 (T-3a COMPLETED). Hard-dep satisfeita.
 **Unblocked (soft):** 2026-04-25 (T-3b COMPLETED — PR #50 merged). estimate-status-badge disponivel para reuso.
-**Claimed:** —
-**Branch:** `feature/SSE-XXX-rf-005c-kanban-sla`
-**PR:** —
+**Claimed:** DM Agent (sessão 2026-04-25)
+**Closed:** 2026-04-25
+**Branch:** `feature/SSE-057-rf-005c-kanban-sla`
+**PR:** #52 (merged)
 
 ### Objetivo
 Adicionar visualização em **kanban** a `/app/estimates/inbox` (toggle tabela↔kanban), drag-and-drop respeitando transitions válidas (consumindo mapa do 3a), e SLA jobs que notificam Owner quando estimate fica > 14 dias em `awaiting_approval` ou > 7 dias em `supplement_pending` (RN8).
