@@ -289,22 +289,22 @@
 <script>
 // <!--METRICS_START-->
 const D = {
-  lastUpdated: "2026-04-25 (Dev Manager — sessao autonoma)",
+  lastUpdated: "2026-04-23 (Dev Manager — sessao agendada autonoma)",
   updatedBy: "Dev Manager",
   health: "green",
-  healthText: "VERDE. CI VERDE. Deploy API VERDE. Deploy Web VERDE. 0 PRs abertos. 55 merged. PR #53 (estimates findOne ownership guard), PR #54 (NS dashboard Bussola v1.2 sync), PR #55 (tenant-scoped del() security fix). 514 testes. Coverage <80% branches em 3 services — standing issue.",
+  healthText: "VERDE. CI VERDE. Deploy API VERDE. Deploy Web in_progress (normal pos-merge). 0 PRs abertos. 57 merged. PR #56 (RF-007 Cases CI fix + merge), PR #57 (T-036 accounting frontend COA+JE). 543 testes. Coverage <80% branches em 3 services — standing issue.",
   activeFase: "2",
   kpis: {
-    backendModules: 13,
-    controllers: 16,
-    endpoints: 114,
-    frontendPages: 38,
-    specFiles: 25,
-    tests: 514,
-    migrations: 17,
-    adrs: 14,
+    backendModules: 14,
+    controllers: 17,
+    endpoints: 120,
+    frontendPages: 42,
+    specFiles: 26,
+    tests: 543,
+    migrations: 18,
+    adrs: 15,
     excelTotal: 36,
-    excelDone: 34
+    excelDone: 36
   },
   agents: [
     { name: "PM Agent", role: "Status Diario + Metricas", color: "var(--blue)", bg: "var(--blue-bg)", icon: "clipboard", status: "active", statusText: "Revisao 2026-04-25 — Saude VERDE. 52 PRs merged (antes sessao DM). T-3c COMPLETED (PR #52). T-20260421-4 COMPLETED (PR #51). RF-005 totalmente concluido. Regras 1-18 OK. Sem violacoes Bussola.", stats: [["Frequencia","Diario"],["Escopo","Read-only"],["Output","Relatorio + Dashboard"]] },
@@ -315,6 +315,8 @@ const D = {
     { name: "frontend-reviewer", role: "Next.js + shadcn/ui", color: "var(--cyan)", bg: "rgba(6,182,212,.12)", icon: "layout", status: "active", statusText: "Checklist expandido: 20 itens (8 base + 6 PV + 6 PUX via ADR-013). PR #44 FAIL→PASS. Regra 19 vigente.", stats: [["Framework","Next.js 15 + React 19"],["Checklist","20 itens (ADR-013)"],["Trigger","UI/component changes — Regra 19"]] }
   ],
   activity: [
+    { time: "Abr 23", color: "var(--accent2)", msg: "<strong>PR #57 merged</strong> feat(web): T-036 accounting frontend — /accounting/chart-of-accounts (COA list, filtros tipo/status/search), /accounting/journal-entries (JE list, filtros status/datas/search), hooks use-chart-of-accounts + use-journal-entries, sidebar books atualizada. 543 testes. Accountant / gap accounting UI. T-20260423-1 COMPLETED.", tag: "merge" },
+    { time: "Abr 23", color: "var(--accent2)", msg: "<strong>PR #56 merged</strong> feat(cases): RF-007 Case Management simplificado (SSE-060) — fix TS: SetMetadata import (@nestjs/core→@nestjs/common) + definite assignment (!) em CreateCaseDto. CI verde. RF-007 DONE em RF_BACKLOG.md. T-20260421-5 COMPLETED.", tag: "merge" },
     { time: "Abr 25", color: "var(--accent2)", msg: "<strong>PR #55 merged</strong> fix(security): tenant-scoped del() em deleteDocument + deletePhoto (SSE-059) — estimate_documents e vehicle_photos del() agora incluem tenant_id no WHERE. Auditoria completa: 6 .del() revisados, 4 ja corretos. 514 testes. A01:2021 Low finding fechado.", tag: "merge" },
     { time: "Abr 25", color: "var(--accent2)", msg: "<strong>PR #54 merged</strong> docs(strategy): sync NS dashboard com Bussola v1.2 + RF status — card ADR-013 (§6.1/§6.2/§6.3 PV/PUX), RF-004/005/006 DONE badges, roadmap timeline atualizado. T-20260421-9 COMPLETED.", tag: "merge" },
     { time: "Abr 25", color: "var(--accent2)", msg: "<strong>PR #53 merged</strong> fix(estimates): Estimator ownership guard em findOne (SSE-058) — security-reviewer Medium corrigido (hardening user.id guard). 513→514 testes. P1 urgente de codigo nao-commitado resolvido.", tag: "merge" },
@@ -357,8 +359,8 @@ const D = {
   fases: [
     { id: "1A", nome: "Hardening & Tests", total: 10, done: 10, saude: "green", desc: "Jest config + 7 unit test suites + error handler DONE. Coverage 82% para estimates+vehicles. T-008 (enums) + T-009 (date validation) verificados como JA implementados em sessoes anteriores — Fase 1A 10/10." },
     { id: "1B", nome: "Deploy Staging", total: 9, done: 9, saude: "green", desc: "Fly.io, Redis, migrations, health, GH Actions, Neon, Vercel DONE. Deploy API VERDE 2026-04-22 (T-20260421-10 COMPLETED). T-019 smoke test DONE. /ready 200 confirmado 2026-04-24 (Fly secrets DATABASE_URL+REDIS_URL configurados — full staging health)." },
-    { id: "2", nome: "Frontend Polish + Fase 2 RFs", total: 13, done: 10, saude: "green", desc: "T-020/021/022 DONE. RF-001 (Gap 1) DONE PR#31. RF-002 (Gap 3) DONE PR#37. RF-003 (Gap 8) DONE PR#33. RF-004 (Customer 360) DONE PR#44. RF-005a/b/c (Estimate SM+Inbox+Kanban) DONE PRs#48-52. RF-006 (Payment Hold) DONE PR#51. Pendente: RF-007 (Case Management, P2) — T-20260421-5." },
-    { id: "3", nome: "Accounting & FAM", total: 8, done: 7, saude: "green", desc: "COA + JE + Fiscal Periods + FAM + Reports (P&L, Balance Sheet, Trial Balance) DONE. Falta apenas T-036 (frontend pages COA/JE)." }
+    { id: "2", nome: "Frontend Polish + Fase 2 RFs", total: 13, done: 13, saude: "green", desc: "T-020/021/022 DONE. RF-001 (Gap 1) DONE PR#31. RF-002 (Gap 3) DONE PR#37. RF-003 (Gap 8) DONE PR#33. RF-004 (Customer 360) DONE PR#44. RF-005a/b/c (Estimate SM+Inbox+Kanban) DONE PRs#48-52. RF-006 (Payment Hold) DONE PR#51. RF-007 (Case Management) DONE PR#56." },
+    { id: "3", nome: "Accounting & FAM", total: 8, done: 8, saude: "green", desc: "COA + JE + Fiscal Periods + FAM + Reports (P&L, Balance Sheet, Trial Balance) DONE. T-036 DONE PR#57 (frontend pages COA/JE). Fase 3 COMPLETA." }
   ],
   modules: [
     { name: "customers", files: 12, spec: true, controller: true, endpoints: 10 },
@@ -376,11 +378,11 @@ const D = {
     { name: "admin/activation", files: 5, spec: true, controller: true, endpoints: 3 }
   ],
   pipeline: [
-    { label: "CI", desc: "Lint + Test + Build (GitHub Actions) — SUCCESS PR #52 (2026-04-23T15:07Z). 512/512 testes. 25 suites.", status: "green", date: "2026-04-25" },
-    { label: "Deploy Staging (Web)", desc: "Vercel + GitHub GHCR — SUCCESS 2026-04-23T15:07Z (PR #52 merge). Build+Push Docker images PASS.", status: "green", date: "2026-04-25" },
-    { label: "Deploy API", desc: "Fly.io + GHCR — SUCCESS 2026-04-23T15:07Z. /ready 200 ATIVO (Fly secrets DATABASE_URL+REDIS_URL configurados). Staging full health.", status: "green", date: "2026-04-25" },
-    { label: "Deploy Web", desc: "Vercel — SUCCESS consistente (ultimo: PR #52 merge)", status: "green", date: "2026-04-25" },
-    { label: "PRs Abertos", desc: "0 PRs abertos. 52 total merged. Ultimo: #52 feat RF-005c kanban+SLA (2026-04-25).", status: "green", date: "2026-04-25" }
+    { label: "CI", desc: "Lint + Test + Build (GitHub Actions) — SUCCESS PR #57 merged (2026-04-23). 543/543 testes. 26 suites.", status: "green", date: "2026-04-23" },
+    { label: "Deploy Staging (Web)", desc: "Vercel — in_progress pos-merge PR #57 (normal). Ultimo concluso: SUCCESS PR #56.", status: "green", date: "2026-04-23" },
+    { label: "Deploy API", desc: "Fly.io + GHCR — SUCCESS. /ready 200 ATIVO (Fly secrets DATABASE_URL+REDIS_URL configurados).", status: "green", date: "2026-04-23" },
+    { label: "Deploy Web", desc: "Vercel — in_progress (pos PR #57 merge, normal). Ultimo concluso: SUCCESS.", status: "green", date: "2026-04-23" },
+    { label: "PRs Abertos", desc: "0 PRs abertos. 57 total merged. Ultimos: #56 RF-007 Cases, #57 T-036 Accounting Frontend (2026-04-23).", status: "green", date: "2026-04-23" }
   ],
   alertas: {
     bloqueantes: [],
@@ -389,27 +391,23 @@ const D = {
       { titulo: "Coverage < 80% branches em 3 services", desc: "contractors: 77.77% branches, customers: 71.79%, financial: 66.66%. Statements/lines todos >94%. Meta CLAUDE.md §10 regra 6.", acao: "Criar tasks P2 para cobertura de edge cases nos 3 services acima" }
     ],
     proximos7: [
-      { titulo: "T-20260421-5 (P2): RF-007 Case Management simplificado", desc: "Gap 5 Bussola. Anti-rec #13 (nao ticketing full). Independente — pode iniciar a qualquer momento." },
-      { titulo: "T-20260421-9 (P2): Sync NS dashboard com Bussola v1.2", desc: "Gatilho #2 desbloqueado (ADR-013 merged). PR doc-only. Bloqueio T-6 removido ha muito tempo — priorizar." },
-      { titulo: "T-036 (P2): Accounting frontend pages (COA + JE)", desc: "Completar Fase 3 — chart-of-accounts e journal-entries pages no Next.js." }
+      { titulo: "Coverage <80% branches (standing)", desc: "contractors: 77.77%, customers: 71.79%, financial: 66.66%. Meta CLAUDE.md §10 regra 6. Criar tasks P2 dedicadas." },
+      { titulo: "Gaps B1-3/B2-2/B3-4 sem task explícita", desc: "Vehicle detail (estimates vinculados), Estimate form wizard multi-step, Financial breakdown por categoria." },
+      { titulo: "T-20260421-1: NS dashboard (standing)", desc: "Aguarda gatilho explícito (RF status change, Bussola ajuste, nova anti-rec)." }
     ],
     alinhamentoBussola: []
   },
   inconsistencias: [
-    { tipo: "NOVA — Codigo nao-commitado em estimates", desc: "18 linhas modificadas (controller + service + spec): findOne ownership guard — estimators so podem ver seus proprios estimates. Nao faz parte de nenhum PR merged. Deve ser commitado/PR aberto pelo DM." },
-    { tipo: "T-20260421-9 (NS dashboard sync) — parado", desc: "PENDING P2 desde Abr 21. Bloqueio T-6 removido (ADR-013 merged Abr 22). Nao actioned ha 3+ dias. DM deve priorizar — PR doc-only simples." },
+    { tipo: "Coverage <80% branches em 3 services", desc: "contractors: 77.77%, customers: 71.79%, financial: 66.66%. Standing issue — sem task criada." },
     { tipo: "Gaps P2 Fase 1 sem task explicita", desc: "B1-3 (vehicle detail + estimates vinculados), B2-2 (estimate form wizard multi-step), B3-4 (financial breakdown por categoria) — sem task criada no dm_queue." },
-    { tipo: "T-20260412-2 — aguarda ratificacao PO", desc: "Frontend Polish aguarda decisao PO ha 13 dias. Decidir: executar agora ou encerrar scope com RF-004..007." },
+    { tipo: "T-20260412-2 — aguarda ratificacao PO", desc: "Frontend Polish aguarda decisao PO ha 14+ dias. Decidir: executar agora ou encerrar scope." },
     { tipo: "POST /tenants sem AuthGuard — RESOLVIDO", desc: "PR #38 merged 2026-04-21. Issue HIGH fechada." },
     { tipo: "/ready 503 — RESOLVIDO", desc: "Confirmado 2026-04-24: /ready retorna 200. Fly secrets configurados por Luigi." }
   ],
   recomendacoes: [
-    { prioridade: "P1 (DM — URGENTE)", texto: "Commitar 18 linhas nao-commitadas em estimates (findOne ownership guard + test + controller). Abrir PR ou incluir em proximo ciclo." },
-    { prioridade: "P2 (DM)", texto: "T-20260421-5 (RF-007): Case Management simplificado. Todos os P1 concluidos — proximo RF aprovado." },
-    { prioridade: "P2 (DM)", texto: "T-20260421-9: Sync NS dashboard com Bussola v1.2. Bloqueio removido ha 3 dias. PR doc-only — ~30min." },
-    { prioridade: "P2 (DM)", texto: "T-036: Accounting frontend pages (COA + JE) — fechar Fase 3 completamente." },
     { prioridade: "P2 (DM)", texto: "Coverage <80% branches: contractors (77.77%), customers (71.79%), financial (66.66%). Criar tasks P2 dedicadas." },
-    { prioridade: "P3 (PO)", texto: "Ratificar ou encerrar T-20260412-2 (Frontend Polish) — ha 13 dias sem decisao." }
+    { prioridade: "P2 (DM)", texto: "Gaps B1-3/B2-2/B3-4: Vehicle detail estimates, Estimate form wizard, Financial breakdown — criar tasks explícitas." },
+    { prioridade: "P3 (PO)", texto: "Ratificar ou encerrar T-20260412-2 (Frontend Polish) — aguarda decisao PO ha 14+ dias." }
   ],
   backlog: [
     { id: "RF-004", task: "Customer 360 View (7 abas)", fase: "2", prio: "P1", status: "Concluido", nota: "PR #44 merged 2026-04-22. 368 testes. 2 endpoints novos (/summary + /activity-timeline). 7 abas + ARIA + Suspense. Critical+High+3 Medium corrigidos via subagentes." },
@@ -417,12 +415,12 @@ const D = {
     { id: "RF-005b", task: "Estimate Inbox tabela + filtros", fase: "2", prio: "P1", status: "Concluido", nota: "PR #50 merged 2026-04-25. /app/estimates/inbox + EstimateStatusBadge 10 estados + multi-status + ownership + adjuster/date. 487 testes. Estimator / Gap 5." },
     { id: "RF-005c", task: "Estimate Kanban drag-drop + SLA", fase: "2", prio: "P1", status: "Concluido", nota: "PR #52 merged 2026-04-23. EstimatesKanban dnd-kit, SlaNotificationService @Cron, hero strip, age badges. 512 testes. RF-005 FULLY DONE." },
     { id: "RF-006", task: "Payment Hold / Disputed Estimate", fase: "2", prio: "P1", status: "Concluido", nota: "PR #51 merged 2026-04-23. Migration 016, openDispute/resolveDispute/forceProgress, DisputeModal. 501 testes. T-20260421-4 COMPLETED." },
-    { id: "RF-007", task: "Case Management simplificado", fase: "2", prio: "P2", status: "Aprovado", nota: "ADR-012. Gap 5. Anti-rec #13 (nao ticketing full). T-20260421-5." },
+    { id: "RF-007", task: "Case Management simplificado", fase: "2", prio: "P2", status: "Concluido", nota: "PR #56 merged 2026-04-23. Migration 017, CasesModule (29 testes), /cases + /cases/[id] frontend. T-20260421-5 COMPLETED." },
     { id: "RF-001", task: "Landing por Persona + Workspaces", fase: "2", prio: "P0", status: "Concluido", nota: "Gap 1 Bussola. PR #31 merged 2026-04-20." },
     { id: "RF-002", task: "Setup Wizard de Onboarding (5 passos)", fase: "2", prio: "P0", status: "Concluido", nota: "Gap 3 Bussola. PR #37 merged 2026-04-21." },
     { id: "RF-003", task: "Activation Event Tracking", fase: "2", prio: "P0", status: "Concluido", nota: "Gap 8 Bussola. PR #33 merged 2026-04-20." },
     { id: "T-20260421-10", task: "Fix ESM resolution (shared-utils/shared-types)", fase: "1B", prio: "P0", status: "Concluido", nota: "COMPLETED 2026-04-22. 4 crashes corrigidos. Deploy API VERDE. ADR-011 redigido." },
-    { id: "T-036", task: "Accounting frontend pages (COA + JE)", fase: "3", prio: "P2", status: "Backlog", nota: "Completar Fase 3 accounting" },
+    { id: "T-036", task: "Accounting frontend pages (COA + JE)", fase: "3", prio: "P2", status: "Concluido", nota: "PR #57 merged 2026-04-23. /accounting/chart-of-accounts + /accounting/journal-entries + hooks + sidebar books. Fase 3 COMPLETA." },
     { id: "T-019", task: "Smoke test staging deploy end-to-end", fase: "1B", prio: "P1", status: "Concluido", nota: "DONE 2026-04-22 — /health {status:ok} staging live." }
   ]
 };
