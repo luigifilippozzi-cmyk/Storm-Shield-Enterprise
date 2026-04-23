@@ -1,4 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
+<!--
+  NOTA: Neste documento, "NS" refere-se a um ERP proprietário de terceiros
+  usado exclusivamente como referência comparativa externa, sem relação comercial,
+  licenciamento ou endosso. O nome da marca foi substituído por precaução (ver ADR-014).
+-->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -317,7 +322,7 @@ const D = {
     { time: "Abr 22", color: "var(--green)", msg: "<strong>Dev Manager</strong> T-20260421-10 COMPLETED — Deploy API VERDE pela primeira vez. 4 crashes corrigidos: (1) ESM barrels .js, (2) Dockerfile missing shared-utils/node_modules, (3) CJS circular import KNEX tokens, (4) AuthModule @Global. ADR-011 redigido. /health {status:ok} tentativa 1.", tag: "dm" },
     { time: "Abr 21", color: "var(--blue)", msg: "<strong>PM Agent</strong> revisao noite completa — causa real deploy API identificada (ESM bug, nao secrets). T-20260421-10 (P0) criada. PR #38 merged (AuthGuard fix). ADR-012 Accepted. Bussola v1.1. RF-004..007 APPROVED. 9 novas tasks DM (T-20260421-1..9). Regras 1-18: OK.", tag: "pm" },
     { time: "Abr 21", color: "var(--accent2)", msg: "<strong>PR #38</strong> fix(tenants): add AuthGuard to POST /tenants endpoint (SSE-052) — HIGH security fix. 38 PRs total merged.", tag: "merge" },
-    { time: "Abr 21", color: "var(--orange)", msg: "<strong>ADR-012 Accepted</strong> — Incorporacao parcial de padroes NetSuite a Bussola v1.1. 4 RFs aprovados (RF-004..007). 11 ADRs total. ADR-011 reservado (Release Cadence).", tag: "fix" },
+    { time: "Abr 21", color: "var(--orange)", msg: "<strong>ADR-012 Accepted</strong> — Incorporacao parcial de padroes NS a Bussola v1.1. 4 RFs aprovados (RF-004..007). 11 ADRs total. ADR-011 reservado (Release Cadence).", tag: "fix" },
     { time: "Abr 21", color: "var(--purple)", msg: "<strong>Bussola v1.1</strong> — §5 +7 linhas Simplificamos, §6 novo P8 offline-first, §7 Workspace+Cmd+K obrigatorio, §8 +5 RFs, §9 10 decisoes datadas.", tag: "fix" },
     { time: "Abr 21", color: "var(--green)", msg: "<strong>Dev Manager</strong> sessao autonoma tarde — 4 tasks concluidas (T-20260420-1/2, T-20260417-11, T-20260412-3 verificada). PRs #35 (DM hardening), #36 (subagentes housekeeping), #37 (RF-002 Setup Wizard) mergeados. 363 testes (+13). Todos 3 RFs P0 da Bussola DONE.", tag: "dm" },
     { time: "Abr 21", color: "var(--accent2)", msg: "<strong>PR #37</strong> feat(web,api): RF-002 Setup Wizard de Onboarding — 5 passos, migrations 011+012, wizard hooks + redirect, 363 testes. Owner-Operator / Gap 3.", tag: "merge" },
@@ -373,7 +378,7 @@ const D = {
     ],
     proximos7: [
       { titulo: "T-20260421-3 (P1): RF-005 Estimate State Machine + Inbox — consultar PO para split", desc: "Gap 5 Bussola. Complexidade XL — DM deve propor split ao PO (RF-005a/b/c) ANTES de abrir branch. Desbloqueia RF-006 (T-20260421-4)." },
-      { titulo: "T-20260421-9 (P2): Sync NetSuite dashboard com Bussola v1.2", desc: "Gatilho #2 desbloqueado (Bussola foi ajustada para v1.2 via ADR-013). PR doc-only. T-20260421-6 COMPLETED." },
+      { titulo: "T-20260421-9 (P2): Sync NS dashboard com Bussola v1.2", desc: "Gatilho #2 desbloqueado (Bussola foi ajustada para v1.2 via ADR-013). PR doc-only. T-20260421-6 COMPLETED." },
       { titulo: "T-20260421-5 (P2): RF-007 Case Management simplificado", desc: "Gap 5 Bussola. Complexidade M. Independente de RF-005/006. Anti-rec #13 explícita (nao ticketing full)." },
       { titulo: "Luigi (acao manual): configurar Fly secrets", desc: "DATABASE_URL (Neon pooled, usuario sse_app) + REDIS_URL (Upstash free). Desbloqueia /ready verde e full staging health." }
     ],
@@ -390,7 +395,7 @@ const D = {
   recomendacoes: [
     { prioridade: "P1 (Luigi)", texto: "Configurar Fly secrets: fly secrets set DATABASE_URL=<neon-pooled> REDIS_URL=<upstash> --app sse-api-staging. Desbloqueara /ready verde e full health check." },
     { prioridade: "P1 (DM)", texto: "T-20260421-3 (RF-005): validar split XL com PO ANTES de abrir branch. Propor RF-005a (state machine core) + RF-005b (Inbox kanban) + RF-005c (notificacoes). RF-005a desbloqueia RF-006 (Payment Hold)." },
-    { prioridade: "P2 (DM)", texto: "T-20260421-9: sync NetSuite dashboard com Bussola v1.2 (gatilho #2 desbloqueado por T-20260421-6 COMPLETED). PR doc-only simples." },
+    { prioridade: "P2 (DM)", texto: "T-20260421-9: sync NS dashboard com Bussola v1.2 (gatilho #2 desbloqueado por T-20260421-6 COMPLETED). PR doc-only simples." },
     { prioridade: "P2 (DM)", texto: "T-20260421-5 (RF-007): Case Management simplificado — M, independente, pode rodar apos consulta PO para RF-005." }
   ],
   backlog: [

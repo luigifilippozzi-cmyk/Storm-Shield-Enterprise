@@ -7,9 +7,112 @@ type: project
 
 # Dev Manager Queue — SSE
 
+> **Nota:** "NS" = ERP de referência externo. Nome substituído por precaução (ADR-014).
+
 > Fila única. Tarefas novas no topo. Template canônico em `docs/process/HANDOFF_PROTOCOL.md` §4.
 > Status permitidos: PENDING | IN_PROGRESS | BLOCKED | COMPLETED
 > Rotação: COMPLETED movidas para `dm_queue_archive.md` no primeiro dia útil de cada mês.
+
+---
+
+## T-20260422-1 — P2 Substituição de marca registrada de ERP externo por sigla NS (trademark hygiene)
+
+**Origin:** PO (sessão 2026-04-22)
+**Priority:** P2
+**Status:** COMPLETED
+**Created:** 2026-04-22
+**Claimed:** DM Agent (sessão 2026-04-22)
+**Closed:** 2026-04-22
+**Branch:** `chore/SSE-trademark-hygiene-netsuite`
+**PR:** #46 (a abrir)
+**Dependência invertida:** T-20260421-1 (sync dashboard) deve ser executada **após** conclusão desta; o path `ANALISE_NS_vs_BUSSOLA_v1.*` será renomeado e sua referência no corpo do T-20260421-1 precisa ser atualizada no mesmo PR.
+
+### Objetivo
+Reduzir exposição jurídica removendo menção direta à marca registrada de ERP de terceiro usado como referência comparativa. Substituir "NS" por "NS" em 235 ocorrências (19 arquivos versionados) + acompanhamento em issues/PRs do GitHub. Decisão formalizada em **ADR-014**.
+
+### Escopo
+
+1. **ADR-014** publicado em `docs/decisions/014-remocao-mencao-marca-erp-referencia.md` (rascunho canônico em `.auto-memory/proposals/adr_014_draft.md`).
+2. **Disclaimer canônico** no topo de cada doc impactado:
+   > **Nota:** Neste documento, "NS" refere-se a um ERP proprietário de terceiros usado exclusivamente como referência comparativa externa, sem relação comercial, licenciamento ou endosso. O nome da marca foi substituído por precaução (ver ADR-014).
+3. **Substituição textual** em 19 arquivos (ver lista completa abaixo): "NS" → "NS"; "NS" / "NS" / "NS" / "NS" → "NS".
+4. **Renames com stubs de redirect (60 dias)**:
+   - `docs/strategy/ANALISE_NS_vs_BUSSOLA_v1.md` → `ANALISE_NS_vs_BUSSOLA_v1.md`
+   - `docs/strategy/ANALISE_NS_vs_BUSSOLA_v1.html` → `ANALISE_NS_vs_BUSSOLA_v1.html`
+   - `docs/decisions/012-ns-incorporacao-parcial.md` → `012-ns-incorporacao-parcial.md`
+   - Conteúdo do stub (1 linha): `Moved to <novo_caminho> (ADR-014). Stub será removido em 2026-06-22.`
+5. **Atualizar links cruzados**:
+   - `.auto-memory/MEMORY.md` (entrada "NS↔Bússola v1" → "NS↔Bússola v1")
+   - `.auto-memory/dm_queue.md` (T-20260421-1 referência de path)
+   - `docs/decisions/008`, `009`, `013` (referências a 012)
+   - `CLAUDE.md` seção "Dashboards estratégicos" (se presente) e regra 19 menciona frontend-reviewer — validar se há ref direta ao ADR 012 pelo slug antigo
+   - `README.md`, `docs/README.md`, `sse-squad-dashboard.html`
+6. **Sweep GitHub** (3 etapas: Discovery → Execution → Verify, snippets canônicos em `po_sessions.md` sessão 2026-04-22):
+   - Issues abertas e fechadas (título + corpo)
+   - PRs abertos e mergeados (título + corpo)
+   - **NÃO editar** comentários nem reviews
+
+### Arquivos impactados (19 + 3 renames)
+
+```
+docs/strategy/BUSSOLA_PRODUTO_SSE.md                  (27 ocorrências)
+docs/strategy/RF_BACKLOG.md                           (9)
+docs/strategy/ANALISE_NS_vs_BUSSOLA_v1.md       (78) + RENAME
+docs/strategy/ANALISE_NS_vs_BUSSOLA_v1.html     (47) + RENAME
+docs/decisions/008-fam-implementation-decisions.md    (1)
+docs/decisions/009-adocao-bussola-de-produto.md       (4)
+docs/decisions/012-ns-incorporacao-parcial.md   (14) + RENAME
+docs/decisions/013-incorporacao-parcial-pv-pux.md     (2)
+docs/sql/001_fam_tables.sql                           (1)
+CLAUDE.md                                             (1)
+README.md                                             (2)
+docs/README.md                                        (2)
+sse-squad-dashboard.html                              (3)
+.auto-memory/MEMORY.md                                (1)
+.auto-memory/dm_queue.md                              (19 — este próprio arquivo)
+.auto-memory/po_sessions.md                           (10)
+.auto-memory/project_sse_status.md                    (7)
+.auto-memory/proposals/bussola_v1_2_patch_pv_pux.md   (5)
+.auto-memory/proposals/adr_013_draft.md               (2)
+```
+
+### Escopo negativo (NÃO fazer)
+
+- Não executar `git filter-branch` nem reescrever commits históricos
+- Não usar `--force-push` sob nenhuma circunstância (viola regra 1 do CLAUDE.md)
+- Não alterar os documentos Oracle em `.gitignore` (referência externa)
+- Não reescrever o conteúdo analítico/comparativo — apenas a string da marca + disclaimer
+- Não renomear ADRs 008/013 (não contêm a marca no filename)
+- Não editar comentários de PR nem reviews no GitHub
+- Não tocar em `apps/api/src` ou `apps/web/src` sem evidência de match (grep inicial não encontrou — confirmar no re-scan)
+
+### Subagentes
+
+- **test-runner** (obrigatório, CI green)
+- **frontend-reviewer** (condicional — aplicar se alteração no `sse-squad-dashboard.html` afetar JS/UI ou se qualquer `.tsx` for tocado inesperadamente)
+
+### Critérios de aceite (Done)
+
+- [ ] ADR-014 publicado e linkado
+- [ ] Disclaimer canônico no topo de todos os docs impactados
+- [ ] 3 renames aplicados com stubs de 60 dias (remoção agendada 2026-06-22)
+- [ ] Todos os links cruzados atualizados (MEMORY.md, dm_queue.md T-20260421-1, ADRs 008/009/013, READMEs, dashboard)
+- [ ] `grep -ri "NS" C:\Dev\storm-shield-enterprise` retorna apenas: (a) os 3 stubs de redirect, (b) menção explicativa única no ADR-014, (c) eventuais matches em `.auto-memory/sweeps/` (logs de discovery — aceitáveis)
+- [ ] Sweep GitHub concluído: Verify da Etapa 3 retorna zero
+- [ ] CI verde
+- [ ] PR aprovado pelo PO
+
+### Condição de reversão
+
+Revisitar em ADR suplementar se: (a) parecer jurídico posterior indicar risco residual da sigla, (b) a sigla "NS" gerar confusão com outro termo/marca em uso, ou (c) a relação com o fornecedor mudar (licenciamento, parceria formal). Stubs de redirect facilitam rollback parcial.
+
+### Protocolo
+
+`docs/process/HANDOFF_PROTOCOL.md` §4 (template canônico) + §7 (ciclo de vida).
+
+### Labels GitHub
+
+`refactor`, `documentation`, `compliance`, `prioridade: média`, `fase-1-mvp`
 
 ---
 
@@ -137,7 +240,7 @@ DM avalia: se a mudança `ESNext/bundler → NodeNext` tiver impacto material al
 
 ---
 
-## T-20260421-1 — Manutenção do dashboard NetSuite↔Bússola (standing task)
+## T-20260421-1 — Manutenção do dashboard NS↔Bússola (standing task)
 
 **Origin:** PO
 **Priority:** P2
@@ -146,16 +249,16 @@ DM avalia: se a mudança `ESNext/bundler → NodeNext` tiver impacto material al
 **Tipo:** Standing task (acionada por gatilho, não por data)
 
 ### Objetivo
-Manter `docs/strategy/ANALISE_NETSUITE_vs_BUSSOLA_v1.html` sincronizado com o estado real do projeto. O Luigi adotou este dashboard como artefato canônico de acompanhamento estratégico (NetSuite↔Bússola) em 2026-04-21. Fonte textual pareada: `ANALISE_NETSUITE_vs_BUSSOLA_v1.md`.
+Manter `docs/strategy/ANALISE_NS_vs_BUSSOLA_v1.html` sincronizado com o estado real do projeto. O Luigi adotou este dashboard como artefato canônico de acompanhamento estratégico (NS↔Bússola) em 2026-04-21. Fonte textual pareada: `ANALISE_NS_vs_BUSSOLA_v1.md`.
 
 ### Contexto
-Sessão PO Cowork 2026-04-21 gerou análise comparativa NetSuite vs Bússola cobrindo 12 áreas (Core ERP, CRM/Service, UX/Dashboards), 4 novos RFs propostos (RF-004 Customer 360, RF-005 Estimate State Machine + Inbox, RF-006 Payment Hold, RF-007 Case Management), 13 anti-recomendações explícitas, novo princípio P8 (offline-first), reclassificação 1099-NEC, ajuste cockpit "Cash disponível vs Cash Balance", e rascunho ADR-012. Dashboard HTML (1050 linhas, 62KB, 7 abas, Tailwind CDN) é o canal visual. Luigi quer acompanhar esta comparação daqui para frente como referência contínua — não é relatório de sessão, é instrumento vivo.
+Sessão PO Cowork 2026-04-21 gerou análise comparativa NS vs Bússola cobrindo 12 áreas (Core ERP, CRM/Service, UX/Dashboards), 4 novos RFs propostos (RF-004 Customer 360, RF-005 Estimate State Machine + Inbox, RF-006 Payment Hold, RF-007 Case Management), 13 anti-recomendações explícitas, novo princípio P8 (offline-first), reclassificação 1099-NEC, ajuste cockpit "Cash disponível vs Cash Balance", e rascunho ADR-012. Dashboard HTML (1050 linhas, 62KB, 7 abas, Tailwind CDN) é o canal visual. Luigi quer acompanhar esta comparação daqui para frente como referência contínua — não é relatório de sessão, é instrumento vivo.
 
 ### Gatilhos de atualização (quando agir)
 1. **RF 004/005/006/007 muda de status** (PROPOSTO → APPROVED → IN_PROGRESS → DONE) → atualizar aba "Novos RFs" + "Roadmap"
 2. **Bússola é ajustada** (revisão trimestral ou evento-gatilho) → atualizar aba "Ajustes Bússola" + "Comparação" (diagnósticos aligned/adjust/reject/superior podem mudar)
 3. **Nova anti-recomendação identificada** ou anti-rec existente revisitada → aba "Anti-Recomendações"
-4. **Nova área NetSuite explorada** (ex: SuiteTax, SuiteBilling) → adicionar card na aba "Comparação"
+4. **Nova área NS explorada** (ex: SuiteTax, SuiteBilling) → adicionar card na aba "Comparação"
 5. **ADR-012 adotado ou refinado** → aba "ADR-012" + footer status
 6. **Release da Fase muda de fase** (ex: Fase 1 → Fase 2) → aba "Roadmap"
 
@@ -163,15 +266,27 @@ Sessão PO Cowork 2026-04-21 gerou análise comparativa NetSuite vs Bússola cob
 1. Editar primeiro o `.md` (fonte de verdade textual).
 2. Sincronizar o `.html` (os arrays JS `AREAS` e `ANTIRECS` + seção correspondente).
 3. Validar abrindo o `.html` em browser local (visual smoke test).
-4. Commit único com escopo claro: `docs(strategy): sync NetSuite dashboard — [motivo do gatilho]`.
+4. Commit único com escopo claro: `docs(strategy): sync NS dashboard — [motivo do gatilho]`.
 
 ### Escopo negativo — NÃO fazer
 - Não transformar em app/dashboard dinâmico (Next.js/React) — HTML estático é intencional.
-- Não remover as 26 fontes NetSuite do `.md`.
+- Não remover as 26 fontes NS do `.md`.
 - Não renumerar ADR-012 sem nova decisão do PO.
 - Não mesclar com `BUSSOLA_PRODUTO_SSE.md` — artefatos separados por design.
 - Não incluir atualização do dashboard no mesmo PR de RF de feature — sempre PR separado de doc.
 - Não atualizar sem gatilho explícito (evitar churn).
+
+### ⚠ Dependência invertida com T-20260422-1 (adicionada 2026-04-22 — PM Agent)
+
+**Não executar esta task antes de T-20260422-1 estar COMPLETED.**
+
+T-20260422-1 (trademark hygiene) renomeia os arquivos:
+- `docs/strategy/ANALISE_NS_vs_BUSSOLA_v1.md` → `docs/strategy/ANALISE_NS_vs_BUSSOLA_v1.md`
+- `docs/strategy/ANALISE_NS_vs_BUSSOLA_v1.html` → `docs/strategy/ANALISE_NS_vs_BUSSOLA_v1.html`
+
+Ao sincronizar este dashboard (quando gatilho disparar), usar os **novos paths** `ANALISE_NS_vs_BUSSOLA_v1.*`. O PR da T-20260421-1 que sincronizar o dashboard deve também atualizar a referência de path nesta tarefa (linha "Objetivo" acima) para o novo slug `NS`.
+
+Referência cruzada: T-20260422-1 em `dm_queue.md`, GitHub Issue #46.
 
 ### Done quando
 - HTML reflete estado atual do gatilho que disparou a atualização.
@@ -204,7 +319,7 @@ N/A (meta).
 Implementar RF-004 conforme spec em `docs/strategy/RF_BACKLOG.md` (v0.2) — tela unificada Customer 360 com 7 abas (Overview, Vehicles, Estimates, Service Orders, Insurance Claims, Payments, Interactions) para servir a persona Estimator antes/durante/após o atendimento.
 
 ### Contexto
-Origem: análise comparativa NetSuite vs Bússola (sessão PO 2026-04-21), formalizada em ADR-012. NetSuite tem Customer 360 como padrão de indústria e o SSE hoje força o Estimator a saltar entre 4–5 telas para montar contexto do cliente — fricção direta com P4 (uma tela = uma decisão). Complexidade estimada L. Alta probabilidade de candidatar-se a Gap 9 na próxima revisão da Bússola se fricção Estimator continuar apontada.
+Origem: análise comparativa NS vs Bússola (sessão PO 2026-04-21), formalizada em ADR-012. NS tem Customer 360 como padrão de indústria e o SSE hoje força o Estimator a saltar entre 4–5 telas para montar contexto do cliente — fricção direta com P4 (uma tela = uma decisão). Complexidade estimada L. Alta probabilidade de candidatar-se a Gap 9 na próxima revisão da Bússola se fricção Estimator continuar apontada.
 
 ### Ação sugerida
 1. Ler RF-004 completo em `docs/strategy/RF_BACKLOG.md` (status APPROVED, aprovado em 2026-04-21 via ADR-012).
@@ -246,60 +361,209 @@ Complemento a Gap 5 (Insurance workflow) — candidato a novo Gap 9 na próxima 
 
 ---
 
-## T-20260421-3 — Implementar RF-005 (Estimate State Machine + Inbox)
+## T-20260421-3 — SUPERSEDED por split (3a/3b/3c)
 
 **Origin:** PO
 **Priority:** P1
-**Status:** PENDING
+**Status:** SUPERSEDED
 **Created:** 2026-04-21
+**Closed:** 2026-04-22 (Split A ratificado por Luigi em sessão PO Cowork)
+**Supersedes:** —
+**Superseded by:** T-20260421-3a, T-20260421-3b, T-20260421-3c
+
+### Nota histórica
+RF-005 (XL) foi avaliado como split obrigatório. Em 2026-04-22 o PO ratificou **Split A** (originalmente sugerido no próprio spec do RF-005 em `docs/strategy/RF_BACKLOG.md`): 3a = backend state machine, 3b = inbox tabela, 3c = kanban drag-drop + SLA. Split B (tabela + kanban num PR só) foi rejeitado por bundle excessivo na UI. Ver `po_sessions.md` 2026-04-22 para justificativa + condição de reversão. RF-006 (T-20260421-4) passa a ficar BLOCKED por **apenas** 3a — permite paralelismo de 3b/3c com RF-006.
+
+---
+
+## T-20260421-3a — RF-005a: Backend state machine + validator + migration 014
+
+**Origin:** PO (split ratificado 2026-04-22)
+**Priority:** P1
+**Status:** PENDING
+**Created:** 2026-04-22
 **Claimed:** —
-**Branch:** `feature/SSE-XXX-rf-005-estimate-state-machine`
+**Branch:** `feature/SSE-XXX-rf-005a-state-machine-backend`
 **PR:** —
 
 ### Objetivo
-Implementar RF-005 conforme spec em `docs/strategy/RF_BACKLOG.md` (v0.2) — máquina de estados para Estimates com 10 status (Draft → Sent → In Review → Approved → Supplemented → Disputed → Rejected → Cancelled → Completed → Archived) + Inbox kanban+tabela para Estimator gerenciar pipeline.
+Implementar a máquina de estados de Estimates em nível de backend: expandir ENUM `estimate_status` para 10 valores canônicos, criar `EstimateStateMachineService` com validator de transitions, garantir tabela append-only `estimate_status_changes`. Zero mudança de UI.
 
 ### Contexto
-Origem: ADR-012 + Bússola §4 Gap 5 (Insurance workflow). NetSuite tem máquina de estados explícita em Sales Orders; hoje o SSE mantém estimate como flag boolean, o que impede visualização de gargalos no pipeline do Estimator. Complexidade estimada XL — alta probabilidade de split em sub-RFs. Este RF é bloqueante para RF-006 (Payment Hold) — a transição para "Disputed" é o gatilho do payment hold.
+Split A ratificado em 2026-04-22 (ver `po_sessions.md`). Esta é a fundação — entrega CA1, CA2, CA3 e parte de CA8 do RF-005 em `docs/strategy/RF_BACKLOG.md`. Seu merge **desbloqueia RF-006** (T-20260421-4) e também 3b e 3c. Origem conceitual: ADR-012 + Bússola §4 Gap 5.
 
 ### Ação sugerida
-1. Ler RF-005 completo em `docs/strategy/RF_BACKLOG.md` (status APPROVED, aprovado 2026-04-21 via ADR-012).
-2. **Validar complexidade XL — SPLIT RECOMENDADO** pelo PO: (a) state machine core + 10 status + transições + migration (RF-005a, M) → (b) Inbox kanban + tabela (RF-005b, M) → (c) notificações + webhooks de transição (RF-005c, S). DM valida e propõe ao PO antes de abrir branch.
-3. Migration nova: tabela `estimate_status_transitions` (FK estimate_id + from_status + to_status + user_id + reason + created_at) + enum `estimate_status` (10 valores). Ver CLAUDE.md §3 FAM e §4 para convenções.
-4. Backend: `EstimateStateMachine` service com validação de transições legais (ex: Draft → Sent OK, Archived → Draft NOT OK), auditoria automática, webhook de transição.
-5. Frontend: `/app/estimates/inbox` — kanban por padrão (10 colunas, responsive), toggle para tabela (filtro+sort por coluna). Implementar drag-and-drop entre colunas com confirmação modal (RN: quem pode mover para Approved? Role Estimator+manager+owner).
-6. **Decisão técnica do DM registrada no PR:** Reversing Journal Entries já existe no SSE? — relevante se RF-005 toca GL (transição para Cancelled pode requerer reverso de lançamento). Se não existe, abrir ENH separado (P2, Fase 3/Accountant). Documentar no PR.
-7. Subagentes obrigatórios: db-reviewer (migration + enum + constraints) + frontend-reviewer (kanban+tabela + a11y) + test-runner (coverage 80% + testes de máquina de estados) + security-reviewer (quem pode transicionar).
+1. Ler RF-005 em `docs/strategy/RF_BACKLOG.md`, seções RN1–RN3 e CA1–CA3.
+2. Migration `014_estimate_state_machine.sql`:
+   - Expandir ENUM `estimate_status` para os 10 valores canônicos: `draft | submitted_to_adjuster | awaiting_approval | approved | supplement_pending | approved_with_supplement | rejected | disputed | paid | closed`.
+   - Garantir `estimate_status_changes` (FK `estimate_id` + `from_status` + `to_status` + `changed_by_user_id` + `changed_at TIMESTAMPTZ` + `notes TEXT NULL`) com constraint append-only + RLS conforme CLAUDE.md §10 regras 3 e 13.
+   - Idempotente: script de mapping para estimates pré-existentes (só aplica se mapping explícito existir; NÃO força default).
+3. Backend `EstimateStateMachineService`:
+   - Mapa estático `ALLOWED_TRANSITIONS: Map<from, Set<to>>` — nunca strings livres.
+   - `transition(estimateId, toStatus, userId, notes?)`: valida, persiste change log, atualiza `estimates.status` dentro da mesma transaction.
+   - Transition inválida → `400 BadRequest` com mensagem específica (ex: "transition draft→paid not allowed").
+4. **Não expor endpoint `PATCH /estimates/:id/status`** nesta entrega — UI vem em 3b. Se precisar testar internamente, usar só service em testes/fixtures.
 
-### Escopo negativo — NÃO fazer
-- Não implementar no mesmo RF Payment Hold — isso é RF-006 (T-20260421-4)
-- Não criar notificação em email/SMS nesta tarefa — fica para RF-005c se split aprovado, ou ENH futuro
-- Não alterar lógica de criação de estimates (quem cria, onde cria) — RF só adiciona estados
-- Não forçar todos os estimates existentes para novo enum sem script de migração idempotente
-- Não acoplar máquina de estados com máquina de service orders — são domínios separados (ver RF-005 para regras)
-- Não implementar Reversing JE aqui (decisão técnica do DM — abrir ENH separado se necessário)
+### Escopo negativo — NÃO fazer nesta entrega
+- **Zero mudança em `apps/web`** — UI é 3b.
+- Não implementar kanban nem drag-drop — é 3c.
+- Não implementar SLA jobs nem notifications — é 3c.
+- Não implementar Payment Hold — é RF-006 (T-20260421-4).
+- Não permitir custom statuses por tenant (Bússola §1 anti-custom-fields).
+- Não acoplar com state machine de service_orders — domínios separados.
+- Não forçar migração de estimates pré-existentes sem mapping explícito — idempotente.
+- Não implementar Reversing Journal Entries aqui. DM avalia se transição para `rejected`/`closed` precisa de reverso de GL; se sim, abrir ENH paralelo (P2, Fase 3/Accountant). Documentar decisão no PR.
 
 ### Done quando
-- Critérios de aceite CA1–CA10 do RF-005 todos checados
-- Migration aplicada; enum tem 10 valores exatos listados em `RF_BACKLOG.md`
-- `/app/estimates/inbox` renderiza kanban e tabela; drag-and-drop funciona em 80% dos casos de uso
-- Transições ilegais bloqueadas no backend; 100% de coverage nas regras de máquina
-- RF-005 marcado DONE em `RF_BACKLOG.md` ao mergear
-- PR referencia ADR-012 na descrição
+- Migration 014 aplicada em CI, idempotente (rodar 2x não falha).
+- ENUM `estimate_status` contém exatamente os 10 valores canônicos.
+- `EstimateStateMachineService.transition()` com cobertura ≥ 80% cobrindo TODOS os pares from→to (válidos e inválidos) em testes dedicados.
+- Cada transition válida grava registro em `estimate_status_changes`.
+- Nenhum arquivo em `apps/web/**` modificado (confirma-se escopo negativo).
+- PR referencia ADR-012 + Split A (ratificado 2026-04-22) + dependência de RF-006.
+- **RF-005 NÃO marcado DONE no backlog** — só quando 3b e 3c fecharem.
 
 ### Subagentes obrigatórios
-db-reviewer + frontend-reviewer + test-runner + security-reviewer.
+`db-reviewer` (migration 014 + ENUM expansion + RLS + idempotência) + `test-runner` (cada par from→to testado, zero `.skip()`) + `security-reviewer` (ownership backend RN5: quem pode invocar o service por role).
 
 ### Persona servida
-Estimator (primária) — Bússola §2. Owner-Operator secundária (cockpit agrega pipeline).
+Estimator (primária) — Bússola §2. Owner-Operator secundária.
 
 ### Gap fechado
 Gap 5 (Insurance workflow) — Bússola §4.
 
 ### Dependências
-- Desbloqueia: RF-006 (T-20260421-4 — Payment Hold depende de estado "Disputed")
-- Independente: RF-004/007 (complementam mas não bloqueiam)
-- Reversing JE (decisão DM): pode abrir como ENH paralelo se módulo de GL for impactado
+- **Desbloqueia:** RF-006 (T-20260421-4) — gatilho `disputed`.
+- **Desbloqueia:** T-20260421-3b e T-20260421-3c.
+
+---
+
+## T-20260421-3b — RF-005b: Inbox tabela + filtros + ownership
+
+**Origin:** PO (split ratificado 2026-04-22)
+**Priority:** P1
+**Status:** BLOCKED (aguarda T-20260421-3a merged)
+**Created:** 2026-04-22
+**Claimed:** —
+**Branch:** `feature/SSE-XXX-rf-005b-inbox-tabela`
+**PR:** —
+
+### Objetivo
+Criar `/app/estimates/inbox` com visualização em **tabela** + filtros (status multi-select / adjuster / data range) + ownership enforcement (Estimator só vê os seus; Owner/Admin vê todos). Entregar `estimate-status-badge.tsx` reutilizável cobrindo os 10 estados.
+
+### Contexto
+Split A ratificado 2026-04-22. Entrega CA5, CA6, CA9 do RF-005. Primeira entrega de UX visível do RF — prioridade alta de ship antes do kanban (que é 3c, de maior incerteza técnica).
+
+### Ação sugerida
+1. Página: `apps/web/src/app/(dashboard)/estimates/inbox/page.tsx` (App Router, Server Component + Client Component para filtros).
+2. Componente `estimates-inbox-table.tsx` usando DataTable padrão (shadcn/ui + TanStack Table).
+3. Filtros controlados (sincronizados com query string):
+   - Status — multi-select com o ENUM completo (10 valores)
+   - Adjuster — select de `insurance_contacts`
+   - Data — range picker (`created_at` ou `updated_at` — DM decide, justificar no PR)
+4. Componente `estimate-status-badge.tsx` reutilizável com cores RN7:
+   - draft → cinza | submitted_to_adjuster → azul | awaiting_approval → amarelo | approved → verde | supplement_pending → laranja | approved_with_supplement → verde | rejected → vermelho | disputed → vermelho | paid → verde-escuro | closed → preto.
+   - Será reaproveitado em Customer 360 (RF-004) e no kanban de 3c.
+5. Backend endpoint `GET /estimates?scope=mine&status=&adjuster_id=&from=&to=` com ownership (RN5) enforced no service: se `request.user.role === 'estimator'`, filtrar automaticamente por `owner_user_id = current user`; Owner/Admin/Manager veem todos.
+6. Customer 360 (RF-004) aba Estimates: substituir badge atual pelo novo `estimate-status-badge`.
+
+### Escopo negativo — NÃO fazer nesta entrega
+- Não implementar kanban nem drag-and-drop — é 3c.
+- Não implementar SLA alerts nem notifications — é 3c.
+- Não adicionar filtros/colunas além dos 3 especificados (status + adjuster + data) — ENH futuro.
+- Não modificar `EstimateStateMachineService` nem o ENUM — já veio de 3a.
+- Não expor `PATCH /estimates/:id/status` — transição via UI vem em 3c (via drag-drop) ou ENH se algum botão for necessário antes; não antecipar.
+- CLAUDE.md §10 Regra 19 obrigatória (PV1–PV6 / PUX1–PUX6 via frontend-reviewer).
+
+### Done quando
+- `/app/estimates/inbox` renderiza tabela com dados reais em staging.
+- Cada filtro funciona isolado e combinado (testes de integração).
+- `estimate-status-badge.tsx` cobre os 10 estados (teste visual via story/snapshot ou unit).
+- Estimator vê só seus estimates; Owner vê todos (E2E com 2 usuários de roles distintos).
+- Customer 360 (RF-004) aba Estimates usa o novo badge (sem regressão visual).
+- Cobertura ≥ 80% dos novos componentes + endpoint.
+- PR referencia ADR-012 + ADR-013 (PV/PUX) + Split A.
+- **RF-005 NÃO marcado DONE** — só quando 3c fechar.
+
+### Subagentes obrigatórios
+`frontend-reviewer` (ADR-013 obrigatório: PV1–PV6, PUX1–PUX6, 20 itens) + `test-runner` + `security-reviewer` (ownership RN5 no backend do endpoint).
+
+### Persona servida
+Estimator (primária) — Bússola §2.
+
+### Gap fechado
+Gap 5 (Insurance workflow) — Bússola §4.
+
+### Dependências
+- **BLOCKED BY:** T-20260421-3a (ENUM + service no backend).
+- Independente de 3c — pode mergear antes.
+- Recomendado: RF-004 merged (já está — PR #44).
+
+---
+
+## T-20260421-3c — RF-005c: Kanban drag-drop + SLA alerts
+
+**Origin:** PO (split ratificado 2026-04-22)
+**Priority:** P1
+**Status:** BLOCKED (aguarda T-20260421-3a merged; soft-dep em 3b)
+**Created:** 2026-04-22
+**Claimed:** —
+**Branch:** `feature/SSE-XXX-rf-005c-kanban-sla`
+**PR:** —
+
+### Objetivo
+Adicionar visualização em **kanban** a `/app/estimates/inbox` (toggle tabela↔kanban), drag-and-drop respeitando transitions válidas (consumindo mapa do 3a), e SLA jobs que notificam Owner quando estimate fica > 14 dias em `awaiting_approval` ou > 7 dias em `supplement_pending` (RN8).
+
+### Contexto
+Split A ratificado 2026-04-22. Entrega CA4 + CA7 do RF-005. Esta é a parte de **maior incerteza técnica** — drag-drop com validação de transitions + feedback visual + a11y. Isolado neste sub-RF para que tabela (3b) não fique bloqueada pela maturação dessa UX. **Condição de reversão explícita** logo abaixo.
+
+### Ação sugerida
+1. Componente `estimates-kanban.tsx` — 10 colunas, scroll horizontal em mobile (PUX6 a11y obrigatória).
+2. Biblioteca drag-drop: usar `@dnd-kit` (idiomático React moderno). Se o projeto não tiver, DM confirma com frontend-reviewer antes de adicionar dependência.
+3. Drag-drop consome `ALLOWED_TRANSITIONS` do backend (endpoint leve `GET /estimates/state-machine/transitions` retorna o mapa, ou bundle estático se DM preferir — documentar escolha no PR).
+4. Drop inválido: toast de erro + revert visual do card à coluna original. Nenhuma chamada PATCH é feita se transition inválida.
+5. Drop válido → `PATCH /estimates/:id/status` (endpoint a expor aqui, delegando ao service já construído em 3a) + refresh da view.
+6. Toggle tabela↔kanban persiste preferência em `user_settings` (se a tabela existir — senão localStorage, DM decide).
+7. SLA batch job (cron diário em `apps/api` usando BullMQ):
+   - Query: estimates em `awaiting_approval` há > 14 dias OU em `supplement_pending` há > 7 dias.
+   - Ação: criar notification para Owner do tenant (`notifications` table) com severity `warning`.
+   - Idempotente: não cria duplicata se já notificado nas últimas 24h (constraint ou check em código).
+
+### Escopo negativo — NÃO fazer nesta entrega
+- Não modificar o validator de transitions — reusar do 3a.
+- Não criar estados "customizados" (Bússola §1).
+- Não adicionar filtros/colunas à tabela — 3b já entregou.
+- Não implementar SLA dashboard agregado — ENH P2 futuro.
+- Não enviar notificações por email/SMS — só via `notifications` table (bell UI). Email/SMS é ENH futuro.
+- Não modificar UI de Estimate detail fora do kanban/toggle.
+- Não mexer em ENUM nem em migration 014 — se precisar, abrir sub-ENH.
+- CLAUDE.md §10 Regra 19 obrigatória (PV/PUX + drag-drop a11y = PUX6 risco alto).
+
+### Done quando
+- Kanban renderiza 10 colunas em staging com cards arrastáveis.
+- Drop inválido bloqueado com feedback claro (toast + revert); zero PATCH disparado em inválido.
+- Drop válido persiste status (verificável via `estimate_status_changes`).
+- Toggle tabela↔kanban persiste preferência entre sessões.
+- SLA job criou notifications corretas em teste com time mock; idempotência verificada (rodar 2x não duplica).
+- Cobertura ≥ 80% dos novos componentes + job.
+- PR referencia ADR-012 + ADR-013 (PV/PUX) + Split A + dependências (3a hard, 3b soft).
+- **RF-005 marcado DONE em `RF_BACKLOG.md`** ao mergear este (último sub-RF do split).
+
+### Subagentes obrigatórios
+`frontend-reviewer` (ADR-013: drag-drop a11y = PUX6 risco alto — expandir 20 itens) + `test-runner` (testes cobrindo transitions inválidas drag + SLA job idempotente) + `security-reviewer` (job não pode vazar cross-tenant; endpoint PATCH com ownership).
+
+### Persona servida
+Estimator (primária). Owner-Operator (SLA alerts).
+
+### Gap fechado
+Gap 5 (Insurance workflow) — Bússola §4.
+
+### Dependências
+- **BLOCKED BY:** T-20260421-3a (hard — precisa do service).
+- **Soft-dep:** T-20260421-3b (recomendado merged antes — para reusar `estimate-status-badge`). Se 3b não estiver, implementar badge inline e refatorar depois.
+
+### Condição de reversão (explícita)
+Se após 3a + 3b em staging o Estimator (entrevista rápida via ritual Operating Model §5.4) indicar que kanban não agrega valor percebido frente ao esforço, canibalizar 3c: entregar APENAS o SLA job como ENH isolado e rebater o kanban como ENH P2 futuro. Reverter exige nota em `po_sessions.md` + atualização do RF_BACKLOG §RF-005 para DONE parcial documentado.
 
 ---
 
@@ -307,21 +571,22 @@ Gap 5 (Insurance workflow) — Bússola §4.
 
 **Origin:** PO
 **Priority:** P1
-**Status:** BLOCKED (aguarda T-20260421-3 — RF-005 em produção)
+**Status:** BLOCKED (aguarda T-20260421-3a merged em staging — state machine backend)
 **Created:** 2026-04-21
+**Updated:** 2026-04-22 (dependência reduzida de T-20260421-3 inteiro → apenas 3a, após Split A ratificado)
 **Claimed:** —
 **Branch:** `feature/SSE-XXX-rf-006-payment-hold`
 **PR:** —
 
 ### Objetivo
-Implementar RF-006 conforme spec em `docs/strategy/RF_BACKLOG.md` (v0.2) — bloqueio automático de pagamentos (insurance + out-of-pocket) quando estimate transiciona para "Disputed" no RF-005, com workflow de resolução e auditoria.
+Implementar RF-006 conforme spec em `docs/strategy/RF_BACKLOG.md` (v0.2) — bloqueio automático de pagamentos (insurance + out-of-pocket) quando estimate transiciona para `disputed` na state machine (RF-005a), com workflow de resolução e auditoria.
 
 ### Contexto
-Origem: ADR-012 + Bússola §4 Gap 5. NetSuite tem "Hold Payments on Sales Orders" como padrão para disputas; hoje o SSE não tem mecanismo de bloqueio — Estimator precisa avisar Accountant manualmente e há risco de pagamento liberado por engano. Complexidade estimada M. Depende de RF-005 (T-20260421-3) estar em produção — sem state machine, não há gatilho "Disputed".
+Origem: ADR-012 + Bússola §4 Gap 5. NS tem "Hold Payments on Sales Orders" como padrão para disputas; hoje o SSE não tem mecanismo de bloqueio — Estimator precisa avisar Accountant manualmente e há risco de pagamento liberado por engano. Complexidade estimada M. Depende de **T-20260421-3a** (state machine backend) estar em produção — sem o estado `disputed` no ENUM, não há gatilho. Após Split A ratificado em 2026-04-22, 3b (tabela) e 3c (kanban/SLA) **não bloqueiam** este RF — pode rodar em paralelo.
 
 ### Ação sugerida
 1. Ler RF-006 completo em `docs/strategy/RF_BACKLOG.md` (status APPROVED, aprovado 2026-04-21 via ADR-012).
-2. **Não iniciar antes de T-20260421-3 mergeada em staging** — este RF escuta eventos da state machine.
+2. **Não iniciar antes de T-20260421-3a mergeada em staging** — este RF escuta eventos da state machine (só 3a basta; 3b/3c independentes).
 3. Backend: listener para webhook `estimate.status.changed` (from=*, to=Disputed) → cria `payment_hold` record vinculado ao estimate + customer + insurance_claim; bloqueia approvals de `financial_transactions` associados.
 4. Workflow de resolução: Accountant/Owner pode "resolver" o hold (resolution: paid_out / refunded / cancelled / released) com audit trail obrigatório.
 5. Frontend: notification bell + painel `/app/financial/payment-holds` listando holds ativos, filtros por customer/estimate/status.
@@ -329,7 +594,7 @@ Origem: ADR-012 + Bússola §4 Gap 5. NetSuite tem "Hold Payments on Sales Order
 7. Subagentes obrigatórios: db-reviewer (tabela `payment_holds` + RLS + indexes) + security-reviewer (quem pode criar/resolver) + test-runner.
 
 ### Escopo negativo — NÃO fazer
-- Não implementar antes de T-20260421-3 estar mergeada — dependência hard
+- Não implementar antes de T-20260421-3a estar mergeada — dependência hard (apenas 3a; 3b/3c não bloqueiam RF-006)
 - Não criar nova máquina de estados para holds — usar enum simples (active, resolved, cancelled)
 - Não bloquear pagamentos retroativos (já processados antes do Disputed) — só futuros
 - Não enviar notificação automática para seguradora nesta entrega — ENH futuro
@@ -339,10 +604,10 @@ Origem: ADR-012 + Bússola §4 Gap 5. NetSuite tem "Hold Payments on Sales Order
 ### Done quando
 - Critérios de aceite CA1–CA8 do RF-006 todos checados
 - Tabela `payment_holds` criada com RLS; listener funcional em staging
-- Hold criado automaticamente ao transicionar estimate para Disputed; bloqueio de approval verificável
+- Hold criado automaticamente ao transicionar estimate para `disputed`; bloqueio de approval verificável
 - Resolução manual com audit log completo; notificação visível no bell
 - RF-006 marcado DONE em `RF_BACKLOG.md` ao mergear
-- PR referencia ADR-012 + dependência de T-20260421-3
+- PR referencia ADR-012 + dependência de T-20260421-3a (Split A)
 
 ### Subagentes obrigatórios
 db-reviewer + security-reviewer + test-runner. Opcional frontend-reviewer se UI tem complexidade.
@@ -354,7 +619,7 @@ Estimator (primária — aciona hold) + Accountant (secundária — resolve hold
 Complemento a Gap 5 (Insurance workflow) — Bússola §4.
 
 ### Dependências
-- **BLOCKED BY** T-20260421-3 (RF-005) — desbloquear status assim que RF-005 for DONE
+- **BLOCKED BY** T-20260421-3a (state machine backend) — desbloquear assim que 3a for DONE. **3b e 3c NÃO bloqueiam** este RF.
 - Independente: RF-004/007
 
 ---
@@ -373,7 +638,7 @@ Complemento a Gap 5 (Insurance workflow) — Bússola §4.
 Implementar RF-007 conforme spec em `docs/strategy/RF_BACKLOG.md` (v0.2) — módulo leve de Case Management (não ticketing full) para registrar follow-ups, dúvidas de cliente, supplements de insurance que não são disputa. Intencionalmente enxuto: 3 status (Open, In Progress, Closed), vinculação a customer+optional vehicle/estimate, notas + anexos.
 
 ### Contexto
-Origem: ADR-012 + Bússola §4 Gap 5 (Insurance workflow). NetSuite tem CRM Case Management robusto; o SSE rejeita essa complexidade (anti-rec #13 formaliza limite). Complexidade estimada M. Intencionalmente P2 e leve — se crescer em escopo, violamos P1 (simplificar > completar).
+Origem: ADR-012 + Bússola §4 Gap 5 (Insurance workflow). NS tem CRM Case Management robusto; o SSE rejeita essa complexidade (anti-rec #13 formaliza limite). Complexidade estimada M. Intencionalmente P2 e leve — se crescer em escopo, violamos P1 (simplificar > completar).
 
 ### Ação sugerida
 1. Ler RF-007 completo em `docs/strategy/RF_BACKLOG.md` (status APPROVED, aprovado 2026-04-21 via ADR-012, com anti-rec #13 explícita).
@@ -568,7 +833,7 @@ Nenhum.
 
 ---
 
-## T-20260421-9 — Sincronizar dashboard NetSuite↔Bússola com v1.2 (gatilho #2)
+## T-20260421-9 — Sincronizar dashboard NS↔Bússola com v1.2 (gatilho #2)
 
 **Origin:** PO
 **Priority:** P2
@@ -578,22 +843,22 @@ Nenhum.
 **Blocked by:** T-20260421-6 (Bússola v1.2 publicada)
 
 ### Objetivo
-Acionar o gatilho #2 do T-20260421-1 (standing task) — "Bússola é ajustada" → atualizar aba "Ajustes Bússola" + "Comparação" do dashboard `docs/strategy/ANALISE_NETSUITE_vs_BUSSOLA_v1.html` com a promoção v1.1 → v1.2 e a reorganização de §6.
+Acionar o gatilho #2 do T-20260421-1 (standing task) — "Bússola é ajustada" → atualizar aba "Ajustes Bússola" + "Comparação" do dashboard `docs/strategy/ANALISE_NS_vs_BUSSOLA_v1.html` com a promoção v1.1 → v1.2 e a reorganização de §6.
 
 ### Contexto
 O dashboard é artefato vivo (adotado por ADR-012). Qualquer mudança na Bússola dispara atualização. Gatilho #2 documentado em T-20260421-1 do `dm_queue.md`.
 
 ### Instruções
 1. Ler `docs/strategy/BUSSOLA_PRODUTO_SSE.md` v1.2 (após T-20260421-6 mergear)
-2. Atualizar `ANALISE_NETSUITE_vs_BUSSOLA_v1.md`:
+2. Atualizar `ANALISE_NS_vs_BUSSOLA_v1.md`:
    - Header: adicionar linha "v1.2 (2026-04-21): Bússola promovida a v1.2 via ADR-013 — §6 reorganizada em §6.1/§6.2/§6.3, PV/PUX adotados"
    - Aba/seção "Ajustes Bússola": adicionar card ou linha referenciando ADR-013
-3. Sincronizar `ANALISE_NETSUITE_vs_BUSSOLA_v1.html` — mesmas edições no array JS equivalente
-4. Commit: `docs(strategy): sync NetSuite dashboard with Bussola v1.2 (ADR-013 trigger)`
+3. Sincronizar `ANALISE_NS_vs_BUSSOLA_v1.html` — mesmas edições no array JS equivalente
+4. Commit: `docs(strategy): sync NS dashboard with Bussola v1.2 (ADR-013 trigger)`
 
 ### Escopo negativo — NÃO fazer
 - Não transformar em dashboard dinâmico
-- Não alterar as 26 fontes NetSuite do `.md`
+- Não alterar as 26 fontes NS do `.md`
 - Não incluir mais do que a referência ao ADR-013 — PV/PUX já vivem na Bússola, não duplicar aqui
 
 ### Done quando
@@ -1607,6 +1872,64 @@ N/A (infra).
 Diagnóstico de deploy sem consumir logs de boot da máquina é especulação. Próxima vez que um deploy falhar sem causa óbvia, **primeiro comando**: `flyctl logs -a <app> --no-tail | Select-Object -Last 100`. Hipóteses (secrets, DNS, port, SSL) só depois. Vale um aditivo no runbook `docs/runbooks/staging-deploy.md` se o DM achar pertinente no PR de T-20260421-10.
 
 --
-## [2026-04-22] T-20260422-11 — Adicionar secao Dashboards estrategicos ao template §5 do HANDOFF_PROTOCOL
-[COLAR BLOCO ACIMA SEM ALTERACOES]
+## [2026-04-22] T-20260422-11 — Adicionar seção "Dashboards estratégicos" ao template §5 do HANDOFF_PROTOCOL
+
+Origin: PO
+Priority: P2 (doc-only, destrava consistência de governança)
+Status: PENDING
+Depends on: — (independente)
+
+### Motivação
+Dashboard `docs/strategy/ANALISE_NS_vs_BUSSOLA_v1.html` foi adotado como artefato vivo em 2026-04-21 (MEMORY.md seção "Dashboards estratégicos"). Hoje o PM só menciona o dashboard quando há novidade. Com esta alteração, o PM passa a reportar **em toda revisão** o estado de sincronização do dashboard e o status dos 6 gatilhos de T-20260421-1. Fecha o loop: artefato vivo → template oficial → ritual recorrente.
+
+### Escopo
+Arquivo único: `docs/process/HANDOFF_PROTOCOL.md`, §5 "Template canônico — Status do PM".
+
+Inserir nova subseção no template, ENTRE `## Inconsistências detectadas (opcional)` e o fechamento do bloco de código, exatamente assim:
+
+~~~
+## Dashboards estratégicos (obrigatório)
+- NS↔Bússola v1 (`docs/strategy/ANALISE_NS_vs_BUSSOLA_v1.html`):
+  - Última sincronização: YYYY-MM-DD | Versão: vN.N
+  - Gatilhos T-20260421-1 abertos: [lista ou "nenhum"]
+    - [ ] Mudança status RF-004..007
+    - [ ] Ajuste Bússola publicado
+    - [ ] Nova anti-rec / nova área NS
+    - [ ] Mudança em ADR-012
+    - [ ] Mudança de fase do projeto
+  - Divergências vs estado atual: [lista ou "nenhuma"]
+- (adicionar blocos análogos ao incluir novos dashboards vivos no MEMORY.md)
+~~~
+
+Adicionar também em §12 "Revisão e evolução" a nota: *"Dashboards vivos (MEMORY.md seção 'Dashboards estratégicos') devem ter entrada correspondente no status do PM — §5."*
+
+### Escopo NEGATIVO
+- NÃO alterar `OPERATING_MODEL_v2.md` (ritual não muda, só o template do artefato)
+- NÃO alterar `MEMORY.md` (já tem a seção correta)
+- NÃO criar ADR (append retrocompatível, coberto por §12 do HANDOFF_PROTOCOL)
+- NÃO reescrever §5 inteiro — apenas append da nova subseção
+- NÃO tocar no dashboard em si (governança é T-20260421-1)
+
+### Subagentes
+Nenhum (doc-only). Validação por leitura.
+
+### Done quando
+- [ ] `HANDOFF_PROTOCOL.md` §5 contém a nova subseção "Dashboards estratégicos (obrigatório)" no template
+- [ ] §12 menciona vínculo MEMORY.md ↔ §5
+- [ ] Commit: `docs(process): adicionar seção Dashboards estratégicos ao template §5 do HANDOFF_PROTOCOL`
+- [ ] PR aberto com label `documentation`
+- [ ] Próxima revisão do PM (executada após merge) já contém a seção preenchida em `project_sse_status.md`
+
+### Critério de reversão
+Se, após 2 revisões consecutivas do PM, a seção nascer sempre vazia (sem gatilhos, sem divergências) e o dashboard permanecer inalterado por >30d, reavaliar: manter obrigatória mas permitir colapsar em 1 linha "sem movimento desde YYYY-MM-DD".
+
+### Persona servida
+N/A (governança de processo).
+
+### Gap fechado
+N/A (governança de processo).
+
+### Aprendizado registrado (para evitar repetição)
+Colar bloco longo com markdown + backticks + caracteres especiais em here-string PowerShell no terminal interativo é frágil: o `'@` final se perde no buffer quando há múltiplas linhas com caracteres de escape. Próxima tarefa longa do PO para o DM: editar o arquivo direto (Edit tool) em vez de script PowerShell colado — ou salvar o corpo em arquivo `.txt` temporário e usar `Get-Content $tmp -Raw`.
+
 ---

@@ -1,9 +1,11 @@
-# ADR-013 — Incorporação parcial do framework PV/PUX e saúde do squad do pacote MF
+﻿# ADR-013 — Incorporação parcial do framework PV/PUX e saúde do squad do pacote MF
+
+> **Nota:** "NS" = ERP de referência externo. Nome substituído por precaução (ADR-014).
 
 **Status:** DRAFT (aguardando aprovação PO para virar Accepted)
 **Data:** 2026-04-21
 **Autor:** Luigi (PO) + PO Assistant (Cowork)
-**Relacionados:** ADR-009 (adoção da Bússola v1.0), ADR-010 (Operating Model v2), ADR-012 (Incorporação parcial NetSuite)
+**Relacionados:** ADR-009 (adoção da Bússola v1.0), ADR-010 (Operating Model v2), ADR-012 (Incorporação parcial NS)
 **Nota de numeração:** ADR-011 permanece **reservado** para release cadence (pendente de T-20260412-1 — Deploy API — sair de BLOCKED). Este ADR usa o slot 013.
 
 ---
@@ -116,7 +118,7 @@ Artefatos de rastreabilidade em `.auto-memory/proposals/`:
 - Bússola SSE v1.1 atual — `docs/strategy/BUSSOLA_PRODUTO_SSE.md` §6 (P1–P8)
 - ADR-009 (adoção da Bússola)
 - ADR-010 (Operating Model v2)
-- ADR-012 (incorporação parcial NetSuite — precedente imediato de incorporação externa)
+- ADR-012 (incorporação parcial NS — precedente imediato de incorporação externa)
 
 ---
 

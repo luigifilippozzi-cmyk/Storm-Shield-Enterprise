@@ -1,12 +1,203 @@
----
+﻿---
 name: PO Sessions Log
 description: Registro datado de sessões do Product Owner — decisões estratégicas, artefatos produzidos, handoffs ao DM
 type: project
 ---
+> **Nota:** "NS" = ERP de referência externo. Nome substituído por precaução (ADR-014).
+
 
 # PO Sessions — Storm Shield Enterprise
 
 > Log mantido pelo PO Assistant (modo Cowork). Complementar ao `project_sse_status.md` (mantido pelo PM Agent).
+
+---
+
+## Sessão 2026-04-22 (parte 2) — PO Cowork (Trademark hygiene — substituição de marca de ERP externo por sigla NS)
+
+**Contexto:** Luigi abriu a sessão para escopar a substituição de menções diretas à marca registrada de um ERP proprietário usado como referência comparativa na documentação do SSE. Motivação: reduzir exposição jurídica — o SSE não tem relação comercial, licenciamento nem endosso do fornecedor; o uso nominativo em repo versionado cria risco latente.
+
+### Decisões de produto
+
+1. **Estratégia de substituição: disclaimer + sigla NS.** Disclaimer canônico padronizado no topo de cada doc impactado + substituição textual uniforme. Rejeitada a substituição literal pura (sigla ambígua sem contexto) e a opção "NS-REF" (quebra fluidez). **Condição de reversão:** ADR suplementar se (a) parecer jurídico posterior indicar risco residual, (b) sigla "NS" gerar confusão interna, (c) mudança de relação com o fornecedor.
+2. **Renames com stubs de 60 dias** (até 2026-06-22) para os 3 arquivos cujos nomes contêm a marca: 2 em `docs/strategy/` (ANALISE_*_vs_BUSSOLA_v1.{md,html}) e 1 em `docs/decisions/` (012-*-incorporacao-parcial.md). Rejeitados: rename sem stub (quebra bookmarks externos sem aviso) e "manter filename com conteúdo trocado" (inconsistência visível).
+3. **Escopo GitHub: abrangente.** Editar título + corpo de issues e PRs em todos os estados (abertos, fechados, mergeados) via `gh api PATCH`. **NÃO editar** comentários nem reviews (escopo negativo honrado). **NÃO reescrever** commits históricos (violaria regra 1 do CLAUDE.md). Rejeitada a opção conservadora (só arquivos versionados) — exposição no GitHub seria residual inaceitável.
+4. **Executar sem aguardar parecer jurídico.** Mitigação precautória, reversível, não bloqueia trabalho estratégico. ADR-014 documenta a decisão e os critérios de reversão.
+
+### Artefatos produzidos
+
+- **T-20260422-1** (P2, PENDING) registrada em `.auto-memory/dm_queue.md` — corpo canônico com 19 arquivos listados, escopo negativo explícito, critérios de aceite, dependência invertida com T-20260421-1 (sync dashboard aguarda renames).
+- **Rascunho ADR-014** em `.auto-memory/proposals/adr_014_draft.md` — decisão, disclaimer canônico, política de referência a produtos de terceiros, condição de reversão. DM publica em `docs/decisions/014-remocao-mencao-marca-erp-referencia.md` durante o PR.
+- **3 snippets PowerShell canônicos** (discovery → execution → verify) para o sweep do GitHub via `gh api`. Preservados aqui abaixo para uso do DM.
+
+### Snippets canônicos — Sweep GitHub (para DM)
+
+```powershell
+# ===== ETAPA 1 — DISCOVERY (dry-run, só lista) =====
+Set-Location "C:\Dev\storm-shield-enterprise"
+$data = Get-Date -Format "yyyy-MM-dd-HHmm"
+$out = ".auto-memory\sweeps\trademark-sweep-discovery-$data.csv"
+New-Item -ItemType Directory -Force -Path ".auto-memory\sweeps" | Out-Null
+
+$issues = gh issue list --state all --search "NS in:title,body" --limit 500 `
+  --json number,title,body,state,url,isPullRequest | ConvertFrom-Json
+$prs = gh pr list --state all --search "NS in:title,body" --limit 500 `
+  --json number,title,body,state,url | ConvertFrom-Json
+$issuesOnly = $issues | Where-Object { -not $_.isPullRequest }
+
+$all = @()
+$all += $issuesOnly | ForEach-Object {
+  [PSCustomObject]@{ Type="issue"; Number=$_.number; State=$_.state; Title=$_.title; URL=$_.url }
+}
+$all += $prs | ForEach-Object {
+  [PSCustomObject]@{ Type="pr"; Number=$_.number; State=$_.state; Title=$_.title; URL=$_.url }
+}
+$all | Export-Csv -Path $out -NoTypeInformation -Encoding UTF8
+$all | Format-Table Type,Number,State,Title -AutoSize
+Write-Host "CSV: $out — REVISAR antes de Etapa 2"
+
+# ===== ETAPA 2 — EXECUÇÃO (aplica substituição via gh api) =====
+Set-Location "C:\Dev\storm-shield-enterprise"
+$data = Get-Date -Format "yyyy-MM-dd-HHmm"
+$discovery = Get-ChildItem ".auto-memory\sweeps\trademark-sweep-discovery-*.csv" `
+  | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+if (-not $discovery) { throw "Rode a Etapa 1 antes." }
+$items = Import-Csv $discovery.FullName
+$log = ".auto-memory\sweeps\trademark-sweep-exec-$data.log"
+Add-Content $log "=== Sweep execução $data ==="
+$repo = "luigifilippozzi-cmyk/Storm-Shield-Enterprise"
+$owner, $name = $repo -split "/"
+
+function Replace-Mark {
+  param([string]$text)
+  if (-not $text) { return $text }
+  $text = $text -replace "NS", "NS"
+  $text = $text -replace "NS", "NS"
+  $text = $text -replace "NS", "NS"
+  $text = $text -replace "NS", "NS"
+  $text = $text -replace "NS", "NS"
+  return $text
+}
+
+foreach ($item in $items) {
+  $num = $item.Number; $type = $item.Type
+  if ($type -eq "issue") {
+    $current = gh issue view $num --repo $repo --json title,body | ConvertFrom-Json
+  } else {
+    $current = gh pr view $num --repo $repo --json title,body | ConvertFrom-Json
+  }
+  $newTitle = Replace-Mark $current.title
+  $newBody  = Replace-Mark $current.body
+  $titleChanged = ($newTitle -ne $current.title)
+  $bodyChanged  = ($newBody  -ne $current.body)
+  if (-not ($titleChanged -or $bodyChanged)) {
+    Add-Content $log "[$type #$num] NO-OP"; continue
+  }
+  $endpoint = if ($type -eq "issue") { "repos/$owner/$name/issues/$num" } `
+              else { "repos/$owner/$name/pulls/$num" }
+  $payload = @{}
+  if ($titleChanged) { $payload.title = $newTitle }
+  if ($bodyChanged)  { $payload.body  = $newBody  }
+  ($payload | ConvertTo-Json -Compress) | gh api --method PATCH $endpoint --input - | Out-Null
+  Add-Content $log "[$type #$num] UPDATED — title:$titleChanged body:$bodyChanged"
+  Write-Host "✓ $type #$num"
+}
+Write-Host "Log: $log"
+
+# ===== ETAPA 3 — VERIFY (lê de volta) =====
+Set-Location "C:\Dev\storm-shield-enterprise"
+$residual = @()
+$residual += (gh issue list --state all --search "NS in:title,body" --limit 500 `
+  --json number,title,state,url,isPullRequest | ConvertFrom-Json `
+  | Where-Object { -not $_.isPullRequest })
+$residual += (gh pr list --state all --search "NS in:title,body" --limit 500 `
+  --json number,title,state,url | ConvertFrom-Json)
+if ($residual.Count -eq 0) {
+  Write-Host "✓ GitHub limpo" -ForegroundColor Green
+} else {
+  Write-Host "⚠ $($residual.Count) residuais:" -ForegroundColor Yellow
+  $residual | Select-Object number,title,state,url | Format-Table -AutoSize
+}
+```
+
+### Task list do acompanhamento (Cowork)
+
+9 tasks criadas, dependências configuradas:
+- #1 → #2 → #3 (PO): registro da tarefa, rascunho ADR-014, log da sessão — **concluídas nesta sessão**
+- #4 (Luigi): despachar ao PM/DM
+- #5 (DM): executar substituições + renames + stubs + publicar ADR-014
+- #6 (DM): rodar sweep GitHub (3 etapas)
+- #7 (DM): abrir PR + CI verde + mergear
+- #8 (PO): revisar PR
+- #9 (PO): atualizar MEMORY.md pós-merge + arquivar T-20260422-1
+
+### Alinhamento Bússola
+
+N/A — mudança de compliance/hygiene, não afeta personas, ICP ou métrica-norte. O ADR-014 é o veículo formal da decisão.
+
+### Próxima sessão
+
+Aguardar despacho de Luigi ao PM/DM. Próximo checkpoint: revisão do PR do DM (task #8). Sem dependência de Bússola ou de T-20260421-10 (independente do deploy API).
+
+---
+
+## Sessão 2026-04-22 — PO Cowork (Split RF-005 XL ratificado — Split A)
+
+**Contexto:** Luigi abriu a sessão para validar o split do RF-005 antes do DM abrir branch (T-20260421-3 estava PENDING com complexidade XL e recomendação explícita de split no próprio spec). Luigi pediu análise comparativa e ratificou a recomendação do PO.
+
+### Decisões de produto
+
+1. **Split A ratificado** para RF-005 (Estimate State Machine + Inbox):
+   - **RF-005a** (backend state machine + ENUM + migration 014 + validator + estimate_status_changes) — T-20260421-3a, P1, PENDING
+   - **RF-005b** (frontend tabela + filtros + ownership + estimate-status-badge) — T-20260421-3b, P1, BLOCKED by 3a
+   - **RF-005c** (frontend kanban drag-drop + SLA jobs) — T-20260421-3c, P1, BLOCKED by 3a (soft-dep em 3b)
+   - **Split B rejeitado** (tabela+kanban bundled): perderia ship incremental do tabela antes do kanban; drag-drop é maior fonte de incerteza técnica e não deve bloquear o uso da tabela.
+   - **Condição de reversão:** se após 3a + 3b em staging o Estimator (via ritual Operating Model §5.4) indicar que kanban não agrega valor frente ao esforço, canibalizar 3c — entregar só SLA como ENH, rebater kanban como ENH P2.
+
+2. **RF-006 (T-20260421-4) — dependência reduzida.** Estava BLOCKED por T-20260421-3 inteiro. Agora BLOCKED **apenas** por T-20260421-3a (o estado `disputed` do ENUM basta para o Payment Hold escutar eventos). Ganho de calendário: 3b e 3c podem rodar em paralelo com RF-006.
+
+3. **T-20260421-3 original marcada SUPERSEDED** em `dm_queue.md` com nota histórica apontando para os três sub-RFs.
+
+4. **RF-005 no `RF_BACKLOG.md`** anotado com tabela de split + referência à task DM de cada parte + condição de reversão. RF-005 só fecha DONE quando 3c mergear (último sub-RF do split).
+
+### Alinhamento Bússola
+
+- Persona tocada: Estimator (primária) — Bússola §2. RN5 de ownership é princípio P5 (insurance-first) + princípio P1 (simplificar > completar) — separar em 3 PRs é simplificação, não complexificação.
+- Gap fechado: Gap 5 (Insurance workflow) — Bússola §4.
+- Regras CLAUDE.md §10: Regra 16 (persona+gap) já está obrigatória nos 3 PRs via `Done quando`; Regra 17 (handoff canônico §4) respeitada — tasks seguem template; Regra 19 (PV/PUX via frontend-reviewer) obrigatória em 3b e 3c.
+
+### Artefatos produzidos
+
+| Artefato | Arquivo | Mudança |
+|---|---|---|
+| Task T-20260421-3 superseded | `.auto-memory/dm_queue.md` | Bloco substituído por nota histórica curta |
+| Nova task DM P1 | `.auto-memory/dm_queue.md` | T-20260421-3a (backend state machine) |
+| Nova task DM P1 | `.auto-memory/dm_queue.md` | T-20260421-3b (frontend tabela) BLOCKED by 3a |
+| Nova task DM P1 | `.auto-memory/dm_queue.md` | T-20260421-3c (frontend kanban + SLA) BLOCKED by 3a |
+| Task T-20260421-4 atualizada | `.auto-memory/dm_queue.md` | Dependência de T-3 inteiro → apenas T-3a |
+| Anotação RF-005 | `docs/strategy/RF_BACKLOG.md` | Tabela de split + condição de reversão |
+| Sessão logada | `.auto-memory/po_sessions.md` | Esta entrada (append-top) |
+
+### Handoffs
+
+- **Dev Manager:** 3 tarefas novas em `dm_queue.md` (origin=PO). IDs: T-20260421-3a, T-20260421-3b, T-20260421-3c. 1 tarefa atualizada: T-20260421-4 (dependência reduzida).
+- **PM Agent:** na próxima revisão diária, atualizar "Handoff DM aberto" em `project_sse_status.md` — substituir T-20260421-3 pelas três sub-tasks + notar que T-4 está BLOCKED por 3a apenas.
+
+### Bloqueios / alertas
+
+- Nenhum bloqueio novo. T-20260421-3a agora é a próxima P1 do DM (podia iniciar imediatamente após sessão DM disponível).
+- Alerta para o DM: não acumular 3a+3b+3c num único PR "para otimizar" — Split A foi ratificado exatamente para evitar isso. Violação = reabrir consulta PO.
+
+### Próxima sessão
+
+Quando T-20260421-3a mergear em staging: sessão PO curta para (1) marcar T-20260421-4 como PENDING (desbloqueado), (2) validar se algum ajuste de escopo em 3b/3c virou visível após ver o backend real em staging, (3) monitorar condição de reversão do kanban.
+
+### Escopo negativo desta sessão
+
+- Não escrevi código (apenas artefatos de decisão/handoff — conforme PO não executa).
+- Não redigi ADR novo (Split A é decisão operacional, não arquitetural — cabe no po_sessions + RF_BACKLOG, não em ADR).
+- Não mexi em CLAUDE.md, AGENTS.md, Bússola, Operating Model.
+- Não toquei ADR-011 (continua reservado — última condição de destrave já ocorreu com T-20260421-10 COMPLETED; cabe avaliar ADR-011 em sessão dedicada).
+- Não alterei `CHANGELOG`.
 
 ---
 
@@ -67,7 +258,7 @@ Assim que T-20260421-10 fechar com `/ready` 200:
 
 - Não mexi em código (apenas diagnóstico + delegação)
 - Não alterei CLAUDE.md, AGENTS.md, nem ADRs
-- Não toquei Bússola, RF_BACKLOG, dashboard NetSuite
+- Não toquei Bússola, RF_BACKLOG, dashboard NS
 - Não redigi ADR-011 (continua reservado)
 - Não abri PR (isso é tarefa do DM em T-20260421-10)
 - Não mexi em `fly.toml`, Dockerfile nem workflow — eles estão corretos
@@ -76,7 +267,7 @@ Assim que T-20260421-10 fechar com `/ready` 200:
 
 ## Sessão 2026-04-21 (noite, parte 2) — PO Cowork (Incorporação parcial do pacote MF — PV/PUX + squad health)
 
-**Contexto:** imediatamente após a sessão "NetSuite vs Bússola" (parte 1), Luigi disponibilizou um pacote de conhecimento exportado do projeto Minhas Finanças (MF) — 10 arquivos destilando ~18 meses de aprendizados em governança de squad assistido por IA, princípios de UX (PUX1–PUX6), princípios visuais (PV1–PV6), padrão de subagente ux-reviewer, estrutura da Bússola de Produto, regras invioláveis, workflow Git/PowerShell, anti-patterns e checklist de adoção. Pediu: *"vamos incorporar a tecnologia estabelecida no mf em nosso projeto ... levando em consideração a eficiência em nossa implementação e roadmap estabelecida"*.
+**Contexto:** imediatamente após a sessão "NS vs Bússola" (parte 1), Luigi disponibilizou um pacote de conhecimento exportado do projeto Minhas Finanças (MF) — 10 arquivos destilando ~18 meses de aprendizados em governança de squad assistido por IA, princípios de UX (PUX1–PUX6), princípios visuais (PV1–PV6), padrão de subagente ux-reviewer, estrutura da Bússola de Produto, regras invioláveis, workflow Git/PowerShell, anti-patterns e checklist de adoção. Pediu: *"vamos incorporar a tecnologia estabelecida no mf em nosso projeto ... levando em consideração a eficiência em nossa implementação e roadmap estabelecida"*.
 
 Pergunta antes da ação (AskUserQuestion, 3 perguntas): Luigi confirmou **Opção A — Cirúrgica** (PV/PUX na Bússola + saúde do squad no Operating Model), **upload dos 3 arquivos-chave antes de executar** (02 ux-reviewer, 03 PV/PUX, 05 template Bússola), e **absorver em `frontend-reviewer` existente** (sem criar subagente novo).
 
@@ -124,9 +315,9 @@ Pergunta antes da ação (AskUserQuestion, 3 perguntas): Luigi confirmou **Opç�
 
 ---
 
-## Sessão 2026-04-21 (noite) — PO Cowork (NetSuite vs Bússola — análise + incorporação)
+## Sessão 2026-04-21 (noite) — PO Cowork (NS vs Bússola — análise + incorporação)
 
-**Contexto:** Luigi pediu análise comparativa entre a documentação pública do NetSuite e a Bússola de Produto SSE v1.0 (ADR-009). Objetivo: confrontar a Bússola com padrões de indústria sem perder posicionamento "simpler + cheaper + purpose-built", identificando gaps não-vistos, reforços possíveis, e padrões adotáveis sem violar P1–P7. Base: `docs.oracle.com/en/cloud/saas/netsuite/ns-online-help/` via WebSearch (fetch bloqueado por allowlist). 12 áreas exploradas.
+**Contexto:** Luigi pediu análise comparativa entre a documentação pública do NS e a Bússola de Produto SSE v1.0 (ADR-009). Objetivo: confrontar a Bússola com padrões de indústria sem perder posicionamento "simpler + cheaper + purpose-built", identificando gaps não-vistos, reforços possíveis, e padrões adotáveis sem violar P1–P7. Base: `docs.oracle.com/en/cloud/saas/NS/ns-online-help/` via WebSearch (fetch bloqueado por allowlist). 12 áreas exploradas.
 
 Durante a sessão, Luigi enviou duas instruções de aprovação:
 1. *"este é o dashboard que eu quero acompanhar daqui para frente, informe o PM e DM"* — adoção do HTML como artefato vivo de governança estratégica.
@@ -146,9 +337,9 @@ Durante a sessão, Luigi enviou duas instruções de aprovação:
    - RF-006 Payment Hold / Disputed Estimate (P1, Fase 2, Persona Estimator, M, depende de RF-005)
    - RF-007 Case Management simplificado (P2, Fase 2, Persona Estimator, M, com anti-rec #13 formal)
 
-4. **13 anti-recomendações explícitas** documentadas em `ANALISE_NETSUITE_vs_BUSSOLA_v1.md §7` — reduzem debate recorrente sobre features NetSuite rejeitadas.
+4. **13 anti-recomendações explícitas** documentadas em `ANALISE_NS_vs_BUSSOLA_v1.md §7` — reduzem debate recorrente sobre features NS rejeitadas.
 
-5. **Dashboard NetSuite↔Bússola** (`ANALISE_NETSUITE_vs_BUSSOLA_v1.html` + `.md`) adotado como artefato canônico de acompanhamento contínuo, mantido via **T-20260421-1** (standing task) com 6 gatilhos explícitos.
+5. **Dashboard NS↔Bússola** (`ANALISE_NS_vs_BUSSOLA_v1.html` + `.md`) adotado como artefato canônico de acompanhamento contínuo, mantido via **T-20260421-1** (standing task) com 6 gatilhos explícitos.
 
 6. **3 decisões técnicas delegadas ao DM** (cada PR de RF registra):
    - Reversing Journal Entries já existe no SSE? (relevante p/ RF-005 se toca GL)
@@ -166,15 +357,15 @@ Durante a sessão, Luigi enviou duas instruções de aprovação:
 
 | Artefato | Localização | Operação |
 |---|---|---|
-| Relatório NetSuite vs Bússola | `docs/strategy/ANALISE_NETSUITE_vs_BUSSOLA_v1.md` | Novo → Accepted |
-| Dashboard interativo | `docs/strategy/ANALISE_NETSUITE_vs_BUSSOLA_v1.html` | Novo → Accepted (living artifact) |
-| ADR-012 formal | `docs/decisions/012-netsuite-incorporacao-parcial.md` | Novo |
+| Relatório NS vs Bússola | `docs/strategy/ANALISE_NS_vs_BUSSOLA_v1.md` | Novo → Accepted |
+| Dashboard interativo | `docs/strategy/ANALISE_NS_vs_BUSSOLA_v1.html` | Novo → Accepted (living artifact) |
+| ADR-012 formal | `docs/decisions/012-ns-incorporacao-parcial.md` | Novo |
 | Bússola v1.1 | `docs/strategy/BUSSOLA_PRODUTO_SSE.md` | Patch (header, §5, §6, §7, §8, §9) |
 | RF_BACKLOG v0.2 | `docs/strategy/RF_BACKLOG.md` | Header + RF-004/005/006/007 + Próximos RFs |
 | Standing task do dashboard | `.auto-memory/dm_queue.md` T-20260421-1 | Novo |
 | Tasks DM para 4 RFs | `.auto-memory/dm_queue.md` T-20260421-2/3/4/5 | Novo |
 | Status update PM | `.auto-memory/project_sse_status.md` | Anotação PO no topo + ADR count 10→11 + RFs |
-| Memória do dashboard | `...memory/project_sse_netsuite_dashboard.md` | Novo |
+| Memória do dashboard | `...memory/project_sse_NS_dashboard.md` | Novo |
 | Index de memória | `...memory/MEMORY.md` | Patch (entrada do dashboard) |
 | Index de auto-memory | `.auto-memory/MEMORY.md` | Patch (seção "Dashboards estratégicos") |
 

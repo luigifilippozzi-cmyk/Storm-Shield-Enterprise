@@ -1,4 +1,6 @@
-# ADR-008: Fixed Asset Management Implementation Decisions
+﻿# ADR-008: Fixed Asset Management Implementation Decisions
+
+> **Nota:** Neste documento, "NS" refere-se a um ERP proprietário de terceiros usado exclusivamente como referência comparativa externa, sem relação comercial, licenciamento ou endosso. O nome da marca foi substituído por precaução (ver ADR-014).
 
 **Status:** Accepted  
 **Date:** 2026-04-12  
@@ -14,7 +16,7 @@ The Fixed Asset Management (FAM) module was implemented as part of Fase 3 to han
 
 **Decision:** `AssetStatus` uses `active | fully_depreciated | disposed | inactive` (from `enums.ts`), not `proposal | active | fully_depreciated | disposed | transferred` (from SQL spec).
 
-**Rationale:** `enums.ts` in `packages/shared-types` is the single source of truth for the NestJS application. The SQL spec was a reference design from the Oracle/NetSuite comparison. `inactive` better represents a paused asset than `proposal` (which implies an approval workflow not yet implemented). `trade_in` in `DisposalType` replaces `transfer` for the same reason.
+**Rationale:** `enums.ts` in `packages/shared-types` is the single source of truth for the NestJS application. The SQL spec was a reference design from the Oracle/NS comparison. `inactive` better represents a paused asset than `proposal` (which implies an approval workflow not yet implemented). `trade_in` in `DisposalType` replaces `transfer` for the same reason.
 
 ### 2. Depreciation calculation in NestJS, not stored procedures
 

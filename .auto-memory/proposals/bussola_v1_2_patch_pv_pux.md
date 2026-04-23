@@ -1,4 +1,4 @@
-# Patch: Bússola v1.1 → v1.2 — PV/PUX (§6 reorganizada)
+﻿# Patch: Bússola v1.1 → v1.2 — PV/PUX (§6 reorganizada)
 
 **Arquivo-alvo:** `docs/strategy/BUSSOLA_PRODUTO_SSE.md`
 **Origem:** ADR-013 (draft em `.auto-memory/proposals/adr_013_draft.md`)
@@ -28,12 +28,14 @@ Este é um **patch descritivo** — mostra o que mudar, não um diff mecânico. 
 ```markdown
 # Bússola de Produto — Storm Shield Enterprise
 
+> **Nota:** "NS" = ERP de referência externo. Nome substituído por precaução (ADR-014).
+
 > Documento de referência estratégica para decisões de roadmap, redesenho de UX e priorização de RFs no SSE.
 > Criado em: 2026-04-17 (v1.0 via ADR-009). Atualizado em: 2026-04-21 (v1.1 via ADR-012).
 > Autor: Luigi (PO) + PO Assistant
 > **Propósito:** Servir de norte a todas as decisões de produto. Deve ser lido antes de qualquer sessão de redesenho, priorização ou discovery de RF.
 > **Natureza:** Não é backlog. Não é arquitetura técnica. É bússola — orienta "que produto estamos construindo e para quem".
-> **v1.1 (2026-04-21):** incorpora aprendizados de `ANALISE_NETSUITE_vs_BUSSOLA_v1.md` — novo princípio P8 (offline-first), §5 expandida (6 anti-features + 1099-NEC movido para Superamos + MACRS adicionado), §7 nota de nomenclatura "Workspace" + Global Search obrigatório, §8 estendida com RF-004/006/007 e ajuste Cockpit.
+> **v1.1 (2026-04-21):** incorpora aprendizados de `ANALISE_NS_vs_BUSSOLA_v1.md` — novo princípio P8 (offline-first), §5 expandida (6 anti-features + 1099-NEC movido para Superamos + MACRS adicionado), §7 nota de nomenclatura "Workspace" + Global Search obrigatório, §8 estendida com RF-004/006/007 e ajuste Cockpit.
 ```
 
 **Depois (v1.2):**
@@ -46,7 +48,7 @@ Este é um **patch descritivo** — mostra o que mudar, não um diff mecânico. 
 > Autor: Luigi (PO) + PO Assistant
 > **Propósito:** Servir de norte a todas as decisões de produto. Deve ser lido antes de qualquer sessão de redesenho, priorização ou discovery de RF.
 > **Natureza:** Não é backlog. Não é arquitetura técnica. É bússola — orienta "que produto estamos construindo e para quem".
-> **v1.1 (2026-04-21):** incorpora aprendizados de `ANALISE_NETSUITE_vs_BUSSOLA_v1.md` — novo princípio P8 (offline-first), §5 expandida, §7 Global Search + nomenclatura "Workspace", §8 estendida com RF-004/006/007.
+> **v1.1 (2026-04-21):** incorpora aprendizados de `ANALISE_NS_vs_BUSSOLA_v1.md` — novo princípio P8 (offline-first), §5 expandida, §7 Global Search + nomenclatura "Workspace", §8 estendida com RF-004/006/007.
 > **v1.2 (2026-04-21):** incorporação parcial do pacote MF (ADR-013) — §6 reorganizada em §6.1 Produto (P1–P8 intactos), §6.2 Visuais (PV1–PV6 novos), §6.3 UX (PUX1–PUX6 novos). Zero mudança em P1–P8 nem em §1–§5, §7–§8.
 ```
 
@@ -79,13 +81,13 @@ Violação de qualquer princípio sem justificativa registrada em ADR → descop
 
 **P4 — Operação do shop não depende do owner estar logado.** Owner viaja, o shop opera. Técnico e estimator têm autonomia completa dentro de seus escopos.
 
-**P5 — Insurance-first, não out-of-pocket-first.** Fluxo padrão de estimate e SO é insurance claim com adjuster. Out-of-pocket é caminho paralelo menor. Invertido do que NetSuite faz.
+**P5 — Insurance-first, não out-of-pocket-first.** Fluxo padrão de estimate e SO é insurance claim com adjuster. Out-of-pocket é caminho paralelo menor. Invertido do que NS faz.
 
 **P6 — Contabilidade nos bastidores.** Tech/estimator nunca veem "journal entry" ou "debit/credit". Owner vê KPIs agregados em linguagem de negócio ("margem", "receivable", "cash"). Accountant vê GL detalhado — é quem fala a língua contábil.
 
-**P7 — NetSuite é referência, não benchmark.** Feature nova só entra se passa no filtro "body shop médio de 5–15 func usa isso?". Se a justificativa é "NetSuite tem" ou "pode ser necessário no futuro", desprioriza.
+**P7 — NS é referência, não benchmark.** Feature nova só entra se passa no filtro "body shop médio de 5–15 func usa isso?". Se a justificativa é "NS tem" ou "pode ser necessário no futuro", desprioriza.
 
-**P8 — Offline-first para shop floor (v1.1).** Técnico não pode perder trabalho quando WiFi cai. Operações críticas do mobile (timer, fotos, SO status) funcionam offline e sincronizam quando reconectar. Desktop pode assumir online; mobile do Technician **não**. Sem offline, mobile do técnico vira "ferramenta que só funciona no escritório" — contradiz P2. Origem: gap identificado em `ANALISE_NETSUITE_vs_BUSSOLA_v1.md §2.7` (FSM Mobile).
+**P8 — Offline-first para shop floor (v1.1).** Técnico não pode perder trabalho quando WiFi cai. Operações críticas do mobile (timer, fotos, SO status) funcionam offline e sincronizam quando reconectar. Desktop pode assumir online; mobile do Technician **não**. Sem offline, mobile do técnico vira "ferramenta que só funciona no escritório" — contradiz P2. Origem: gap identificado em `ANALISE_NS_vs_BUSSOLA_v1.md §2.7` (FSM Mobile).
 
 ---
 

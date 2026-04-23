@@ -1,11 +1,13 @@
-# RF Backlog — Storm Shield Enterprise
+﻿# RF Backlog — Storm Shield Enterprise
+
+> **Nota:** Neste documento, "NS" refere-se a um ERP proprietário de terceiros usado exclusivamente como referência comparativa externa, sem relação comercial, licenciamento ou endosso. O nome da marca foi substituído por precaução (ver ADR-014).
 
 > Backlog de Requisitos Funcionais derivados dos Gaps Críticos da Bússola.
 > **Status:** v0.2 — atualizado em 2026-04-21 (incorporação de RF-004..007 via ADR-012)
 > **Convenção de numeração:** RF-NNN sequencial. Próximo RF a criar: **RF-008**.
 > **Status permitidos:** PROPOSED | APPROVED | IN_PROGRESS | DONE | CANCELED
 > **Autoridade:** Bússola §4 (gaps) + §8 (ordem de ataque). RFs aqui derivam diretamente de gaps.
-> **Autoridade adicional (RF-004..007):** ADR-012 (incorporação parcial de padrões NetSuite) + `ANALISE_NETSUITE_vs_BUSSOLA_v1.md`.
+> **Autoridade adicional (RF-004..007):** ADR-012 (incorporação parcial de padrões NS) + `ANALISE_NS_vs_BUSSOLA_v1.md`.
 
 ---
 
@@ -313,7 +315,7 @@ Justificativa: migration nova + módulo backend novo + alteração em 6 services
 **Gap fechado:** Fricção CRM — novo gap candidato (Gap 9), não nos 8 originais da Bússola v1.0. A decisão formal de adicionar como Gap 9 fica para revisão trimestral de julho/2026.
 **Persona primária:** Estimator. Secundárias: Owner-Operator, Accountant.
 **Princípio respeitado:** P1 (landing por persona, estendido a detalhe de entidade).
-**Origem:** `ANALISE_NETSUITE_vs_BUSSOLA_v1.md` §2.6 + §5 — adaptação de NetSuite Customer 360 View.
+**Origem:** `ANALISE_NS_vs_BUSSOLA_v1.md` §2.6 + §5 — adaptação de NS Customer 360 View.
 
 ### Descrição
 
@@ -380,14 +382,29 @@ Justificativa: 7 abas no frontend (L), backend é principalmente reuso (S), endp
 
 ## RF-005 — Estimate State Machine + Inbox do Estimator
 
-**Status:** APPROVED
+**Status:** APPROVED — **SPLIT RATIFICADO (Split A) em 2026-04-22**
 **Prioridade:** P1
 **Fase:** 2
 **Aprovado em:** 2026-04-21 (sessão PO, via ADR-012)
+**Split ratificado em:** 2026-04-22 (sessão PO Cowork — ver `.auto-memory/po_sessions.md`)
 **Gap fechado:** Gap 5 (Insurance workflow subdesenvolvido) — Bússola §4. Formaliza o "RF futuro — Insurance workflow visual" que estava mencionado em Bússola §8.
 **Persona primária:** Estimator. Secundárias: Owner-Operator (visibilidade), Accountant (receivables).
 **Princípio respeitado:** P5 (insurance-first).
-**Origem:** `ANALISE_NETSUITE_vs_BUSSOLA_v1.md` §5 + Bússola §4 Gap 5.
+**Origem:** `ANALISE_NS_vs_BUSSOLA_v1.md` §5 + Bússola §4 Gap 5.
+
+### Split de implementação (Split A — ratificado 2026-04-22)
+
+| Sub-RF | Task DM | Escopo | Complex. | CA cobertos |
+|---|---|---|---|---|
+| **RF-005a** | T-20260421-3a | Backend: ENUM expandido, validator de transitions, migration 014, `estimate_status_changes` append-only. Zero UI. | M | CA1, CA2, CA3, CA8 parcial |
+| **RF-005b** | T-20260421-3b | Frontend: `/app/estimates/inbox` **tabela** + filtros (status/adjuster/data) + ownership RN5 + `estimate-status-badge.tsx`. | M | CA5, CA6, CA9 |
+| **RF-005c** | T-20260421-3c | Frontend avançado: **kanban + drag-drop** respeitando transitions + SLA jobs (RN8). | S-M | CA4, CA7 |
+
+**Desbloqueio explícito:** RF-006 (T-20260421-4) fica BLOCKED apenas por RF-005a — pode rodar em paralelo com 3b e 3c. RF-005 só é marcado DONE quando o último dos três (3c) fechar.
+
+**Rejeitado:** Split B (tabela+kanban num PR só + notifications separadas) foi considerado e descartado — bundle excessivo em UI e perda de ship incremental do tabela antes do kanban.
+
+**Condição de reversão do Split A:** se após 3a + 3b em staging o Estimator (via ritual Operating Model §5.4) não vir valor no kanban, canibalizar 3c — entregar só o SLA job como ENH isolado e rebater kanban como ENH P2 futuro.
 
 ### Descrição
 
@@ -465,10 +482,10 @@ Justificativa: state machine + kanban + inbox + SLA jobs + migrations. Sugestão
 **Prioridade:** P1
 **Fase:** 2
 **Aprovado em:** 2026-04-21 (sessão PO, via ADR-012)
-**Gap fechado:** complementa Gap 5 (Insurance workflow). Inspiração: NetSuite Payment Hold.
+**Gap fechado:** complementa Gap 5 (Insurance workflow). Inspiração: NS Payment Hold.
 **Persona primária:** Estimator. Secundárias: Owner-Operator (aprovação), Technician (impacto na SO pausada).
 **Princípio respeitado:** P5 (insurance-first).
-**Origem:** `ANALISE_NETSUITE_vs_BUSSOLA_v1.md` §2.4 + §5 — adaptação de NetSuite Payment Hold.
+**Origem:** `ANALISE_NS_vs_BUSSOLA_v1.md` §2.4 + §5 — adaptação de NS Payment Hold.
 
 ### Descrição
 
@@ -550,10 +567,10 @@ Justificativa: migration contida, lógica de guard é clara, UI relativamente si
 **Prioridade:** P2
 **Fase:** 2
 **Aprovado em:** 2026-04-21 (sessão PO, via ADR-012)
-**Gap fechado:** complementa Gap 5 e serve customer complaints em geral — estrutura leve, não é CRM ticket full. NetSuite Case Management é a inspiração, mas com 13ª anti-recomendação explícita (`ANALISE §7.13`): sem tipos/origens/regras/territórios/auto-assignment.
+**Gap fechado:** complementa Gap 5 e serve customer complaints em geral — estrutura leve, não é CRM ticket full. NS Case Management é a inspiração, mas com 13ª anti-recomendação explícita (`ANALISE §7.13`): sem tipos/origens/regras/territórios/auto-assignment.
 **Persona primária:** Estimator (abre casos). Secundárias: Owner-Operator (revisa), Customer (subject).
 **Princípio respeitado:** P7 (complexidade proporcional ao ICP).
-**Origem:** `ANALISE_NETSUITE_vs_BUSSOLA_v1.md` §2.6 + §5.
+**Origem:** `ANALISE_NS_vs_BUSSOLA_v1.md` §2.6 + §5.
 
 ### Descrição
 
@@ -580,7 +597,7 @@ Entidade `cases` leve para rastrear complaints de customers e disputes não-esti
   - `resolution_notes` TEXT NULL
   - `created_at`, `updated_at` padrão
 
-- **RN2** — Escopo deliberado: **sem** case types customizáveis, **sem** origins, **sem** routing rules, **sem** territórios, **sem** auto-assignment, **sem** SLA por tipo. Anti-recomendação #13 do `ANALISE_NETSUITE_vs_BUSSOLA_v1.md`.
+- **RN2** — Escopo deliberado: **sem** case types customizáveis, **sem** origins, **sem** routing rules, **sem** territórios, **sem** auto-assignment, **sem** SLA por tipo. Anti-recomendação #13 do `ANALISE_NS_vs_BUSSOLA_v1.md`.
 - **RN3** — Relação com RF-006: `dispute` não é um case type aqui — disputes de estimate têm fluxo próprio (RF-006). **Decisão DM**: avaliar se faz sentido unificar via campo discriminator futuramente, mas v0.1 fica separado.
 - **RN4** — Lista em `/app/cases` (rota secundária, não workspace próprio).
 - **RN5** — Filtros: status, priority, assigned_to, customer.
@@ -629,7 +646,7 @@ Justificativa: módulo novo + migration + CRUD frontend + integração leve com 
 
 ### Notas de implementação
 
-- **Anti-recomendação explícita (do `ANALISE §7.13`):** não permitir que o DM introduza features de Case Management full do NetSuite. Se demanda real emergir (>10 tenants pedindo tipos customizáveis), reabrir decisão.
+- **Anti-recomendação explícita (do `ANALISE §7.13`):** não permitir que o DM introduza features de Case Management full do NS. Se demanda real emergir (>10 tenants pedindo tipos customizáveis), reabrir decisão.
 - Comments/notes thread em v0.1 está fora. Não adicionar mesmo se parecer "fácil".
 
 ---

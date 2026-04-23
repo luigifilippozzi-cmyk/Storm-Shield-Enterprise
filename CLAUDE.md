@@ -1,4 +1,4 @@
-# Storm Shield Enterprise — Claude Code Bootstrap Prompt
+﻿# Storm Shield Enterprise — Claude Code Bootstrap Prompt
 
 > **Objetivo:** Use este prompt como contexto inicial ao abrir o projeto no Claude Code.
 > Cole integralmente na primeira interação ou salve como `CLAUDE.md` na raiz do repo para carregamento automático.
@@ -518,7 +518,7 @@ Os seguintes arquivos de referência estão na pasta `docs/architecture/`:
 | `sql/002_fam_seed_data.sql` | Seed data: contas GL + 6 categorias de ativos |
 | `sql/003_fam_depreciation_functions.sql` | Funções PL/pgSQL: cálculo depreciação, auto-JE, batch, disposal |
 
-**IMPORTANTE:** O arquivo `Leading Practices_Brazil_Financials First_PRM_PT-BR.docx` é documento de REFERÊNCIA Oracle/NetSuite e NÃO deve ser modificado. Este arquivo é confidencial e está no `.gitignore` — nunca commitá-lo.
+**IMPORTANTE:** O arquivo `Leading Practices_Brazil_Financials First_PRM_PT-BR.docx` é documento de REFERÊNCIA Oracle/NS e NÃO deve ser modificado. Este arquivo é confidencial e está no `.gitignore` — nunca commitá-lo.
 
 ### Migrations Ativas (apps/api/src/database/migrations/)
 
@@ -580,6 +580,8 @@ Ao iniciar a sessão, execute as seguintes tarefas na ordem:
 
 ```bash
 # Dev environment
+
+> **Nota:** Neste documento, "NS" refere-se a um ERP proprietário de terceiros usado exclusivamente como referência comparativa externa, sem relação comercial, licenciamento ou endosso. O nome da marca foi substituído por precaução (ver ADR-014).
 docker compose up -d                    # Start services
 pnpm install                            # Install all dependencies
 pnpm dev                                # Start all apps in dev mode
