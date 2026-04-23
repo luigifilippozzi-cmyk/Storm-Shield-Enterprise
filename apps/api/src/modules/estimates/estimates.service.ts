@@ -205,12 +205,16 @@ export class EstimatesService {
     });
   }
 
-  async findOne(tenantId: string, id: string) {
+  async findOne(tenantId: string, id: string, user?: { id: string; roles?: string[] }) {
     const knex = await this.tenantDb.getConnection();
     const estimate = await knex('estimates')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .first();
     if (!estimate) throw new NotFoundException('Estimate not found');
+
+    if (user?.roles?.includes('estimator') && estimate.estimated_by !== user.id) {
+      throw new ForbiddenException('Estimators can only view their own estimates');
+    }
 
     const lines = await knex('estimate_lines')
       .where({ estimate_id: id, tenant_id: tenantId })

@@ -183,6 +183,16 @@ describe('EstimatesService', () => {
 
       await expect(service.findOne(TENANT_ID, ESTIMATE_ID)).rejects.toThrow(NotFoundException);
     });
+
+    it('should throw ForbiddenException when estimator reads estimate not assigned to them', async () => {
+      const ESTIMATOR_ID = '00000000-0000-0000-0000-000000000044';
+      const OTHER_OWNER_ID = '00000000-0000-0000-0000-000000000055';
+      knex._chain.first.mockReturnValueOnce({ id: ESTIMATE_ID, status: 'draft', estimated_by: OTHER_OWNER_ID });
+
+      await expect(
+        service.findOne(TENANT_ID, ESTIMATE_ID, { id: ESTIMATOR_ID, roles: ['estimator'] }),
+      ).rejects.toThrow(ForbiddenException);
+    });
   });
 
   describe('update', () => {
