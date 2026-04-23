@@ -6,6 +6,114 @@ type: project
 > **Nota:** "NS" = ERP de referência externo. Nome substituído por precaução (ADR-014).
 
 
+# SSE Project Status — 2026-04-23 (DM Agent — T-20260421-3a COMPLETED)
+
+## Revisão DM — 2026-04-23 (RF-005a state machine backend)
+
+**Saúde: VERDE** — Deploy API VERDE (migrations 014+015 aplicadas). CI VERDE. Deploy Web VERDE. 0 PRs abertos. T-20260421-3a COMPLETED.
+
+**Fase 1:** ~98% | Módulos: 13/15 | Testes: 482 | Endpoints: 112 | Migrations: 16 | ADRs: 14 | Controllers: 16 | Pages: 38
+
+**CI:** VERDE | **Deploy Web:** VERDE | **Deploy API:** VERDE | **PRs abertos:** 0 | **PRs merged:** 49
+
+### Novidades desta sessão (2026-04-23)
+- **PR #48 merged:** feat(estimates) RF-005a — EstimateStateMachineService (10 estados, 22 transitions, 482 testes), migration 014 (ENUM expand), EstimateStatus enum expandido, ALLOWED_STATUS_TRANSITIONS atualizado. Zero UI.
+- **PR #49 merged:** fix(db) migration split — PG constraint 55P04 (ALTER TYPE ADD VALUE não pode ser usado na mesma transação que queries referenciando os novos valores). Split em 014_estimate_status_enum_expand.sql + 015_estimate_status_changes.sql.
+- **T-20260421-3a COMPLETED**
+- **T-20260421-3b, T-20260421-3c, T-20260421-4 DESBLOQUEADOS** (dependiam de 3a merged)
+- **Subagentes acionados:** test-runner [PASS 482/482], security-reviewer [PASS 0 Critical/High, 1 Medium herdado], db-reviewer [FAIL→PASS — 2 issues corrigidos: ON DELETE RESTRICT + FOR SELECT em RLS]
+
+### Prioridades P0/P1 para próxima sessão DM
+1. **P1 DESBLOQUEADO** — T-20260421-3b: RF-005b Inbox tabela + filtros + estimate-status-badge.tsx + ownership (Estimator vs Owner)
+2. **P1 DESBLOQUEADO** — T-20260421-4: RF-006 Payment Hold / Disputed Estimate (pode rodar em paralelo com 3b)
+3. **P2** — T-20260421-9: sync NS dashboard Bússola v1.2 (PR doc-only)
+4. **P2** — T-20260421-3c: RF-005c Kanban drag-drop + SLA (soft-dep em 3b)
+
+### Alertas
+- /ready 503 em staging (DATABASE_URL+REDIS_URL ausentes nos Fly secrets — ação Luigi)
+- Branch coverage < 80% em contractors (77.77%), customers (71.79%), financial (66.66%) — statements todos >94%
+- Coverage < 80%: standing issue, sem task criada
+
+### Alinhamento Bússola (regras 15-18)
+Sem violações. PR #48 cita Estimator (Bússola §2) + Gap 5. PR #49 é infra/fix, N/A. dm_queue.md usa template canônico §4. Stubs deprecated não escritos.
+
+### Gaps P2 Fase 1 remanescentes
+- B1-3: Vehicle detail — estimates vinculados
+- B2-2: Estimate form — wizard multi-step completo
+- B3-4: Financial — breakdown por categoria
+
+### Handoff DM aberto (dm_queue.md)
+- **COMPLETED:** T-20260422-1, T-20260421-10, T-20260421-2, T-20260421-6/7/8, **T-20260421-3a**
+- **PENDING P1 DESBLOQUEADO:** T-20260421-3b (RF-005b inbox tabela)
+- **PENDING P1 DESBLOQUEADO:** T-20260421-4 (RF-006 payment hold)
+- **BLOCKED (soft-dep 3b):** T-20260421-3c (RF-005c kanban SLA)
+- **PENDING P2:** T-20260421-1 (standing), T-20260421-5 (RF-007), T-20260421-9 (NS dashboard v1.2), T-036 (accounting frontend)
+- **Legacy:** T-20260412-2 (ratificação PO pendente)
+
+### Última sessão DM: 2026-04-23 (RF-005a PR #48 + migration fix PR #49)
+
+---
+
+# SSE Project Status — 2026-04-23 (PM Agent — revisão diária)
+
+## Revisão PM — 2026-04-23
+
+**Saúde: VERDE** — Deploy API VERDE. CI VERDE. Deploy Web VERDE. 0 PRs abertos. ADR-011 Accepted (ESM→CJS). ADR-014 Accepted (trademark hygiene). T-20260422-1 COMPLETED.
+
+**Fase 1:** ~97% | Módulos: 13/15 | Testes: 368 | Endpoints: 110 | Migrations: 14 | ADRs: 14 | Controllers: 16 | Pages: 38
+
+**CI:** VERDE | **Deploy Web:** VERDE | **Deploy API:** VERDE | **PRs abertos:** 0 | **PRs merged:** 47
+
+### Novidades desde última revisão PM (2026-04-22)
+- **PR #47 merged:** chore(docs) trademark hygiene ADR-014 — T-20260422-1 COMPLETED
+- **ADR-011 Accepted:** ESM→CJS shared packages (T-20260421-10 COMPLETED)
+- **ADR-014 Accepted:** remoção de menção à marca ERP referência
+- **ADR count:** 14 (15 arquivos — 012 tem stub + renamed por ADR-014)
+- **Deploy API:** último run SUCCESS 2026-04-22T20:34Z; CI 2026-04-23T00:28Z SUCCESS
+- **Split RF-005 ratificado:** T-20260421-3a (PENDING P1), 3b/3c/4 BLOCKED aguardam 3a
+
+### Prioridades P0/P1 para Dev Manager
+1. **P1 (DM)** — T-20260421-3a: RF-005a backend state machine — ENUM expandido + validator + migration 014 + tabela estimate_status_changes. Split ratificado PO 2026-04-22. Desbloqueia T-3b, T-3c e T-20260421-4.
+2. **P1 (Luigi)** — Configurar Fly secrets: `fly secrets set DATABASE_URL=<neon-pooled> REDIS_URL=<upstash> --app sse-api-staging` — desbloqueia /ready verde.
+3. **P2 (DM)** — T-20260421-9: sync NS dashboard com Bússola v1.2 (gatilho #2 desbloqueado). PR doc-only.
+4. **P2 (DM)** — T-20260421-5: RF-007 Case Management simplificado — M, independente.
+
+### Alertas
+- /ready 503 em staging (DATABASE_URL+REDIS_URL ausentes nos Fly secrets — ação Luigi)
+- T-20260421-3b/3c/4: BLOCKED aguardam T-3a merged
+- Coverage < 80% em todos os services (meta CLAUDE.md regra 6) — standing issue
+
+### Alinhamento Bússola (regras 15-18)
+Sem violações. 0 PRs abertos. Últimos PRs (#44 RF-004, #45 ADR-013, #47 trademark) já revisados e OK. dm_queue.md usa template canônico §4. Stubs deprecated não escritos.
+
+### Verificação Regras CLAUDE.md §10
+- Regra 4 (KNEX_CONNECTION direto): OK
+- Regra 5 (FLOAT em migrations): OK
+- Regra 6 (CASCADE em financeiro/contábil): OK
+- Regra 9 (secrets hardcoded): OK
+- Regras 15-18: OK — sem PRs abertos para checar
+
+### Gaps P2 Fase 1 remanescentes
+- B1-3: Vehicle detail — estimates vinculados
+- B2-2: Estimate form — wizard multi-step completo
+- B3-4: Financial — breakdown por categoria
+
+### Inconsistências
+- /ready 503: esperado (DATABASE_URL+REDIS_URL ausentes) — ação Luigi pendente
+- Coverage < 80%: standing issue, sem task criada
+
+### Handoff DM aberto (dm_queue.md)
+- **COMPLETED:** T-20260422-1, T-20260421-10, T-20260421-2, T-20260421-6/7/8
+- **PENDING P1:** T-20260421-3a (RF-005a — pode iniciar)
+- **BLOCKED:** T-20260421-3b (aguarda 3a), T-20260421-3c (aguarda 3a), T-20260421-4 (RF-006, aguarda 3a)
+- **PENDING P2:** T-20260421-1 (standing), T-20260421-5 (RF-007), T-20260421-9 (NS dashboard v1.2), T-036 (accounting frontend)
+- **Legacy:** T-20260412-2 (ratificação PO pendente)
+
+### Última sessão PM: 2026-04-23
+### Última sessão DM: 2026-04-22 (RF-004 PR#44 + ADR-013 PR#45 + trademark PR#47)
+
+---
+
 # SSE Project Status — 2026-04-22 (DM Agent — sessão tarde/noite — RF-004 merged + ADR-013 merged)
 
 ## Revisão DM — 2026-04-22 (sessão completa: subagentes + PR #44 + PR #45)

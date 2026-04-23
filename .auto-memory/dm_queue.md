@@ -380,11 +380,12 @@ RF-005 (XL) foi avaliado como split obrigatório. Em 2026-04-22 o PO ratificou *
 
 **Origin:** PO (split ratificado 2026-04-22)
 **Priority:** P1
-**Status:** PENDING
+**Status:** COMPLETED
 **Created:** 2026-04-22
-**Claimed:** —
-**Branch:** `feature/SSE-XXX-rf-005a-state-machine-backend`
-**PR:** —
+**Claimed:** DM Agent (sessão 2026-04-23)
+**Closed:** 2026-04-23
+**Branch:** `feature/SSE-054-rf-005a-state-machine-backend`
+**PR:** #48 (feat) + #49 (fix migration PG 55P04)
 
 ### Objetivo
 Implementar a máquina de estados de Estimates em nível de backend: expandir ENUM `estimate_status` para 10 valores canônicos, criar `EstimateStateMachineService` com validator de transitions, garantir tabela append-only `estimate_status_changes`. Zero mudança de UI.
@@ -442,8 +443,9 @@ Gap 5 (Insurance workflow) — Bússola §4.
 
 **Origin:** PO (split ratificado 2026-04-22)
 **Priority:** P1
-**Status:** BLOCKED (aguarda T-20260421-3a merged)
+**Status:** PENDING
 **Created:** 2026-04-22
+**Unblocked:** 2026-04-23 (T-20260421-3a COMPLETED — PR #48+#49 merged)
 **Claimed:** —
 **Branch:** `feature/SSE-XXX-rf-005b-inbox-tabela`
 **PR:** —
@@ -505,8 +507,9 @@ Gap 5 (Insurance workflow) — Bússola §4.
 
 **Origin:** PO (split ratificado 2026-04-22)
 **Priority:** P1
-**Status:** BLOCKED (aguarda T-20260421-3a merged; soft-dep em 3b)
+**Status:** BLOCKED (soft-dep em T-20260421-3b — aguarda 3b merged para reutilizar estimate-status-badge)
 **Created:** 2026-04-22
+**Unblocked (hard):** 2026-04-23 (T-3a COMPLETED). Hard-dep satisfeita. Soft-dep em 3b ainda pendente.
 **Claimed:** —
 **Branch:** `feature/SSE-XXX-rf-005c-kanban-sla`
 **PR:** —
@@ -571,9 +574,9 @@ Se após 3a + 3b em staging o Estimator (entrevista rápida via ritual Operating
 
 **Origin:** PO
 **Priority:** P1
-**Status:** BLOCKED (aguarda T-20260421-3a merged em staging — state machine backend)
+**Status:** PENDING
 **Created:** 2026-04-21
-**Updated:** 2026-04-22 (dependência reduzida de T-20260421-3 inteiro → apenas 3a, após Split A ratificado)
+**Updated:** 2026-04-23 (DESBLOQUEADO — T-20260421-3a COMPLETED, PR #48+#49 merged)
 **Claimed:** —
 **Branch:** `feature/SSE-XXX-rf-006-payment-hold`
 **PR:** —
