@@ -8,11 +8,22 @@ import { isWorkspaceAccessible } from '@/lib/workspace';
 import { useEstimates } from '@/hooks/use-estimates';
 import { useInsuranceCompanies } from '@/hooks/use-insurance';
 import { EstimateStatusBadge, ESTIMATE_STATUS_CONFIG } from '@/components/estimates/estimate-status-badge';
+import { EstimatesKanban, EstimatesKanbanSkeleton } from '@/components/estimates/estimates-kanban';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn, formatDate } from '@/lib/utils';
 
 const ALL_STATUSES = Object.keys(ESTIMATE_STATUS_CONFIG);
+
+// Persist view preference in localStorage (DM decision: avoids extra round-trip
+// to user_settings table; preference is UI-only and non-critical).
+const VIEW_PREF_KEY = 'sse_estimates_inbox_view';
+
+function getInitialView(): 'table' | 'kanban' {
+  if (typeof window === 'undefined') return 'table';
+  return (localStorage.getItem(VIEW_PREF_KEY) as 'table' | 'kanban') ?? 'table';
+}
 
 interface InboxFilters {
   statuses: string[];
@@ -48,6 +59,18 @@ function EstimatesInboxContent() {
   const router = useRouter();
   const { data: workspace, isLoading: wsLoading } = useWorkspaceInfo();
 
+  const [view, setView] = useState<'table' | 'kanban'>('table');
+
+  // Hydrate from localStorage after mount to avoid SSR mismatch
+  useEffect(() => {
+    setView(getInitialView());
+  }, []);
+
+  const handleViewChange = (v: 'table' | 'kanban') => {
+    setView(v);
+    localStorage.setItem(VIEW_PREF_KEY, v);
+  };
+
   const [filters, setFilters] = useState<InboxFilters>({
     statuses: [],
     scope: 'mine',
@@ -60,7 +83,20 @@ function EstimatesInboxContent() {
 
   const { data: insurers } = useInsuranceCompanies({ limit: 200 });
 
-  const queryFilters = {
+  // Kanban fetches all estimates (no pagination) matching current filters
+  const kanbanFilters = {
+    ...(filters.statuses.length > 0 ? { statuses: filters.statuses.join(',') } : {}),
+    ...(filters.insurance_company_id ? { insurance_company_id: filters.insurance_company_id } : {}),
+    ...(filters.date_from ? { date_from: filters.date_from } : {}),
+    ...(filters.date_to ? { date_to: filters.date_to } : {}),
+    ...(filters.search ? { search: filters.search } : {}),
+    scope: filters.scope,
+    limit: 500,
+    sort_by: 'created_at',
+    sort_order: 'desc' as const,
+  };
+
+  const tableFilters = {
     ...(filters.statuses.length > 0 ? { statuses: filters.statuses.join(',') } : {}),
     ...(filters.insurance_company_id ? { insurance_company_id: filters.insurance_company_id } : {}),
     ...(filters.date_from ? { date_from: filters.date_from } : {}),
@@ -73,11 +109,9 @@ function EstimatesInboxContent() {
     sort_order: filters.sort_order,
   };
 
-  const { data, isLoading, error } = useEstimates(queryFilters);
+  const { data, isLoading, error } = useEstimates(view === 'kanban' ? kanbanFilters : tableFilters);
   const meta = data?.meta;
 
-  // Access control: redirect unauthorized roles after workspace data resolves.
-  // useEffect is required here — redirect() throws in Client Components after hooks run.
   useEffect(() => {
     if (!wsLoading && workspace && !isWorkspaceAccessible('estimates-inbox', workspace.roles)) {
       router.replace('/403');
@@ -137,42 +171,82 @@ function EstimatesInboxContent() {
         </Link>
       </div>
 
-      {/* Scope toggle */}
-      <div className="flex items-center gap-3">
-        <span className="text-sm font-medium text-muted-foreground">View:</span>
-        <div className="flex rounded-md border">
-          <button
-            type="button"
-            onClick={() => setFilters((p) => ({ ...p, scope: 'mine', page: 1 }))}
-            aria-pressed={filters.scope === 'mine'}
-            className={cn(
-              'rounded-l-md px-3 py-1.5 text-sm font-medium transition-colors',
-              filters.scope === 'mine'
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-background text-muted-foreground hover:text-foreground',
-            )}
-          >
-            My Estimates
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilters((p) => ({ ...p, scope: 'all', page: 1 }))}
-            aria-pressed={filters.scope === 'all'}
-            className={cn(
-              'rounded-r-md border-l px-3 py-1.5 text-sm font-medium transition-colors',
-              filters.scope === 'all'
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-background text-muted-foreground hover:text-foreground',
-            )}
-          >
-            All Estimates
-          </button>
+      {/* Top controls row: scope toggle + view toggle */}
+      <div className="flex flex-wrap items-center gap-4">
+        {/* Scope toggle */}
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium text-muted-foreground">View:</span>
+          <div className="flex rounded-md border">
+            <button
+              type="button"
+              onClick={() => setFilters((p) => ({ ...p, scope: 'mine', page: 1 }))}
+              aria-pressed={filters.scope === 'mine'}
+              className={cn(
+                'rounded-l-md px-3 py-1.5 text-sm font-medium transition-colors',
+                filters.scope === 'mine'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-background text-muted-foreground hover:text-foreground',
+              )}
+            >
+              My Estimates
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilters((p) => ({ ...p, scope: 'all', page: 1 }))}
+              aria-pressed={filters.scope === 'all'}
+              className={cn(
+                'rounded-r-md border-l px-3 py-1.5 text-sm font-medium transition-colors',
+                filters.scope === 'all'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-background text-muted-foreground hover:text-foreground',
+              )}
+            >
+              All Estimates
+            </button>
+          </div>
+          {meta && (
+            <span className="text-sm text-muted-foreground">
+              {meta.total} result{meta.total !== 1 ? 's' : ''}
+            </span>
+          )}
         </div>
-        {meta && (
-          <span className="text-sm text-muted-foreground">
-            {meta.total} result{meta.total !== 1 ? 's' : ''}
-          </span>
-        )}
+
+        {/* View toggle (table ↔ kanban) */}
+        <div
+          className="ml-auto flex items-center gap-2"
+          role="group"
+          aria-label="Switch between table and kanban view"
+        >
+          <span className="text-sm font-medium text-muted-foreground">Layout:</span>
+          <div className="flex rounded-md border">
+            <button
+              type="button"
+              onClick={() => handleViewChange('table')}
+              aria-pressed={view === 'table'}
+              className={cn(
+                'rounded-l-md px-3 py-1.5 text-sm font-medium transition-colors',
+                view === 'table'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-background text-muted-foreground hover:text-foreground',
+              )}
+            >
+              Table
+            </button>
+            <button
+              type="button"
+              onClick={() => handleViewChange('kanban')}
+              aria-pressed={view === 'kanban'}
+              className={cn(
+                'rounded-r-md border-l px-3 py-1.5 text-sm font-medium transition-colors',
+                view === 'kanban'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-background text-muted-foreground hover:text-foreground',
+              )}
+            >
+              Kanban
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Status multi-select chips */}
@@ -262,122 +336,132 @@ function EstimatesInboxContent() {
         )}
       </div>
 
-      {/* Table */}
-      <div className="rounded-lg border">
-        {isLoading ? (
-          <div className="flex items-center justify-center p-12">
-            <div
-              className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"
-              role="status"
-              aria-label="Loading estimates"
-            />
-          </div>
-        ) : error ? (
-          <p className="p-8 text-center text-destructive" role="alert">
-            Failed to load estimates: {error.message}
-          </p>
-        ) : !data?.data.length ? (
-          <div className="p-8 text-center text-muted-foreground">
-            <p className="text-lg font-medium">No estimates found</p>
-            <p className="mt-1 text-sm">
-              {hasActiveFilters
-                ? 'Try adjusting your filters.'
-                : 'Create your first estimate to get started.'}
-            </p>
-          </div>
+      {/* Loading / error states */}
+      {isLoading ? (
+        view === 'kanban' ? (
+          <EstimatesKanbanSkeleton />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm" aria-label="Estimates inbox">
-              <thead>
-                <tr className="border-b bg-muted/50">
-                  <th
-                    scope="col"
-                    className="cursor-pointer px-4 py-3 text-left font-medium text-muted-foreground hover:text-foreground"
-                    onClick={() => handleSort('estimate_number')}
-                  >
-                    Estimate #{sortArrow('estimate_number')}
-                  </th>
-                  <th scope="col" className="px-4 py-3 text-left font-medium text-muted-foreground">Customer</th>
-                  <th scope="col" className="px-4 py-3 text-left font-medium text-muted-foreground">Status</th>
-                  <th
-                    scope="col"
-                    className="cursor-pointer px-4 py-3 text-right font-medium text-muted-foreground hover:text-foreground"
-                    onClick={() => handleSort('total')}
-                  >
-                    Total{sortArrow('total')}
-                  </th>
-                  <th scope="col" className="px-4 py-3 text-left font-medium text-muted-foreground">Claim #</th>
-                  <th scope="col" className="px-4 py-3 text-left font-medium text-muted-foreground">Adjuster</th>
-                  <th
-                    scope="col"
-                    className="cursor-pointer px-4 py-3 text-left font-medium text-muted-foreground hover:text-foreground"
-                    onClick={() => handleSort('created_at')}
-                  >
-                    Created{sortArrow('created_at')}
-                  </th>
-                  <th scope="col" className="px-4 py-3 text-right font-medium text-muted-foreground">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.data.map((est: any) => (
-                  <tr
-                    key={est.id}
-                    className="cursor-pointer border-b transition-colors hover:bg-muted/30"
-                    onClick={() => router.push(`/estimates/${est.id}`)}
-                  >
-                    <td className="px-4 py-3 font-medium font-mono">{est.estimate_number}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{est.customer_name ?? '—'}</td>
-                    <td className="px-4 py-3">
-                      <EstimateStatusBadge status={est.status} />
-                    </td>
-                    <td className="px-4 py-3 text-right font-medium tabular-nums">
-                      ${parseFloat(est.total).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground font-mono text-xs">{est.claim_number ?? '—'}</td>
-                    <td className="px-4 py-3 text-muted-foreground text-xs">{(est as any).insurance_company_name ?? '—'}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{formatDate(est.created_at)}</td>
-                    <td
-                      className="px-4 py-3 text-right"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Link href={`/estimates/${est.id}/edit`}>
-                        <Button variant="ghost" size="sm">Edit</Button>
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="space-y-2 rounded-lg border p-4" aria-label="Loading estimates" aria-busy="true">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-12 w-full" />
+            ))}
           </div>
-        )}
-      </div>
+        )
+      ) : error ? (
+        <p className="p-8 text-center text-destructive" role="alert">
+          Failed to load estimates: {(error as Error).message}
+        </p>
+      ) : view === 'kanban' ? (
+        /* ── Kanban view ── */
+        <EstimatesKanban estimates={data?.data ?? []} />
+      ) : (
+        /* ── Table view ── */
+        <>
+          <div className="rounded-lg border">
+            {!data?.data.length ? (
+              <div className="p-8 text-center text-muted-foreground">
+                <p className="text-lg font-medium">No estimates found</p>
+                <p className="mt-1 text-sm">
+                  {hasActiveFilters
+                    ? 'Try adjusting your filters.'
+                    : 'Create your first estimate to get started.'}
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm" aria-label="Estimates inbox">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      <th
+                        scope="col"
+                        className="cursor-pointer px-4 py-3 text-left font-medium text-muted-foreground hover:text-foreground"
+                        onClick={() => handleSort('estimate_number')}
+                      >
+                        Estimate #{sortArrow('estimate_number')}
+                      </th>
+                      <th scope="col" className="px-4 py-3 text-left font-medium text-muted-foreground">Customer</th>
+                      <th scope="col" className="px-4 py-3 text-left font-medium text-muted-foreground">Status</th>
+                      <th
+                        scope="col"
+                        className="cursor-pointer px-4 py-3 text-right font-medium text-muted-foreground hover:text-foreground"
+                        onClick={() => handleSort('total')}
+                      >
+                        Total{sortArrow('total')}
+                      </th>
+                      <th scope="col" className="px-4 py-3 text-left font-medium text-muted-foreground">Claim #</th>
+                      <th scope="col" className="px-4 py-3 text-left font-medium text-muted-foreground">Adjuster</th>
+                      <th
+                        scope="col"
+                        className="cursor-pointer px-4 py-3 text-left font-medium text-muted-foreground hover:text-foreground"
+                        onClick={() => handleSort('created_at')}
+                      >
+                        Created{sortArrow('created_at')}
+                      </th>
+                      <th scope="col" className="px-4 py-3 text-right font-medium text-muted-foreground">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.data.map((est: any) => (
+                      <tr
+                        key={est.id}
+                        className="cursor-pointer border-b transition-colors hover:bg-muted/30"
+                        onClick={() => router.push(`/estimates/${est.id}`)}
+                      >
+                        <td className="px-4 py-3 font-medium font-mono">{est.estimate_number}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{est.customer_name ?? '—'}</td>
+                        <td className="px-4 py-3">
+                          <EstimateStatusBadge status={est.status} />
+                        </td>
+                        <td className="px-4 py-3 text-right font-medium tabular-nums">
+                          ${parseFloat(est.total).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground font-mono text-xs">{est.claim_number ?? '—'}</td>
+                        <td className="px-4 py-3 text-muted-foreground text-xs">{est.insurance_company_name ?? '—'}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{formatDate(est.created_at)}</td>
+                        <td
+                          className="px-4 py-3 text-right"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Link href={`/estimates/${est.id}/edit`}>
+                            <Button variant="ghost" size="sm">Edit</Button>
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
 
-      {/* Pagination */}
-      {meta && meta.totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Showing {(meta.page - 1) * meta.limit + 1}–{Math.min(meta.page * meta.limit, meta.total)} of{' '}
-            {meta.total}
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={meta.page <= 1}
-              onClick={() => setFilters((p) => ({ ...p, page: meta.page - 1 }))}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={meta.page >= meta.totalPages}
-              onClick={() => setFilters((p) => ({ ...p, page: meta.page + 1 }))}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
+          {/* Pagination (table view only) */}
+          {meta && meta.totalPages > 1 && (
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                Showing {(meta.page - 1) * meta.limit + 1}–{Math.min(meta.page * meta.limit, meta.total)} of{' '}
+                {meta.total}
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={meta.page <= 1}
+                  onClick={() => setFilters((p) => ({ ...p, page: meta.page - 1 }))}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={meta.page >= meta.totalPages}
+                  onClick={() => setFilters((p) => ({ ...p, page: meta.page + 1 }))}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

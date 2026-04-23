@@ -117,6 +117,18 @@ export function useUpdateEstimateStatus(id: string) {
   });
 }
 
+export function useUpdateEstimateStatusById() {
+  const qc = useQueryClient();
+  const getHeaders = useApiHeaders();
+  return useMutation({
+    mutationFn: async ({ id, status, notes }: { id: string; status: string; notes?: string }) => {
+      const { token } = await getHeaders();
+      return api<Estimate>(`/estimates/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status, notes }), token });
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['estimates'] }),
+  });
+}
+
 export function useDeleteEstimate() {
   const qc = useQueryClient();
   const getHeaders = useApiHeaders();

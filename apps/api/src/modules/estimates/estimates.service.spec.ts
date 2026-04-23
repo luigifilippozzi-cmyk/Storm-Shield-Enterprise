@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import { NotFoundException, BadRequestException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { EstimatesService } from './estimates.service';
 import { EstimateStateMachineService } from './estimate-state-machine.service';
 import { TenantDatabaseService } from '../../config/tenant-database.service';
@@ -38,19 +38,21 @@ jest.mock('@sse/shared-utils', () => ({
 describe('EstimatesService', () => {
   let service: EstimatesService;
   let knex: any;
+  let stateMachineMock: { transition: jest.Mock };
 
   const TENANT_ID = '00000000-0000-0000-0000-000000000001';
   const ESTIMATE_ID = '00000000-0000-0000-0000-000000000010';
 
   beforeEach(async () => {
     knex = mockKnex();
+    stateMachineMock = { transition: jest.fn().mockResolvedValue({ estimate: { id: ESTIMATE_ID, status: 'submitted_to_adjuster' }, statusChange: {} }) };
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         EstimatesService,
         { provide: TenantDatabaseService, useValue: { getConnection: jest.fn().mockResolvedValue(knex) } },
         { provide: StorageService, useValue: { upload: jest.fn(), delete: jest.fn(), generateKey: jest.fn().mockReturnValue('key') } },
         { provide: ActivationEventsService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
-        { provide: EstimateStateMachineService, useValue: { transition: jest.fn().mockResolvedValue({ estimate: {}, statusChange: {} }) } },
+        { provide: EstimateStateMachineService, useValue: stateMachineMock },
       ],
     }).compile();
     service = module.get<EstimatesService>(EstimatesService);
@@ -212,36 +214,62 @@ describe('EstimatesService', () => {
   });
 
   describe('updateStatus', () => {
-    it('should allow valid status transition', async () => {
-      knex._chain.first.mockReturnValueOnce({ id: ESTIMATE_ID, status: 'draft' });
-      knex._chain.returning.mockReturnValueOnce([{ id: ESTIMATE_ID, status: 'submitted_to_adjuster' }]);
+    it('should delegate to state machine and return estimate', async () => {
+      stateMachineMock.transition.mockResolvedValueOnce({
+        estimate: { id: ESTIMATE_ID, status: 'submitted_to_adjuster' },
+        statusChange: {},
+      });
 
       const result = await service.updateStatus(TENANT_ID, ESTIMATE_ID, { status: 'submitted_to_adjuster' } as any);
 
+      expect(stateMachineMock.transition).toHaveBeenCalledWith(
+        TENANT_ID, ESTIMATE_ID, 'submitted_to_adjuster', 'system', undefined,
+      );
       expect(result.status).toBe('submitted_to_adjuster');
     });
 
-    it('should set approved_at when approving', async () => {
-      knex._chain.first.mockReturnValueOnce({ id: ESTIMATE_ID, status: 'awaiting_approval' });
-      knex._chain.returning.mockReturnValueOnce([{ id: ESTIMATE_ID, status: 'approved' }]);
+    it('should throw ForbiddenException when estimator changes status of unowned estimate', async () => {
+      const ESTIMATOR_ID = '00000000-0000-0000-0000-000000000044';
+      const OTHER_OWNER_ID = '00000000-0000-0000-0000-000000000055';
+      knex._chain.first.mockReturnValueOnce({ estimated_by: OTHER_OWNER_ID });
 
-      await service.updateStatus(TENANT_ID, ESTIMATE_ID, { status: 'approved' } as any);
+      await expect(
+        service.updateStatus(
+          TENANT_ID,
+          ESTIMATE_ID,
+          { status: 'submitted_to_adjuster' } as any,
+          { id: ESTIMATOR_ID, roles: ['estimator'] },
+        ),
+      ).rejects.toThrow(ForbiddenException);
 
-      expect(knex._chain.update).toHaveBeenCalledWith(
-        expect.objectContaining({ status: 'approved', approved_at: expect.any(Date) }),
-      );
+      expect(stateMachineMock.transition).not.toHaveBeenCalled();
     });
 
-    it('should reject invalid status transition', async () => {
-      knex._chain.first.mockReturnValueOnce({ id: ESTIMATE_ID, status: 'draft' });
+    it('should set approved_at stamp via extra update when approving', async () => {
+      stateMachineMock.transition.mockResolvedValueOnce({
+        estimate: { id: ESTIMATE_ID, status: 'approved' },
+        statusChange: {},
+      });
+      knex._chain.returning.mockReturnValueOnce([{ id: ESTIMATE_ID, status: 'approved', approved_at: new Date() }]);
+
+      const result = await service.updateStatus(TENANT_ID, ESTIMATE_ID, { status: 'approved' } as any);
+
+      expect(knex._chain.update).toHaveBeenCalledWith(
+        expect.objectContaining({ approved_at: expect.any(Date) }),
+      );
+      expect(result.status).toBe('approved');
+    });
+
+    it('should propagate BadRequestException from state machine on invalid transition', async () => {
+      stateMachineMock.transition.mockRejectedValueOnce(new BadRequestException('Invalid transition'));
 
       await expect(
         service.updateStatus(TENANT_ID, ESTIMATE_ID, { status: 'approved' } as any),
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('should throw NotFoundException when not found', async () => {
-      knex._chain.first.mockReturnValueOnce(null);
+    it('should propagate NotFoundException from state machine when estimate not found', async () => {
+      stateMachineMock.transition.mockRejectedValueOnce(new NotFoundException('Estimate not found'));
 
       await expect(
         service.updateStatus(TENANT_ID, ESTIMATE_ID, { status: 'submitted_to_adjuster' } as any),

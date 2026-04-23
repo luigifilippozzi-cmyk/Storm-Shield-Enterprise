@@ -19,6 +19,7 @@ import { RbacGuard } from '../../common/guards/rbac.guard';
 import { CurrentTenant } from '../../common/decorators/current-tenant.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RequirePermissions } from '../../common/decorators/permissions.decorator';
+import { ALLOWED_TRANSITIONS } from './estimate-state-machine.service';
 
 @ApiTags('estimates')
 @ApiBearerAuth()
@@ -26,6 +27,18 @@ import { RequirePermissions } from '../../common/decorators/permissions.decorato
 @Controller('estimates')
 export class EstimatesController {
   constructor(private readonly estimatesService: EstimatesService) {}
+
+  @Get('state-machine/transitions')
+  @ApiOperation({ summary: 'Return allowed status transitions map for the estimate state machine' })
+  @ApiResponse({ status: 200, description: 'Transitions map: { [fromStatus]: string[] }' })
+  @RequirePermissions('estimates:read:list')
+  getTransitions() {
+    const result: Record<string, string[]> = {};
+    ALLOWED_TRANSITIONS.forEach((targets, from) => {
+      result[from] = [...targets];
+    });
+    return result;
+  }
 
   @Get()
   @ApiOperation({ summary: 'List estimates with pagination, search, and filters. Use scope=mine to enforce ownership; estimator role enforces it automatically.' })
@@ -72,16 +85,18 @@ export class EstimatesController {
   }
 
   @Patch(':id/status')
-  @ApiOperation({ summary: 'Update estimate status with workflow validation' })
+  @ApiOperation({ summary: 'Update estimate status via state machine (validates allowed transitions, audits to estimate_status_changes)' })
   @ApiResponse({ status: 200, description: 'Status updated' })
   @ApiResponse({ status: 400, description: 'Invalid status transition' })
+  @ApiResponse({ status: 403, description: 'Estimator can only change status of their own estimates' })
   @RequirePermissions('estimates:write:update')
   updateStatus(
     @CurrentTenant() tenantId: string,
+    @CurrentUser() user: { id: string; roles?: string[] },
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateEstimateStatusDto,
   ) {
-    return this.estimatesService.updateStatus(tenantId, id, dto);
+    return this.estimatesService.updateStatus(tenantId, id, dto, user);
   }
 
   @Delete(':id')
