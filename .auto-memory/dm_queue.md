@@ -634,11 +634,11 @@ Complemento a Gap 5 (Insurance workflow) — Bússola §4.
 
 **Origin:** PO
 **Priority:** P2
-**Status:** PENDING
+**Status:** IN_REVIEW
 **Created:** 2026-04-21
-**Claimed:** —
-**Branch:** `feature/SSE-XXX-rf-007-case-management`
-**PR:** —
+**Claimed:** 2026-04-23
+**Branch:** `feature/SSE-060-rf-007-case-management`
+**PR:** #56 (open — CI pending)
 
 ### Objetivo
 Implementar RF-007 conforme spec em `docs/strategy/RF_BACKLOG.md` (v0.2) — módulo leve de Case Management (não ticketing full) para registrar follow-ups, dúvidas de cliente, supplements de insurance que não são disputa. Intencionalmente enxuto: 3 status (Open, In Progress, Closed), vinculação a customer+optional vehicle/estimate, notas + anexos.
