@@ -14,6 +14,21 @@ export class QueryEstimateDto {
   @IsEnum(EstimateStatus)
   status?: EstimateStatus;
 
+  @ApiPropertyOptional({ description: 'Comma-separated list of statuses for multi-select filtering', example: 'draft,awaiting_approval,disputed' })
+  @IsOptional()
+  @IsString()
+  statuses?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by insurance company (adjuster)' })
+  @IsOptional()
+  @IsUUID()
+  insurance_company_id?: string;
+
+  @ApiPropertyOptional({ enum: ['mine', 'all'], description: 'mine = only estimates created by current user; enforced for estimator role' })
+  @IsOptional()
+  @IsEnum(['mine', 'all'])
+  scope?: 'mine' | 'all';
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsUUID()

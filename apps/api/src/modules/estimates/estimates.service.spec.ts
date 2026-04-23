@@ -11,7 +11,7 @@ const mockKnex = () => {
     'where', 'insert', 'update', 'select', 'first', 'returning',
     'clone', 'count', 'orderBy', 'limit', 'offset', 'del',
     'leftJoin', 'whereILike', 'orWhereILike', 'raw', 'groupBy',
-    'sum', 'groupByRaw',
+    'sum', 'groupByRaw', 'whereIn',
   ];
   methods.forEach((m) => {
     chain[m] = jest.fn().mockReturnValue(chain);
@@ -73,6 +73,52 @@ describe('EstimatesService', () => {
       await service.findAll(TENANT_ID, { status: 'draft' as any, page: 1, limit: 20 });
 
       expect(knex._chain.where).toHaveBeenCalledWith('estimates.status', 'draft');
+    });
+
+    it('should enforce ownership for estimator role (scope=mine implicit)', async () => {
+      const USER_ID = '00000000-0000-0000-0000-000000000099';
+      knex._chain.count.mockReturnValueOnce([{ count: '0' }]);
+      knex._chain.offset.mockReturnValueOnce([]);
+
+      await service.findAll(TENANT_ID, { page: 1, limit: 20 }, { id: USER_ID, roles: ['estimator'] });
+
+      expect(knex._chain.where).toHaveBeenCalledWith('estimates.estimated_by', USER_ID);
+    });
+
+    it('should throw ForbiddenException when estimator has no resolved user.id', async () => {
+      await expect(
+        service.findAll(TENANT_ID, { page: 1, limit: 20 }, { roles: ['estimator'] }),
+      ).rejects.toThrow('Estimator context requires a resolved user identity');
+    });
+
+    it('should apply scope=mine for non-estimator with user.id', async () => {
+      const USER_ID = '00000000-0000-0000-0000-000000000088';
+      knex._chain.count.mockReturnValueOnce([{ count: '0' }]);
+      knex._chain.offset.mockReturnValueOnce([]);
+
+      await service.findAll(TENANT_ID, { scope: 'mine', page: 1, limit: 20 }, { id: USER_ID, roles: ['manager'] });
+
+      expect(knex._chain.where).toHaveBeenCalledWith('estimates.estimated_by', USER_ID);
+    });
+
+    it('should filter by statuses (multi-select, validates against enum)', async () => {
+      knex._chain.count.mockReturnValueOnce([{ count: '0' }]);
+      knex._chain.offset.mockReturnValueOnce([]);
+
+      await service.findAll(TENANT_ID, { statuses: 'draft,awaiting_approval,invalid_value', page: 1, limit: 20 });
+
+      // invalid_value should be stripped; only valid enum values passed to whereIn
+      expect(knex._chain.whereIn).toHaveBeenCalledWith('estimates.status', ['draft', 'awaiting_approval']);
+    });
+
+    it('should filter by insurance_company_id (adjuster)', async () => {
+      const INS_ID = '00000000-0000-0000-0000-000000000077';
+      knex._chain.count.mockReturnValueOnce([{ count: '0' }]);
+      knex._chain.offset.mockReturnValueOnce([]);
+
+      await service.findAll(TENANT_ID, { insurance_company_id: INS_ID, page: 1, limit: 20 });
+
+      expect(knex._chain.where).toHaveBeenCalledWith('estimates.insurance_company_id', INS_ID);
     });
   });
 

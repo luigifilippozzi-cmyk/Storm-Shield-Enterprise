@@ -2,18 +2,9 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/utils';
 import { useEstimates } from '@/hooks/use-estimates';
-
-const STATUS_COLORS: Record<string, string> = {
-  draft: 'bg-gray-100 text-gray-800',
-  sent: 'bg-blue-100 text-blue-800',
-  approved: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-800',
-  supplement_requested: 'bg-orange-100 text-orange-800',
-  converted: 'bg-purple-100 text-purple-800',
-};
+import { EstimateStatusBadge } from '@/components/estimates/estimate-status-badge';
 
 export function Customer360Estimates({ customerId }: { customerId: string }) {
   const { data, isLoading, error } = useEstimates({ customer_id: customerId, limit: 50 });
@@ -21,7 +12,7 @@ export function Customer360Estimates({ customerId }: { customerId: string }) {
   if (isLoading) {
     return (
       <div className="flex justify-center py-8">
-        <div className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <div className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent" role="status" aria-label="Loading estimates" />
       </div>
     );
   }
@@ -62,9 +53,7 @@ export function Customer360Estimates({ customerId }: { customerId: string }) {
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-sm font-medium">{formatCurrency(e.total)}</span>
-                <Badge className={`border-transparent capitalize ${STATUS_COLORS[e.status] ?? 'bg-gray-100 text-gray-800'}`}>
-                  {e.status?.replace('_', ' ')}
-                </Badge>
+                <EstimateStatusBadge status={e.status} />
               </div>
             </Link>
           ))}
