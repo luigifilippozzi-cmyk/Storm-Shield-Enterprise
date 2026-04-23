@@ -843,8 +843,12 @@ Nenhum.
 
 **Origin:** PO
 **Priority:** P2
-**Status:** PENDING
+**Status:** COMPLETED
 **Created:** 2026-04-21
+**Closed:** 2026-04-25
+**Claimed:** DM Agent (sessão 2026-04-25)
+**Branch:** `docs/SSE-t9-sync-ns-dashboard-bussola-v12` (deleted)
+**PR:** #54
 **Tipo:** Doc-only
 **Blocked by:** T-20260421-6 (Bússola v1.2 publicada)
 

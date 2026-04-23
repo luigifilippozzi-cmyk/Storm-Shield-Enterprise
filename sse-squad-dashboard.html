@@ -289,10 +289,10 @@
 <script>
 // <!--METRICS_START-->
 const D = {
-  lastUpdated: "2026-04-25 (PM Agent — RF-005c + RF-006 COMPLETED)",
-  updatedBy: "PM Agent",
+  lastUpdated: "2026-04-25 (Dev Manager — sessao autonoma)",
+  updatedBy: "Dev Manager",
   health: "green",
-  healthText: "VERDE. CI VERDE. Deploy API VERDE. Deploy Web VERDE. 0 PRs abertos. 52 merged. T-3c COMPLETED (PR #52 RF-005c kanban+SLA). T-20260421-4 COMPLETED (PR #51 RF-006 payment hold). RF-005 totalmente concluido. Coverage <80% branches em 3 services — standing issue. Atenção: 18 linhas não-commitadas em estimates (findOne ownership guard).",
+  healthText: "VERDE. CI VERDE. Deploy API VERDE. Deploy Web VERDE. 0 PRs abertos. 55 merged. PR #53 (estimates findOne ownership guard), PR #54 (NS dashboard Bussola v1.2 sync), PR #55 (tenant-scoped del() security fix). 514 testes. Coverage <80% branches em 3 services — standing issue.",
   activeFase: "2",
   kpis: {
     backendModules: 13,
@@ -300,21 +300,24 @@ const D = {
     endpoints: 114,
     frontendPages: 38,
     specFiles: 25,
-    tests: 512,
+    tests: 514,
     migrations: 17,
     adrs: 14,
     excelTotal: 36,
     excelDone: 34
   },
   agents: [
-    { name: "PM Agent", role: "Status Diario + Metricas", color: "var(--blue)", bg: "var(--blue-bg)", icon: "clipboard", status: "active", statusText: "Revisao 2026-04-25 — Saude VERDE. 52 PRs merged. T-3c COMPLETED (PR #52 RF-005c). T-20260421-4 COMPLETED (PR #51 RF-006). RF-005 totalmente concluido. Regras 1-18 OK. Sem violacoes Bussola. Proximo P2 DM: T-20260421-5 RF-007 + T-20260421-9 + T-036. Atencao: 18 linhas nao-commitadas em estimates.", stats: [["Frequencia","Diario"],["Escopo","Read-only"],["Output","Relatorio + Dashboard"]] },
-    { name: "Dev Manager", role: "Implementacao + Orquestracao", color: "var(--accent2)", bg: "var(--teal-bg)", icon: "gear", status: "active", statusText: "Sessao 2026-04-25 — T-20260421-3b COMPLETED: PR #50 (RF-005b inbox tabela + EstimateStatusBadge + ownership). 3 subagentes PASS. 487 testes. Deploy API+Web VERDE. T-3c unblocked.", stats: [["Autoridade","Execucao tecnica"],["Subagentes","4 configurados"],["PRs merged","#50"]] },
-    { name: "test-runner", role: "Jest + Coverage", color: "var(--green)", bg: "var(--green-bg)", icon: "check", status: "active", statusText: "482 testes, 24 suites — GREEN (2026-04-23). estimate-state-machine: 114/114, 100% statements/functions.", stats: [["Framework","Jest + ts-jest"],["Specs","24 test suites"],["Trigger","Sempre pre-PR"]] },
-    { name: "security-reviewer", role: "RLS + XSS + Auth", color: "var(--red)", bg: "var(--red-bg)", icon: "shield", status: "active", statusText: "HARDENED — regras 15-18 + comandos destrutivos. PR #38 fix AuthGuard validado.", stats: [["Foco","tenant_id, RLS, AES"],["Checks","OWASP Top 10 + regras 15-18"],["Trigger","auth/db changes"]] },
-    { name: "db-reviewer", role: "Migrations + Schema", color: "var(--purple)", bg: "var(--purple-bg)", icon: "database", status: "active", statusText: "Baseline atualizado — 000-016 (17 SQL files). migration 016: dispute_reason ENUM + 5 campos estimates + is_paused_by_dispute SO. PASS PR #51.", stats: [["Foco","RLS, indexes, FK"],["Migrations","17 SQL files"],["Trigger","Schema changes"]] },
-    { name: "frontend-reviewer", role: "Next.js + shadcn/ui", color: "var(--cyan)", bg: "rgba(6,182,212,.12)", icon: "layout", status: "active", statusText: "Checklist expandido: 20 itens (8 base + 6 PV + 6 PUX via ADR-013). PR #44 FAIL→PASS (B1 Suspense, B2 ARIA, B3 customer_id). Regra 19 vigente.", stats: [["Framework","Next.js 15 + React 19"],["Checklist","20 itens (ADR-013)"],["Trigger","UI/component changes — Regra 19"]] }
+    { name: "PM Agent", role: "Status Diario + Metricas", color: "var(--blue)", bg: "var(--blue-bg)", icon: "clipboard", status: "active", statusText: "Revisao 2026-04-25 — Saude VERDE. 52 PRs merged (antes sessao DM). T-3c COMPLETED (PR #52). T-20260421-4 COMPLETED (PR #51). RF-005 totalmente concluido. Regras 1-18 OK. Sem violacoes Bussola.", stats: [["Frequencia","Diario"],["Escopo","Read-only"],["Output","Relatorio + Dashboard"]] },
+    { name: "Dev Manager", role: "Implementacao + Orquestracao", color: "var(--accent2)", bg: "var(--teal-bg)", icon: "gear", status: "active", statusText: "Sessao 2026-04-25 autonoma — PR #53 (SSE-058 findOne ownership guard, hardening Medium), PR #54 (T-9 NS dashboard Bussola v1.2 + RF status), PR #55 (SSE-059 tenant-scoped del() estimates+vehicles). 514 testes. 3 PRs mergeados. 0 bloqueios.", stats: [["Autoridade","Execucao tecnica"],["Subagentes","4 configurados"],["PRs merged","#53 #54 #55"]] },
+    { name: "test-runner", role: "Jest + Coverage", color: "var(--green)", bg: "var(--green-bg)", icon: "check", status: "active", statusText: "514 testes, 25 suites — GREEN (2026-04-25). estimates: 97.63% statements. PASS PR #53+#55.", stats: [["Framework","Jest + ts-jest"],["Specs","25 test suites"],["Trigger","Sempre pre-PR"]] },
+    { name: "security-reviewer", role: "RLS + XSS + Auth", color: "var(--red)", bg: "var(--red-bg)", icon: "shield", status: "active", statusText: "PR #53 — Medium corrigido (findOne estimator guard sem user.id), Low pre-existente fechado via PR #55 (del() tenant_id). Todos findings resolvidos.", stats: [["Foco","tenant_id, RLS, AES"],["Checks","OWASP Top 10 + regras 15-18"],["Trigger","auth/db changes"]] },
+    { name: "db-reviewer", role: "Migrations + Schema", color: "var(--purple)", bg: "var(--purple-bg)", icon: "database", status: "active", statusText: "Baseline: 000-016 (17 SQL files). migration 016: dispute_reason ENUM + 5 campos estimates + is_paused_by_dispute SO. Auditoria del() — todos 6 calls revisados, 2 corrigidos (PR #55).", stats: [["Foco","RLS, indexes, FK"],["Migrations","17 SQL files"],["Trigger","Schema changes"]] },
+    { name: "frontend-reviewer", role: "Next.js + shadcn/ui", color: "var(--cyan)", bg: "rgba(6,182,212,.12)", icon: "layout", status: "active", statusText: "Checklist expandido: 20 itens (8 base + 6 PV + 6 PUX via ADR-013). PR #44 FAIL→PASS. Regra 19 vigente.", stats: [["Framework","Next.js 15 + React 19"],["Checklist","20 itens (ADR-013)"],["Trigger","UI/component changes — Regra 19"]] }
   ],
   activity: [
+    { time: "Abr 25", color: "var(--accent2)", msg: "<strong>PR #55 merged</strong> fix(security): tenant-scoped del() em deleteDocument + deletePhoto (SSE-059) — estimate_documents e vehicle_photos del() agora incluem tenant_id no WHERE. Auditoria completa: 6 .del() revisados, 4 ja corretos. 514 testes. A01:2021 Low finding fechado.", tag: "merge" },
+    { time: "Abr 25", color: "var(--accent2)", msg: "<strong>PR #54 merged</strong> docs(strategy): sync NS dashboard com Bussola v1.2 + RF status — card ADR-013 (§6.1/§6.2/§6.3 PV/PUX), RF-004/005/006 DONE badges, roadmap timeline atualizado. T-20260421-9 COMPLETED.", tag: "merge" },
+    { time: "Abr 25", color: "var(--accent2)", msg: "<strong>PR #53 merged</strong> fix(estimates): Estimator ownership guard em findOne (SSE-058) — security-reviewer Medium corrigido (hardening user.id guard). 513→514 testes. P1 urgente de codigo nao-commitado resolvido.", tag: "merge" },
     { time: "Abr 25", color: "var(--blue)", msg: "<strong>PM Agent</strong> revisao diaria — Saude VERDE. CI+API+Web VERDE. 0 PRs abertos. 52 merged. Metricas: 13/15 modulos, 38 pages, 512 testes, 114 endpoints, 17 migrations, 14 ADRs, 25 specs. T-20260421-3c COMPLETED (PR #52 RF-005c kanban+SLA), T-20260421-4 COMPLETED (PR #51 RF-006). RF-005 totalmente concluido. Regras 1-18 OK. Sem violacoes Bussola. Inconsistencia: 18 linhas nao-commitadas em estimates (findOne ownership guard). Proximos P2 DM: T-5 RF-007, T-9 NS dashboard, T-036 accounting frontend.", tag: "pm" },
     { time: "Abr 25", color: "var(--accent2)", msg: "<strong>PR #52 merged</strong> feat(estimates): RF-005c kanban drag-drop + SLA alerts + estimator ownership (SSE-057) — EstimatesKanban dnd-kit 10 colunas, hero strip counters, age badges semanticos (PV3/PUX1/PV4), SlaNotificationService @Cron daily, GET /state-machine/transitions, updateStatus ownership guard Estimator. 512 testes (25 suites). Estimator+Owner-Operator / Gap 5. RF-005 FULLY DONE.", tag: "merge" },
     { time: "Abr 25", color: "var(--accent2)", msg: "<strong>PR #51 merged</strong> feat(estimates): RF-006 payment hold / disputed estimate workflow (SSE-056) — migration 016 (dispute_reason ENUM + 5 campos + is_paused_by_dispute SO), openDispute()+resolveDispute()+notifyOwners(), SO updateStatus guard, forceProgress() Owner-only+audit, DisputeModal+ResolveDisputeModal+ForceProgressModal, Paused by Dispute badge. 501 testes. Manager+Owner+Estimator / Gap 5.", tag: "merge" },

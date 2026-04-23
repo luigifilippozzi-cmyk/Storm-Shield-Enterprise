@@ -6,6 +6,58 @@ type: project
 > **Nota:** "NS" = ERP de referência externo. Nome substituído por precaução (ADR-014).
 
 
+# SSE Project Status — 2026-04-25 (DM Agent — sessão autônoma)
+
+## Revisão DM — 2026-04-25 (PR #53 + PR #54 + PR #55)
+
+**Saúde: VERDE** — CI VERDE. Deploy API VERDE. Deploy Web VERDE. 0 PRs abertos. 55 merged.
+
+**Fase 1:** ~99.8% | Módulos: 13/15 | Testes: 514 | Endpoints: 114 | Migrations: 17 | ADRs: 14 | Controllers: 16 | Pages: 38 | Specs: 25
+
+**CI:** VERDE | **Deploy Web:** VERDE | **Deploy API:** VERDE | **PRs abertos:** 0 | **PRs merged:** 55
+
+### Novidades desta sessão (2026-04-25)
+- **PR #53 merged:** fix(estimates) SSE-058 — Estimator ownership guard em `findOne()` + hardening user.id (security-reviewer Medium corrigido). 514 testes.
+- **PR #54 merged:** docs(strategy) T-20260421-9 — NS dashboard sincronizado com Bússola v1.2 (card ADR-013, RF-004/005/006 DONE badges, roadmap atualizado). T-20260421-9 COMPLETED.
+- **PR #55 merged:** fix(security) SSE-059 — `.del()` de `estimate_documents` e `vehicle_photos` agora escopados por `tenant_id`. Auditoria completa de 6 `.del()` calls — 4 já corretos, 2 corrigidos.
+- **Código não-commitado resolvido:** 18 linhas P1 confirmadas em PR #53.
+
+### Prioridades P0/P1 para próxima sessão DM
+1. **P2** — T-20260421-5: RF-007 Case Management simplificado (próximo RF aprovado, independente)
+2. **P2** — T-036: Accounting frontend pages (COA + JE)
+3. **P2** — Coverage <80% branches: contractors (77.77%), customers (71.79%), financial (66.66%) — standing issue
+
+### Alertas
+- Coverage <80% branches em 3 services: contractors, customers, financial — standing issue, sem task criada
+- T-20260412-2: Legacy PENDING há 14 dias — aguarda ratificação PO
+- Módulos ausentes: inventory, rental, notifications (não bloqueantes para Fase 1)
+
+### Alinhamento Bússola (regras 15-18)
+Sem violações. PR #53 e #55 são fixes internos (Regra 16 N/A). PR #54 é doc-only (N/A). dm_queue.md usa template canônico §4.
+
+### Verificação Regras CLAUDE.md §10
+- Regra 2 (tenant_id em queries): OK — PR #55 fechou gap residual
+- Regra 4 (KNEX_CONNECTION direto): OK
+- Regra 5 (FLOAT em migrations): OK
+- Regra 6 (CASCADE em financeiro/contábil): OK
+- Regra 9 (secrets hardcoded): OK
+- Regras 15-18: OK
+
+### Handoff DM (dm_queue.md)
+- **COMPLETED esta sessão:** T-20260421-9 (NS dashboard v1.2 sync)
+- **PENDING P2:** T-20260421-1 (standing), T-20260421-5 (RF-007), T-036 (accounting frontend)
+- **Legacy:** T-20260412-2 (ratificação PO pendente)
+
+### Subagentes acionados esta sessão
+- test-runner: PASS 513→514/514
+- security-reviewer: PASS após correção Medium (PR #53)
+- db-reviewer: N/A
+- frontend-reviewer: N/A
+
+### Última sessão DM: 2026-04-25 (PR #53 SSE-058 + PR #54 T-9 + PR #55 SSE-059)
+
+---
+
 # SSE Project Status — 2026-04-25 (PM Agent — revisão diária)
 
 ## Revisão PM — 2026-04-25
