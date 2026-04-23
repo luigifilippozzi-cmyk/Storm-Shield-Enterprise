@@ -389,7 +389,7 @@ export class EstimatesService {
     if (!doc) throw new NotFoundException('Document not found');
 
     await this.storageService.delete(doc.storage_key);
-    await knex('estimate_documents').where({ id: documentId }).del();
+    await knex('estimate_documents').where({ id: documentId, tenant_id: tenantId }).del();
 
     return { deleted: true };
   }

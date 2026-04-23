@@ -263,12 +263,13 @@ describe('VehiclesService', () => {
   });
 
   describe('deletePhoto', () => {
-    it('should delete an existing photo', async () => {
+    it('should delete an existing photo scoped by tenant_id', async () => {
       knex._chain.first.mockReturnValueOnce({ id: 'photo-1', storage_key: 'key/photo.jpg' });
 
       const result = await service.deletePhoto(TENANT_ID, VEHICLE_ID, 'photo-1');
 
       expect(result).toEqual({ deleted: true });
+      expect(knex._chain.where).toHaveBeenCalledWith({ id: 'photo-1', tenant_id: TENANT_ID });
     });
 
     it('should throw NotFoundException when photo not found', async () => {

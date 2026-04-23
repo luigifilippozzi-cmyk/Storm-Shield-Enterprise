@@ -424,12 +424,13 @@ describe('EstimatesService', () => {
   });
 
   describe('deleteDocument', () => {
-    it('should delete an existing document', async () => {
+    it('should delete an existing document scoped by tenant_id', async () => {
       knex._chain.first.mockReturnValueOnce({ id: 'doc-1', storage_key: 'key/doc.pdf' });
 
       const result = await service.deleteDocument(TENANT_ID, ESTIMATE_ID, 'doc-1');
 
       expect(result).toEqual({ deleted: true });
+      expect(knex._chain.where).toHaveBeenCalledWith({ id: 'doc-1', tenant_id: TENANT_ID });
     });
 
     it('should throw NotFoundException when document not found', async () => {

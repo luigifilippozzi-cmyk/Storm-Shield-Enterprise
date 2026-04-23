@@ -173,7 +173,7 @@ export class VehiclesService {
     if (!photo) throw new NotFoundException('Photo not found');
 
     await this.storageService.delete(photo.storage_key);
-    await knex('vehicle_photos').where({ id: photoId }).del();
+    await knex('vehicle_photos').where({ id: photoId, tenant_id: tenantId }).del();
 
     return { deleted: true };
   }
