@@ -1,4 +1,6 @@
-# ADR 009 — Adoção da Bússola de Produto como Artefato Estratégico Oficial
+﻿# ADR 009 — Adoção da Bússola de Produto como Artefato Estratégico Oficial
+
+> **Nota:** Neste documento, "NS" refere-se a um ERP proprietário de terceiros usado exclusivamente como referência comparativa externa, sem relação comercial, licenciamento ou endosso. O nome da marca foi substituído por precaução (ver ADR-014).
 
 **Data:** 2026-04-17
 **Status:** Aceito
@@ -16,12 +18,12 @@ Apesar disso, a construção foi feita **de baixo para cima** — RF por RF, mó
 1. Quem é o cliente ideal (ICP) e quem não é?
 2. Quais são as personas primárias, suas perguntas centrais e jobs-to-be-done?
 3. Qual a métrica de sucesso de produto nos próximos 12 meses?
-4. Onde o SSE simplifica vs. NetSuite/Mitchell/CCC, e onde herda?
+4. Onde o SSE simplifica vs. NS/Mitchell/CCC, e onde herda?
 5. Quais os gaps críticos ordenados por impacto na métrica de sucesso (não por módulo)?
 
 Sintomas concretos da ausência desse artefato observáveis no estado atual:
 
-- **FAM entregou 5 métodos de depreciação** (2 implementados em TS, 3 documentados) — paridade com NetSuite que não tem uso no ICP predominante do produto. Ver ADR-008.
+- **FAM entregou 5 métodos de depreciação** (2 implementados em TS, 3 documentados) — paridade com NS que não tem uso no ICP predominante do produto. Ver ADR-008.
 - **Mobile para técnico está em Fase 5** — o técnico é a persona mais frequente no dia-a-dia do shop, mas fica sem ferramenta até ~12 meses pós Fase 1.
 - **Dashboard é unitário** — não há landing por persona. Owner, Estimator, Technician e Accountant veem a mesma home e navegam horizontalmente para suas áreas.
 - **Insurance workflow** — core para 70–90% da receita do ICP — está subdesenvolvido em UI apesar de existir em schema.
@@ -101,7 +103,7 @@ O PO Assistant (este agente em modo Cowork) é responsável por:
 ### Positivas
 
 - **Clareza estratégica permanente** — qualquer contributor (humano ou agente) consegue ler a Bússola e entender quem é o cliente, qual é o jogo, e como priorizar.
-- **Filtro anti-bloat** — feature com racional "NetSuite tem" sem passar no filtro da persona é descartada antes do dev.
+- **Filtro anti-bloat** — feature com racional "NS tem" sem passar no filtro da persona é descartada antes do dev.
 - **Instrumentação da métrica** — adoção da Bússola força a discussão "como medimos activation?", criando o Gap 8 da seção 4 da Bússola.
 - **Alinhamento squad IA** — PM Agent, Dev Manager e subagentes passam a ter artefato único de referência estratégica, complementar ao CLAUDE.md técnico.
 - **Rastreabilidade de decisões de produto** — a Bússola tem §9 com registro datado, separado do ADR tradicional (que cobre decisões arquiteturais).
@@ -153,5 +155,5 @@ Estes itens devem ser convertidos em RFs e issues GitHub em sessão PO subsequen
 - `docs/strategy/BUSSOLA_PRODUTO_SSE.md` — Bússola de Produto v0.1
 - `CLAUDE.md` — Bootstrap técnico do SSE
 - `docs/decisions/007-agent-squad-architecture.md` — ADR do Squad IA
-- `docs/decisions/008-fam-implementation-decisions.md` — Exemplo concreto de gap "paridade NetSuite" reconhecido pelo próprio squad (MACRS simplificado)
+- `docs/decisions/008-fam-implementation-decisions.md` — Exemplo concreto de gap "paridade NS" reconhecido pelo próprio squad (MACRS simplificado)
 - Referência externa: documento `BUSSOLA_PRODUTO.md` do projeto Minhas Finanças (MF) — inspiração estrutural, conteúdo integralmente novo para SSE

@@ -1,8 +1,10 @@
----
+﻿---
 name: SSE Project Status
 description: Current state of Storm Shield Enterprise project — metrics, health, priorities for Dev Manager
 type: project
 ---
+> **Nota:** "NS" = ERP de referência externo. Nome substituído por precaução (ADR-014).
+
 
 # SSE Project Status — 2026-04-22 (DM Agent — sessão tarde/noite — RF-004 merged + ADR-013 merged)
 
@@ -24,7 +26,7 @@ type: project
 
 ### Prioridades P0/P1 para próxima sessão DM
 1. **P1** — T-20260421-3 (RF-005): **CONSULTAR PO ANTES de abrir branch** — split XL obrigatório (RF-005a/b/c)
-2. **P2** — T-20260421-9: Sync NetSuite dashboard com Bússola v1.2 (gatilho #2 desbloqueado) — PR doc-only
+2. **P2** — T-20260421-9: Sync NS dashboard com Bússola v1.2 (gatilho #2 desbloqueado) — PR doc-only
 3. **P2** — T-20260421-5 (RF-007): Case Management simplificado — independente, pode rodar em paralelo após RF-005 validado
 
 ### Alertas
@@ -53,8 +55,12 @@ Sem violações. PR #44 cita Estimator (Bússola §2) + candidato Gap 9. PR #45 
 - **COMPLETED:** T-20260421-10, T-20260421-2 (RF-004), T-20260421-6/7/8 (ADR-013 patches)
 - **PENDING P1:** T-20260421-3 (RF-005 XL — aguarda split PO)
 - **BLOCKED P1:** T-20260421-4 (RF-006, aguarda T-3)
-- **PENDING P2:** T-20260421-1 (NetSuite standing), T-20260421-5 (RF-007), T-20260421-9 (NetSuite dashboard v1.2 — desbloqueado), T-036 (accounting frontend)
+- **PENDING P2:** T-20260421-1 (NS standing), T-20260421-5 (RF-007), T-20260421-9 (NS dashboard v1.2 — desbloqueado), T-036 (accounting frontend)
 - **Legacy:** T-20260412-2 (ratificação PO pendente)
+
+### Governança — 2026-04-22
+
+**Trademark Hygiene (T-20260422-1 / ADR-014):** Decisão de substituir 235 menções nominais à marca registrada de ERP de referência por sigla **NS** + disclaimer canônico em 19 arquivos + sweep GitHub. ADR-014 em DRAFT (publicação pelo DM via T-20260422-1 P2). GitHub Issue #46 aberta. Sem impacto em personas, ICP, métrica-norte ou roadmap Fase 1. Executado em paralelo ao fechamento de T-20260421-10. T-20260421-1 (sync dashboard) bloqueada até renames concluírem.
 
 ### Última sessão PM: 2026-04-22
 ### Última sessão DM: 2026-04-22 (RF-004 PR #44 + ADR-013 PR #45 mergeados)
@@ -108,7 +114,7 @@ Sem violações. PR #44 cita Estimator (Bússola §2) + Gap 9 / ADR-012. dm_queu
 - **COMPLETED:** T-20260421-10 (ESM fix), T-20260421-2 (RF-004 PR aberto)
 - **PENDING P1:** T-20260421-3 (RF-005 XL), T-20260421-5 (RF-007)
 - **BLOCKED:** T-20260421-4 (RF-006, aguarda T-3)
-- **PENDING P2:** T-20260421-1 (NetSuite standing), T-20260421-6 (Bússola v1.2), T-20260421-7/8/9 (bloq. T-6), T-036 (accounting frontend)
+- **PENDING P2:** T-20260421-1 (NS standing), T-20260421-6 (Bússola v1.2), T-20260421-7/8/9 (bloq. T-6), T-036 (accounting frontend)
 - **Legacy:** T-20260412-2 (ratificação PO pendente)
 
 ### Última sessão PM: 2026-04-22
@@ -131,7 +137,7 @@ Sem violações. PR #44 cita Estimator (Bússola §2) + Gap 9 / ADR-012. dm_queu
 - T-20260421-2 COMPLETED (branch+PR abertos, aguarda merge)
 - RF-004 status: APPROVED → IN_PROGRESS em RF_BACKLOG.md
 - PR #38 merged: fix(tenants) AuthGuard POST /tenants — HIGH security fix (SSE-052)
-- ADR-012 Accepted: Incorporação parcial NetSuite → Bússola v1.1
+- ADR-012 Accepted: Incorporação parcial NS → Bússola v1.1
 - T-20260421-10 COMPLETED: Deploy API VERDE (4 crashes corrigidos)
 
 ### Prioridades P0/P1 para Dev Manager
@@ -164,7 +170,7 @@ Sem violações detectadas. PR #38 (AuthGuard) não cria página nova — regra 
 - **P0 PENDING:** T-20260421-10 (ESM fix)
 - **P1 PENDING:** T-20260421-2 (RF-004), T-20260421-3 (RF-005)
 - **P1 BLOCKED:** T-20260421-4 (RF-006, aguarda RF-005)
-- **P2 PENDING:** T-20260421-1 (NetSuite standing), T-20260421-5 (RF-007), T-20260421-6 (Bússola v1.2), T-20260421-7 (frontend-reviewer, bloq. T-6), T-20260421-8 (AGENTS.md, bloq. T-6), T-20260421-9 (NetSuite dashboard v1.2, bloq. T-6)
+- **P2 PENDING:** T-20260421-1 (NS standing), T-20260421-5 (RF-007), T-20260421-6 (Bússola v1.2), T-20260421-7 (frontend-reviewer, bloq. T-6), T-20260421-8 (AGENTS.md, bloq. T-6), T-20260421-9 (NS dashboard v1.2, bloq. T-6)
 - **Legacy PENDING:** T-20260412-2 (ratificação PO), T-036 (accounting frontend pages)
 
 ### Última sessão PM: 2026-04-21 (noite — revisão completa pós sessão PO parte 3)
@@ -192,11 +198,11 @@ Tarefa T-20260412-1 marcada como **SUPERSEDED**. Nova tarefa **T-20260421-10** (
 ## Atualização PO (2026-04-21 noite) — nota para PM sincronizar
 
 Sessão PO Cowork produziu:
-- **ADR-012** (Accepted) — Incorporação parcial de padrões NetSuite à Bússola v1.1. ADR count: 10 → **11**. ADR-011 continua reservado para Release Cadence (T-20260412-1).
+- **ADR-012** (Accepted) — Incorporação parcial de padrões NS à Bússola v1.1. ADR count: 10 → **11**. ADR-011 continua reservado para Release Cadence (T-20260412-1).
 - **Bússola v1.1** — §5 (+7 linhas Simplificamos + 1099-NEC movido para Superamos), §6 (novo P8 offline-first), §7 (Workspace + Cmd+K obrigatório), §8 (+5 linhas novas RFs), §9 (10 decisões datadas).
 - **4 RFs APPROVED** em `RF_BACKLOG.md` v0.2: RF-004 Customer 360 (P1), RF-005 Estimate State Machine + Inbox (P1, split recomendado), RF-006 Payment Hold (P1, BLOCKED by RF-005), RF-007 Case Management leve (P2).
 - **4 tasks DM** em `dm_queue.md`: T-20260421-2, T-20260421-3, T-20260421-4 (BLOCKED), T-20260421-5.
-- **Dashboard NetSuite↔Bússola** (`ANALISE_NETSUITE_vs_BUSSOLA_v1.html` + `.md`) adotado como artefato vivo. Manutenção via T-20260421-1.
+- **Dashboard NS↔Bússola** (`ANALISE_NS_vs_BUSSOLA_v1.html` + `.md`) adotado como artefato vivo. Manutenção via T-20260421-1.
 - **3 decisões técnicas delegadas ao DM** para registrar nos PRs de cada RF: Reversing JE, Half-Year MACRS, Global Search Cmd+K.
 
 Próximas ações do PM: consolidar métricas abaixo (ADR count 11), refletir RF-004..007 em "RF Backlog (Bússola §4)", adicionar T-20260421-2..5 em "Handoff DM aberto".

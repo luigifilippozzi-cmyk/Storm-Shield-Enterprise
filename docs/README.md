@@ -1,4 +1,6 @@
-# Documentação — Storm Shield Enterprise
+﻿# Documentação — Storm Shield Enterprise
+
+> **Nota:** Neste documento, "NS" refere-se a um ERP proprietário de terceiros usado exclusivamente como referência comparativa externa, sem relação comercial, licenciamento ou endosso. O nome da marca foi substituído por precaução (ver ADR-014).
 
 Índice navegável de toda a documentação do SSE.
 
@@ -25,7 +27,7 @@
 
 **Ler primeiro se você vai propor um RF ou redesenho de UX.**
 
-- [`strategy/BUSSOLA_PRODUTO_SSE.md`](strategy/BUSSOLA_PRODUTO_SSE.md) — Bússola de Produto v0.1. Define ICP (body shop médio 5–15 func nos EUA), 4 personas primárias (Owner, Estimator, Technician, Accountant), 8 gaps críticos priorizados, posicionamento vs NetSuite/Mitchell/CCC, princípios de design, arquitetura de navegação por persona, roadmap ancorado em gaps. **Autoridade formalizada em ADR-009.**
+- [`strategy/BUSSOLA_PRODUTO_SSE.md`](strategy/BUSSOLA_PRODUTO_SSE.md) — Bússola de Produto v0.1. Define ICP (body shop médio 5–15 func nos EUA), 4 personas primárias (Owner, Estimator, Technician, Accountant), 8 gaps críticos priorizados, posicionamento vs NS/Mitchell/CCC, princípios de design, arquitetura de navegação por persona, roadmap ancorado em gaps. **Autoridade formalizada em ADR-009.**
 - [`strategy/RF_BACKLOG.md`](strategy/RF_BACKLOG.md) — Backlog de Requisitos Funcionais derivados dos Gaps Críticos da Bússola. v0.1 contém RF-001 (Landing por Persona), RF-002 (Setup Wizard), RF-003 (Event Tracking de Activation). Próximo RF a criar: **RF-004**.
 
 ---
@@ -63,7 +65,7 @@ Documentação de referência da arquitetura de dados e requisitos funcionais. F
 - `architecture/SSE_Banco_de_Dados_v1.0.docx` — Arquitetura completa do BD (65 entidades, 12 domínios)
 - `architecture/SSE_Requisitos_Funcionais_v1.2.docx` — Requisitos funcionais (10 seções)
 - `architecture/SSE_Diagrama_ER.mermaid` / `.html` — Diagrama ER
-- `architecture/SSE_Quadro_Comparativo_FAM.xlsx` — Comparação Oracle/NetSuite vs SSE (FAM)
+- `architecture/SSE_Quadro_Comparativo_FAM.xlsx` — Comparação Oracle/NS vs SSE (FAM)
 
 > **Nota:** arquivos `.docx` e `.xlsx` são abertos fora do editor. Para convenções de schema e migrations, consultar `../CLAUDE.md` §3 (mais atualizado).
 

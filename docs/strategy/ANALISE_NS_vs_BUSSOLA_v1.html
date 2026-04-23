@@ -1,0 +1,1055 @@
+﻿<!DOCTYPE html>
+<!--
+  NOTA: Neste documento, "NS" refere-se a um ERP proprietário de terceiros
+  usado exclusivamente como referência comparativa externa, sem relação comercial,
+  licenciamento ou endosso. O nome da marca foi substituído por precaução (ver ADR-014).
+-->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Análise NS vs Bússola SSE — v1</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          sse: {
+            bg: '#0b1020',
+            panel: '#131a31',
+            border: '#283050',
+            accent: '#4f8cff',
+            good: '#22c55e',
+            warn: '#f59e0b',
+            bad:  '#ef4444',
+            muted:'#8892b0'
+          }
+        }
+      }
+    }
+  }
+</script>
+<style>
+  html { scroll-behavior: smooth; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif; }
+  .tab-btn.active { background:#4f8cff; color:#fff; }
+  .tab-btn.active .badge { background: rgba(255,255,255,0.25); }
+  .chip-filter.active { background:#4f8cff; color:white; border-color:#4f8cff; }
+  .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(79,140,255,0.15); }
+  .fade-in { animation: fadeIn 0.25s ease-in; }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(6px); } to { opacity:1; transform:none; } }
+  details[open] summary .chevron { transform: rotate(90deg); }
+  details summary { list-style: none; }
+  details summary::-webkit-details-marker { display: none; }
+  .chevron { transition: transform 0.2s; display:inline-block; }
+  .diff-added { border-left: 3px solid #22c55e; background: rgba(34,197,94,0.05); }
+  .diff-removed { border-left: 3px solid #ef4444; background: rgba(239,68,68,0.05); text-decoration: line-through; opacity:0.6; }
+  .diff-changed { border-left: 3px solid #f59e0b; background: rgba(245,158,11,0.05); }
+  .timeline-line { position:absolute; left:1.125rem; top:0; bottom:0; width:2px; background: linear-gradient(180deg, #4f8cff, #283050); }
+  .pulse { animation: pulse 2s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1;} 50% { opacity: 0.5;} }
+</style>
+</head>
+<body class="bg-sse-bg text-slate-200 min-h-screen">
+
+<!-- ================ HEADER ================ -->
+<header class="border-b border-sse-border bg-sse-panel sticky top-0 z-40 backdrop-blur-md">
+  <div class="max-w-7xl mx-auto px-6 py-4">
+    <div class="flex items-start justify-between flex-wrap gap-4">
+      <div>
+        <div class="flex items-center gap-3 mb-1">
+          <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-sse-accent to-indigo-600 grid place-items-center text-white font-bold">SSE</div>
+          <div>
+            <h1 class="text-xl font-bold text-white">Análise Comparativa</h1>
+            <p class="text-sm text-sse-muted">NS <span class="mx-1">vs</span> Bússola de Produto SSE — v1.0</p>
+          </div>
+        </div>
+      </div>
+      <div class="flex flex-wrap items-center gap-3 text-xs">
+        <span class="px-3 py-1 rounded-full bg-sse-bg border border-sse-border"><span class="text-sse-muted">Status:</span> <span class="text-sse-warn">PROPOSTA</span></span>
+        <span class="px-3 py-1 rounded-full bg-sse-bg border border-sse-border"><span class="text-sse-muted">Data:</span> <span class="text-white">2026-04-21</span></span>
+        <span class="px-3 py-1 rounded-full bg-sse-bg border border-sse-border"><span class="text-sse-muted">Autor:</span> <span class="text-white">PO Assistant (Cowork)</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================ TABS ================ -->
+  <nav class="max-w-7xl mx-auto px-6 pb-3">
+    <div class="flex flex-wrap gap-2 text-sm">
+      <button data-tab="overview"   class="tab-btn active px-4 py-2 rounded-lg border border-sse-border bg-sse-bg hover:bg-sse-border transition">Visão geral <span class="badge ml-1 px-1.5 py-0.5 text-xs rounded bg-sse-border">6</span></button>
+      <button data-tab="comparison" class="tab-btn px-4 py-2 rounded-lg border border-sse-border bg-sse-bg hover:bg-sse-border transition">Comparação <span class="badge ml-1 px-1.5 py-0.5 text-xs rounded bg-sse-border">12 áreas</span></button>
+      <button data-tab="rfs"        class="tab-btn px-4 py-2 rounded-lg border border-sse-border bg-sse-bg hover:bg-sse-border transition">Novos RFs <span class="badge ml-1 px-1.5 py-0.5 text-xs rounded bg-sse-border">4</span></button>
+      <button data-tab="antirecs"   class="tab-btn px-4 py-2 rounded-lg border border-sse-border bg-sse-bg hover:bg-sse-border transition">Anti-recomendações <span class="badge ml-1 px-1.5 py-0.5 text-xs rounded bg-sse-border">13</span></button>
+      <button data-tab="bussola"    class="tab-btn px-4 py-2 rounded-lg border border-sse-border bg-sse-bg hover:bg-sse-border transition">Ajustes Bússola</button>
+      <button data-tab="roadmap"    class="tab-btn px-4 py-2 rounded-lg border border-sse-border bg-sse-bg hover:bg-sse-border transition">Roadmap</button>
+      <button data-tab="adr"        class="tab-btn px-4 py-2 rounded-lg border border-sse-border bg-sse-bg hover:bg-sse-border transition">ADR-012</button>
+    </div>
+  </nav>
+</header>
+
+<main class="max-w-7xl mx-auto px-6 py-8">
+
+<!-- ============================================== -->
+<!-- =========== TAB: OVERVIEW ===================== -->
+<!-- ============================================== -->
+<section data-section="overview" class="fade-in">
+
+  <div class="grid md:grid-cols-4 gap-4 mb-8">
+    <div class="bg-sse-panel border border-sse-border rounded-xl p-5">
+      <div class="text-sm text-sse-muted">Áreas NS analisadas</div>
+      <div class="text-3xl font-bold text-white mt-1">12</div>
+      <div class="text-xs text-sse-muted mt-2">Core ERP · CRM · Service · UX · Mobile · Workflow</div>
+    </div>
+    <div class="bg-sse-panel border border-sse-border rounded-xl p-5">
+      <div class="text-sm text-sse-muted">Novos RFs propostos</div>
+      <div class="text-3xl font-bold text-sse-accent mt-1">4</div>
+      <div class="text-xs text-sse-muted mt-2">RF-004 a RF-007</div>
+    </div>
+    <div class="bg-sse-panel border border-sse-border rounded-xl p-5">
+      <div class="text-sm text-sse-muted">Anti-recomendações</div>
+      <div class="text-3xl font-bold text-sse-bad mt-1">13</div>
+      <div class="text-xs text-sse-muted mt-2">Explicitamente fora do escopo</div>
+    </div>
+    <div class="bg-sse-panel border border-sse-border rounded-xl p-5">
+      <div class="text-sm text-sse-muted">Prioridades P0/P1 mudadas</div>
+      <div class="text-3xl font-bold text-sse-good mt-1">0</div>
+      <div class="text-xs text-sse-muted mt-2">Bússola validada pela indústria</div>
+    </div>
+  </div>
+
+  <!-- Key message banner -->
+  <div class="bg-gradient-to-r from-sse-accent/10 to-indigo-600/10 border border-sse-accent/30 rounded-xl p-6 mb-8">
+    <div class="flex items-start gap-4">
+      <div class="text-3xl">🧭</div>
+      <div>
+        <h2 class="text-lg font-bold text-white mb-2">Mensagem central</h2>
+        <p class="text-slate-300 leading-relaxed">
+          Navegar a documentação pública do NS <strong class="text-white">valida o rumo da Bússola</strong> em praticamente todos os pontos estratégicos.
+          Nenhuma frente P0/P1 precisa mudar. Surgiram 4 padrões concretos que o SSE pode adotar
+          sem violar o posicionamento <em>"simpler + cheaper + purpose-built"</em> — e 13 decisões de descope
+          ganham base objetiva para encerrar debate recorrente.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="text-lg font-bold text-white mb-4">6 achados em 30 segundos</h2>
+  <div class="grid md:grid-cols-2 gap-4 mb-10">
+
+    <div class="bg-sse-panel border border-sse-border rounded-xl p-5 card-hover transition">
+      <div class="flex items-start gap-3">
+        <span class="text-2xl">1</span>
+        <div>
+          <h3 class="font-semibold text-white mb-1">Centers = Workspaces</h3>
+          <p class="text-sm text-slate-300">NS usa "Centers" por role. É literalmente o que RF-001 propõe. Nosso padrão é industry-standard, não experimento — reduz risco de adoção.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-sse-panel border border-sse-border rounded-xl p-5 card-hover transition">
+      <div class="flex items-start gap-3">
+        <span class="text-2xl">2</span>
+        <div>
+          <h3 class="font-semibold text-white mb-1">FSM Mobile valida Gap 2</h3>
+          <p class="text-sm text-slate-300">NS entrega field service mobile nativo com offline. É referência concreta que o mercado conhece. Sem Gap 2, SSE não compete em mobility.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-sse-panel border border-sse-border rounded-xl p-5 card-hover transition">
+      <div class="flex items-start gap-3">
+        <span class="text-2xl">3</span>
+        <div>
+          <h3 class="font-semibold text-white mb-1">Customer 360 é o ganho mais claro</h3>
+          <p class="text-sm text-slate-300">Tela unificada com abas (Overview, Vehicles, Estimates, SOs, Receivables, Activity). Substitui navegação fragmentada. Proposto como RF-004.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-sse-panel border border-sse-border rounded-xl p-5 card-hover transition">
+      <div class="flex items-start gap-3">
+        <span class="text-2xl">4</span>
+        <div>
+          <h3 class="font-semibold text-white mb-1">Payment Hold + Available Balance</h3>
+          <p class="text-sm text-slate-300">Conceitos financeiros do NS que encaixam no SSE: estimate disputado bloqueia SO (RF-006); KPI "Cash disponível" do Cockpit distingue saldo real vs available.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-sse-panel border border-sse-border rounded-xl p-5 card-hover transition">
+      <div class="flex items-start gap-3">
+        <span class="text-2xl">5</span>
+        <div>
+          <h3 class="font-semibold text-white mb-1">Onde SSE supera NS</h3>
+          <p class="text-sm text-slate-300">1099-NEC nativo (NS usa Yearli/Sovos externos), MACRS nativo, onboarding wizard &lt;30min, activation tracking instrumentado. Reforçar narrativa comercial.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-sse-panel border border-sse-border rounded-xl p-5 card-hover transition">
+      <div class="flex items-start gap-3">
+        <span class="text-2xl">6</span>
+        <div>
+          <h3 class="font-semibold text-white mb-1">Descopes deliberados explícitos</h3>
+          <p class="text-sm text-slate-300">4 áreas onde NS tem features avançadas que NÃO entram no SSE: SuiteBilling, OneWorld/Multi-subsidiary, SuiteFlow, Dashboard drag-and-drop. Documentado = menos debate.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Decision matrix -->
+  <h2 class="text-lg font-bold text-white mb-4">Matriz de decisão geral</h2>
+  <div class="grid md:grid-cols-3 gap-4">
+    <div class="bg-sse-panel border border-sse-good/40 rounded-xl p-5">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="w-3 h-3 rounded-full bg-sse-good"></span>
+        <h3 class="font-semibold text-sse-good">ALINHADO — manter</h3>
+      </div>
+      <ul class="text-sm space-y-2 text-slate-300">
+        <li>• Workspaces por persona (RF-001)</li>
+        <li>• Mobile PWA para Técnico (Gap 2)</li>
+        <li>• Setup wizard de onboarding (RF-002)</li>
+        <li>• Activation tracking (RF-003)</li>
+        <li>• 1099-NEC nativo</li>
+        <li>• MACRS nativo</li>
+        <li>• Global Search Cmd+K</li>
+        <li>• Double-entry bookkeeping</li>
+      </ul>
+    </div>
+    <div class="bg-sse-panel border border-sse-warn/40 rounded-xl p-5">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="w-3 h-3 rounded-full bg-sse-warn"></span>
+        <h3 class="font-semibold text-sse-warn">AJUSTAR — adotar</h3>
+      </div>
+      <ul class="text-sm space-y-2 text-slate-300">
+        <li>• Customer 360 View <span class="text-xs text-sse-muted">(RF-004, P1)</span></li>
+        <li>• Payment Hold / Disputed <span class="text-xs text-sse-muted">(RF-006, P1)</span></li>
+        <li>• Case Management light <span class="text-xs text-sse-muted">(RF-007, P2)</span></li>
+        <li>• Estimate state machine <span class="text-xs text-sse-muted">(RF-005, P1)</span></li>
+        <li>• Available Balance no Cockpit</li>
+        <li>• Offline-first shop floor (P8)</li>
+        <li>• Track Service Time auto</li>
+        <li>• Half Year convention (validar)</li>
+      </ul>
+    </div>
+    <div class="bg-sse-panel border border-sse-bad/40 rounded-xl p-5">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="w-3 h-3 rounded-full bg-sse-bad"></span>
+        <h3 class="font-semibold text-sse-bad">ANTI-TARGET — rejeitar</h3>
+      </div>
+      <ul class="text-sm space-y-2 text-slate-300">
+        <li>• SuiteFlow / Workflow Designer</li>
+        <li>• Saved Searches / Custom KPIs</li>
+        <li>• OneWorld / Multi-subsidiary</li>
+        <li>• SuiteBilling (usage billing)</li>
+        <li>• Dept/Class/Location/Segments</li>
+        <li>• Multi-currency / Multi-lang</li>
+        <li>• Multi-book accounting</li>
+        <li>• Scheduler/Dispatcher role</li>
+        <li class="text-xs text-sse-muted mt-1">+ 5 mais na aba Anti-Recs</li>
+      </ul>
+    </div>
+  </div>
+
+</section>
+
+<!-- ============================================== -->
+<!-- =========== TAB: COMPARAÇÃO =================== -->
+<!-- ============================================== -->
+<section data-section="comparison" class="hidden fade-in">
+  <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+    <div>
+      <h2 class="text-lg font-bold text-white">Comparação área por área</h2>
+      <p class="text-sm text-sse-muted">12 áreas analisadas. Filtre pelo diagnóstico para ver onde estamos alinhados vs onde há ajuste proposto.</p>
+    </div>
+    <div class="flex flex-wrap gap-2 text-xs">
+      <button class="chip-filter active px-3 py-1.5 rounded-full border border-sse-border bg-sse-panel hover:bg-sse-border transition" data-diag="all">Todos</button>
+      <button class="chip-filter px-3 py-1.5 rounded-full border border-sse-border bg-sse-panel hover:bg-sse-border transition" data-diag="aligned">Alinhados</button>
+      <button class="chip-filter px-3 py-1.5 rounded-full border border-sse-border bg-sse-panel hover:bg-sse-border transition" data-diag="adjust">Ajustes</button>
+      <button class="chip-filter px-3 py-1.5 rounded-full border border-sse-border bg-sse-panel hover:bg-sse-border transition" data-diag="reject">Rejeitados</button>
+      <button class="chip-filter px-3 py-1.5 rounded-full border border-sse-border bg-sse-panel hover:bg-sse-border transition" data-diag="superior">SSE supera</button>
+    </div>
+  </div>
+
+  <div id="compareList" class="space-y-3">
+    <!-- Area cards injected by JS -->
+  </div>
+</section>
+
+<!-- ============================================== -->
+<!-- =========== TAB: RFs ========================== -->
+<!-- ============================================== -->
+<section data-section="rfs" class="hidden fade-in">
+  <h2 class="text-lg font-bold text-white mb-2">4 novos RFs propostos</h2>
+  <p class="text-sm text-sse-muted mb-6">Cada card abre detalhes. Todos derivam de padrões NS filtrados contra princípios P1–P7 da Bússola.</p>
+
+  <div class="grid md:grid-cols-2 gap-4">
+
+    <!-- RF-004 -->
+    <details class="bg-sse-panel border border-sse-border rounded-xl overflow-hidden group">
+      <summary class="cursor-pointer p-5 flex items-start justify-between gap-4 hover:bg-sse-bg">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="px-2 py-0.5 rounded text-xs font-bold bg-sse-accent/20 text-sse-accent">RF-004</span>
+            <span class="px-2 py-0.5 rounded text-xs bg-sse-warn/20 text-sse-warn">P1</span>
+            <span class="px-2 py-0.5 rounded text-xs bg-slate-700/40 text-slate-300">Fase 2</span>
+          </div>
+          <h3 class="font-bold text-white">Customer 360 View</h3>
+          <p class="text-xs text-sse-muted mt-1">Tela unificada do cliente — 6 abas</p>
+        </div>
+        <span class="chevron text-sse-muted">›</span>
+      </summary>
+      <div class="px-5 pb-5 border-t border-sse-border pt-4 space-y-3 text-sm">
+        <div><span class="text-sse-muted">Persona:</span> <span class="text-white">Estimator (primária), Owner + Accountant (secundárias)</span></div>
+        <div><span class="text-sse-muted">Gap fechado:</span> <span class="text-white">Fricção CRM (candidato a Gap 9 ou RF-UX)</span></div>
+        <div><span class="text-sse-muted">Princípio:</span> <span class="text-white">P1 (landing por persona) aplicado a detalhe de entidade</span></div>
+        <div><span class="text-sse-muted">Inspiração NS:</span> <span class="text-white">Customer 360 View (section_0709124630)</span></div>
+        <div class="pt-2 border-t border-sse-border">
+          <div class="text-sse-muted mb-2">Estrutura proposta (6 abas):</div>
+          <div class="grid grid-cols-3 gap-2 text-xs">
+            <div class="bg-sse-bg border border-sse-border rounded p-2 text-center">Overview</div>
+            <div class="bg-sse-bg border border-sse-border rounded p-2 text-center">Vehicles</div>
+            <div class="bg-sse-bg border border-sse-border rounded p-2 text-center">Estimates</div>
+            <div class="bg-sse-bg border border-sse-border rounded p-2 text-center">Service Orders</div>
+            <div class="bg-sse-bg border border-sse-border rounded p-2 text-center">Receivables</div>
+            <div class="bg-sse-bg border border-sse-border rounded p-2 text-center">Activity</div>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-3 pt-2 border-t border-sse-border text-xs">
+          <span class="px-2 py-1 rounded bg-sse-bg border border-sse-border"><span class="text-sse-muted">Complexidade:</span> <span class="text-sse-warn">L</span></span>
+          <span class="px-2 py-1 rounded bg-sse-bg border border-sse-border"><span class="text-sse-muted">Migrations:</span> <span class="text-sse-good">Não</span></span>
+          <span class="px-2 py-1 rounded bg-sse-bg border border-sse-border"><span class="text-sse-muted">Impacto:</span> <span class="text-white">Alto — 90% cliques do Estimator</span></span>
+        </div>
+      </div>
+    </details>
+
+    <!-- RF-005 -->
+    <details class="bg-sse-panel border border-sse-border rounded-xl overflow-hidden group">
+      <summary class="cursor-pointer p-5 flex items-start justify-between gap-4 hover:bg-sse-bg">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="px-2 py-0.5 rounded text-xs font-bold bg-sse-accent/20 text-sse-accent">RF-005</span>
+            <span class="px-2 py-0.5 rounded text-xs bg-sse-warn/20 text-sse-warn">P1</span>
+            <span class="px-2 py-0.5 rounded text-xs bg-slate-700/40 text-slate-300">Fase 2</span>
+          </div>
+          <h3 class="font-bold text-white">Estimate State Machine + Inbox</h3>
+          <p class="text-xs text-sse-muted mt-1">Formaliza Gap 5 (insurance workflow)</p>
+        </div>
+        <span class="chevron text-sse-muted">›</span>
+      </summary>
+      <div class="px-5 pb-5 border-t border-sse-border pt-4 space-y-3 text-sm">
+        <div><span class="text-sse-muted">Persona:</span> <span class="text-white">Estimator</span></div>
+        <div><span class="text-sse-muted">Gap fechado:</span> <span class="text-white">Gap 5 (Insurance workflow subdesenvolvido)</span></div>
+        <div><span class="text-sse-muted">Princípio:</span> <span class="text-white">P5 (insurance-first)</span></div>
+        <div class="pt-2 border-t border-sse-border">
+          <div class="text-sse-muted mb-2">State machine proposto:</div>
+          <div class="text-xs bg-sse-bg border border-sse-border rounded p-3 font-mono overflow-x-auto">
+            <span class="text-slate-400">draft</span> → <span class="text-sse-accent">submitted_to_adjuster</span> → <span class="text-sse-warn">awaiting_approval</span> → approved → <span class="text-sse-warn">supplement_pending</span> → <span class="text-sse-good">paid</span> → closed
+            <br>
+            <span class="text-sse-muted">└</span> ramificações: <span class="text-sse-bad">rejected</span> | <span class="text-sse-bad">disputed</span> (→ RF-006)
+          </div>
+        </div>
+        <div class="text-xs text-sse-muted">Inbox em <code class="text-sse-accent">/app/estimates/inbox</code> (kanban com colunas por estado)</div>
+      </div>
+    </details>
+
+    <!-- RF-006 -->
+    <details class="bg-sse-panel border border-sse-border rounded-xl overflow-hidden group">
+      <summary class="cursor-pointer p-5 flex items-start justify-between gap-4 hover:bg-sse-bg">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="px-2 py-0.5 rounded text-xs font-bold bg-sse-accent/20 text-sse-accent">RF-006</span>
+            <span class="px-2 py-0.5 rounded text-xs bg-sse-warn/20 text-sse-warn">P1</span>
+            <span class="px-2 py-0.5 rounded text-xs bg-slate-700/40 text-slate-300">Fase 2</span>
+          </div>
+          <h3 class="font-bold text-white">Payment Hold / Disputed Estimate</h3>
+          <p class="text-xs text-sse-muted mt-1">Inspiração NS Payment Hold</p>
+        </div>
+        <span class="chevron text-sse-muted">›</span>
+      </summary>
+      <div class="px-5 pb-5 border-t border-sse-border pt-4 space-y-3 text-sm">
+        <div><span class="text-sse-muted">Persona:</span> <span class="text-white">Estimator (opera), Owner (revisa)</span></div>
+        <div><span class="text-sse-muted">Gap fechado:</span> <span class="text-white">Complementa Gap 5</span></div>
+        <div class="pt-2 border-t border-sse-border">
+          <div class="text-sse-muted mb-2">Efeito do estado <code class="text-sse-accent">disputed</code>:</div>
+          <ul class="text-xs space-y-1.5 text-slate-300 list-none">
+            <li>• SO vinculada fica pausada até resolução</li>
+            <li>• Notificação automática para Owner</li>
+            <li>• Timer SLA interno (14d+ em aberto = alerta)</li>
+            <li>• Histórico entra no Customer 360 activity</li>
+            <li>• Owner pode override com registro de motivo</li>
+          </ul>
+        </div>
+        <div class="pt-2 border-t border-sse-border">
+          <div class="text-sse-muted mb-2">Campos novos em <code class="text-sse-accent">estimates</code>:</div>
+          <div class="text-xs text-slate-300">
+            <code>dispute_reason</code> · <code>dispute_notes</code> · <code>dispute_opened_at</code> · <code>dispute_resolved_at</code> · <code>blocks_so_progression</code>
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <!-- RF-007 -->
+    <details class="bg-sse-panel border border-sse-border rounded-xl overflow-hidden group">
+      <summary class="cursor-pointer p-5 flex items-start justify-between gap-4 hover:bg-sse-bg">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="px-2 py-0.5 rounded text-xs font-bold bg-sse-accent/20 text-sse-accent">RF-007</span>
+            <span class="px-2 py-0.5 rounded text-xs bg-slate-500/20 text-slate-300">P2</span>
+            <span class="px-2 py-0.5 rounded text-xs bg-slate-700/40 text-slate-300">Fase 2</span>
+          </div>
+          <h3 class="font-bold text-white">Case Management simplificado</h3>
+          <p class="text-xs text-sse-muted mt-1">Ticket leve — complaints + disputes</p>
+        </div>
+        <span class="chevron text-sse-muted">›</span>
+      </summary>
+      <div class="px-5 pb-5 border-t border-sse-border pt-4 space-y-3 text-sm">
+        <div><span class="text-sse-muted">Persona:</span> <span class="text-white">Estimator (abre), Owner (revisa), Customer (subject)</span></div>
+        <div><span class="text-sse-muted">Gap fechado:</span> <span class="text-white">Parcial em Gap 5 + dores de complaints</span></div>
+        <div><span class="text-sse-muted">Escopo NEGATIVO:</span> <span class="text-white">NÃO é CRM ticket full. NÃO tem types/origins/rules/territories/auto-assignment do NS.</span></div>
+        <div class="pt-2 border-t border-sse-border">
+          <div class="text-sse-muted mb-2">2 tipos de case:</div>
+          <div class="grid grid-cols-2 gap-2">
+            <div class="bg-sse-bg border border-sse-border rounded p-3 text-xs">
+              <div class="font-bold text-white mb-1">complaint</div>
+              <div class="text-slate-400">Cliente insatisfeito com reparo</div>
+            </div>
+            <div class="bg-sse-bg border border-sse-border rounded p-3 text-xs">
+              <div class="font-bold text-white mb-1">dispute</div>
+              <div class="text-slate-400">Desacordo com adjuster (sobreposto com RF-006)</div>
+            </div>
+          </div>
+        </div>
+        <div class="text-xs text-sse-muted">Lista em <code class="text-sse-accent">/app/cases</code> (secundário, não vira workspace próprio)</div>
+      </div>
+    </details>
+
+  </div>
+
+  <!-- Adicional: ajuste Cockpit -->
+  <div class="mt-6 bg-gradient-to-r from-sse-warn/10 to-orange-500/10 border border-sse-warn/30 rounded-xl p-6">
+    <div class="flex items-start gap-4">
+      <div class="text-3xl">⚙️</div>
+      <div class="flex-1">
+        <h3 class="font-bold text-white mb-1">Ajuste no RF futuro do Cockpit (Gap 4)</h3>
+        <p class="text-sm text-slate-300 mb-3">KPI <strong>"Cash disponível"</strong> deve distinguir Cash Balance vs Available Balance — padrão copiado de NS In-Transit Payments.</p>
+        <div class="text-xs bg-sse-bg border border-sse-border rounded p-3 font-mono text-slate-300">
+          Exibição: <span class="text-white">"$XX,XXX available ($YY,YYY total)"</span>
+        </div>
+        <p class="text-xs text-sse-muted mt-3">
+          <strong>Por quê:</strong> sem essa distinção, Owner vê $50k no sábado, aprova gasto de $30k, e na terça descobre que $25k estava comprometido em vendor bills em trânsito.
+          É a exata falha que Bússola §3 descreve como "dashboard atual é operacional, não gerencial".
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================== -->
+<!-- =========== TAB: ANTI-RECS ==================== -->
+<!-- ============================================== -->
+<section data-section="antirecs" class="hidden fade-in">
+  <h2 class="text-lg font-bold text-white mb-2">13 anti-recomendações explícitas</h2>
+  <p class="text-sm text-sse-muted mb-6">Features do NS que NÃO entram no SSE. Documentadas para encerrar debate recorrente ("e se fizermos X?").</p>
+
+  <div class="flex flex-wrap gap-2 text-xs mb-6">
+    <button class="chip-filter active px-3 py-1.5 rounded-full border border-sse-border bg-sse-panel" data-anti="all">Todas (13)</button>
+    <button class="chip-filter px-3 py-1.5 rounded-full border border-sse-border bg-sse-panel" data-anti="antitarget">Anti-target ICP (4)</button>
+    <button class="chip-filter px-3 py-1.5 rounded-full border border-sse-border bg-sse-panel" data-anti="overhead">Overhead sem valor (6)</button>
+    <button class="chip-filter px-3 py-1.5 rounded-full border border-sse-border bg-sse-panel" data-anti="future">Futuro (3)</button>
+  </div>
+
+  <div id="antirecList" class="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+    <!-- injected -->
+  </div>
+</section>
+
+<!-- ============================================== -->
+<!-- =========== TAB: BÚSSOLA ====================== -->
+<!-- ============================================== -->
+<section data-section="bussola" class="hidden fade-in">
+  <h2 class="text-lg font-bold text-white mb-2">Ajustes propostos à Bússola v1.0 → v1.1</h2>
+  <p class="text-sm text-sse-muted mb-6">Diff visual das mudanças. Aplicação depende de ADR-012 e sessão PO de revisão.</p>
+
+  <div class="space-y-6">
+
+    <!-- §5 expansion -->
+    <div class="bg-sse-panel border border-sse-border rounded-xl overflow-hidden">
+      <div class="bg-sse-bg border-b border-sse-border p-4">
+        <h3 class="font-bold text-white">§5 — Onde simplificamos (expansão)</h3>
+        <p class="text-xs text-sse-muted mt-1">Adiciona 6 linhas à tabela, explicitando descopes hoje implícitos.</p>
+      </div>
+      <div class="p-4 space-y-2 text-sm">
+        <div class="diff-added rounded p-3">
+          <span class="text-sse-good font-mono text-xs mr-2">+</span>
+          <strong class="text-white">Custom Segments / Classifications</strong> — NS: Dept/Class/Location/CS | SSE: tenant = 1 shop = 1 location. Violação direta de P7.
+        </div>
+        <div class="diff-added rounded p-3">
+          <span class="text-sse-good font-mono text-xs mr-2">+</span>
+          <strong class="text-white">SuiteFlow / Workflow Designer</strong> — NS: BPMN visual builder | SSE: n8n workflows pré-definidos.
+        </div>
+        <div class="diff-added rounded p-3">
+          <span class="text-sse-good font-mono text-xs mr-2">+</span>
+          <strong class="text-white">Saved Searches / Custom KPIs</strong> — NS: user monta query → vira KPI | SSE: 4 relatórios canônicos + KPIs fixos por persona.
+        </div>
+        <div class="diff-added rounded p-3">
+          <span class="text-sse-good font-mono text-xs mr-2">+</span>
+          <strong class="text-white">OneWorld / Subsidiaries</strong> — NS: multi-entity | SSE: 1 tenant = 1 empresa. Anti-target §1.
+        </div>
+        <div class="diff-added rounded p-3">
+          <span class="text-sse-good font-mono text-xs mr-2">+</span>
+          <strong class="text-white">SuiteBilling / Usage billing</strong> — NS: recurring + usage + overage | SSE: Stripe plano fixo. Fase 7+.
+        </div>
+        <div class="diff-added rounded p-3">
+          <span class="text-sse-good font-mono text-xs mr-2">+</span>
+          <strong class="text-white">Payment Holds genérico</strong> — NS: flag em qualquer bill | SSE: específico para supplements disputed (RF-006).
+        </div>
+      </div>
+    </div>
+
+    <!-- §5 superamos -->
+    <div class="bg-sse-panel border border-sse-border rounded-xl overflow-hidden">
+      <div class="bg-sse-bg border-b border-sse-border p-4">
+        <h3 class="font-bold text-white">§5 — Onde superamos (reclassificação)</h3>
+        <p class="text-xs text-sse-muted mt-1">Promover 1099-NEC + adicionar MACRS nativo.</p>
+      </div>
+      <div class="p-4 space-y-2 text-sm">
+        <div class="diff-changed rounded p-3">
+          <span class="text-sse-warn font-mono text-xs mr-2">~</span>
+          <strong class="text-white">1099-NEC nativo</strong> sai de "Herdamos" → entra em <strong class="text-sse-good">"Superamos"</strong>. NS não gera 1099; depende de integradores (Yearli/Sovos/Track1099).
+        </div>
+        <div class="diff-added rounded p-3">
+          <span class="text-sse-good font-mono text-xs mr-2">+</span>
+          <strong class="text-white">MACRS nativo</strong> — NS trata como "alternate tax method". SSE tem nativo no FAM (ADR-008) porque é requisito IRS para veículos do shop.
+        </div>
+      </div>
+    </div>
+
+    <!-- §6 P8 -->
+    <div class="bg-sse-panel border border-sse-border rounded-xl overflow-hidden">
+      <div class="bg-sse-bg border-b border-sse-border p-4">
+        <h3 class="font-bold text-white">§6 — Novo princípio P8</h3>
+        <p class="text-xs text-sse-muted mt-1">Offline-first para shop floor — derivado de FSM Mobile offline.</p>
+      </div>
+      <div class="p-4">
+        <div class="diff-added rounded p-4">
+          <div class="flex items-start gap-3">
+            <span class="text-sse-good font-mono text-xs">+</span>
+            <div>
+              <strong class="text-white block mb-2">P8 — Offline-first para shop floor.</strong>
+              <p class="text-sm text-slate-300">Técnico não pode perder trabalho quando WiFi cai. Operações críticas do mobile (timer, fotos, SO status) funcionam offline e sincronizam quando reconectar. Desktop pode assumir online; mobile do técnico não.</p>
+              <p class="text-xs text-sse-muted mt-2"><strong>Racional:</strong> gap concreto identificado em FSM Mobile. Body shop tem WiFi ruim tipicamente. Sem offline, mobile vira "ferramenta que só funciona no escritório" — contradiz P2.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- §7 navigation -->
+    <div class="bg-sse-panel border border-sse-border rounded-xl overflow-hidden">
+      <div class="bg-sse-bg border-b border-sse-border p-4">
+        <h3 class="font-bold text-white">§7 — Navegação (notas adicionais)</h3>
+      </div>
+      <div class="p-4 space-y-2 text-sm">
+        <div class="diff-added rounded p-3">
+          <span class="text-sse-good font-mono text-xs mr-2">+</span>
+          <strong class="text-white">Nomenclatura:</strong> adotamos "Workspace" (não "Center" como NS) — autodescritivo em EN/PT-BR, não importa jargão NS.
+        </div>
+        <div class="diff-added rounded p-3">
+          <span class="text-sse-good font-mono text-xs mr-2">+</span>
+          <strong class="text-white">Global Search (Cmd+K) é obrigatório</strong> em todos os workspaces. Se não existir no SSE, é ENH P1 independente.
+        </div>
+      </div>
+    </div>
+
+    <!-- §8 additions -->
+    <div class="bg-sse-panel border border-sse-border rounded-xl overflow-hidden">
+      <div class="bg-sse-bg border-b border-sse-border p-4">
+        <h3 class="font-bold text-white">§8 — Ordem de ataque (adições)</h3>
+        <p class="text-xs text-sse-muted mt-1">4 novas linhas no roadmap, posicionadas nos horizontes 60–120d.</p>
+      </div>
+      <div class="p-4">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="text-xs text-sse-muted text-left">
+              <tr class="border-b border-sse-border">
+                <th class="py-2 pr-3">Prio</th>
+                <th class="py-2 pr-3">Horiz.</th>
+                <th class="py-2 pr-3">Item</th>
+                <th class="py-2">Justificativa</th>
+              </tr>
+            </thead>
+            <tbody class="text-slate-300">
+              <tr class="diff-added">
+                <td class="py-2 pr-3"><span class="px-2 py-0.5 rounded text-xs bg-sse-warn/20 text-sse-warn">P1</span></td>
+                <td class="py-2 pr-3 text-xs">60–90d</td>
+                <td class="py-2 pr-3 font-semibold text-white">RF-004 Customer 360</td>
+                <td class="py-2 text-xs">Fecha fricção CRM. NS tem como padrão.</td>
+              </tr>
+              <tr class="diff-added">
+                <td class="py-2 pr-3"><span class="px-2 py-0.5 rounded text-xs bg-sse-warn/20 text-sse-warn">P1</span></td>
+                <td class="py-2 pr-3 text-xs">60–90d</td>
+                <td class="py-2 pr-3 font-semibold text-white">RF-006 Payment Hold</td>
+                <td class="py-2 text-xs">Complementa Gap 5. Congelar SO quando supplement em disputa.</td>
+              </tr>
+              <tr class="diff-added">
+                <td class="py-2 pr-3"><span class="px-2 py-0.5 rounded text-xs bg-slate-500/20 text-slate-300">P2</span></td>
+                <td class="py-2 pr-3 text-xs">90–120d</td>
+                <td class="py-2 pr-3 font-semibold text-white">RF-007 Case Mgmt</td>
+                <td class="py-2 text-xs">Complaints + disputes rastreáveis.</td>
+              </tr>
+              <tr class="diff-added">
+                <td class="py-2 pr-3"><span class="px-2 py-0.5 rounded text-xs bg-sse-warn/20 text-sse-warn">P1</span></td>
+                <td class="py-2 pr-3 text-xs">Concorrente</td>
+                <td class="py-2 pr-3 font-semibold text-white">Available Balance (Cockpit)</td>
+                <td class="py-2 text-xs">Refina Gap 4. Sem isso, KPI "Cash" é enganoso.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================== -->
+<!-- =========== TAB: ROADMAP ====================== -->
+<!-- ============================================== -->
+<section data-section="roadmap" class="hidden fade-in">
+  <h2 class="text-lg font-bold text-white mb-2">Roadmap ajustado — visão 0–120 dias</h2>
+  <p class="text-sm text-sse-muted mb-8">Linha do tempo considerando as adições propostas. Nada muda em P0.</p>
+
+  <div class="relative pl-10 space-y-6">
+    <div class="timeline-line"></div>
+
+    <!-- DONE -->
+    <div class="relative">
+      <span class="absolute -left-10 top-1 w-8 h-8 rounded-full bg-sse-good/20 border-2 border-sse-good grid place-items-center text-sse-good font-bold text-sm">✓</span>
+      <div class="bg-sse-panel border border-sse-good/40 rounded-xl p-5">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-xs text-sse-good font-bold">DONE</span>
+          <span class="text-xs text-sse-muted">Fase 1.5 — concluída Abril/2026</span>
+        </div>
+        <h3 class="font-semibold text-white">Fundação P0</h3>
+        <div class="text-sm text-slate-300 mt-2 flex flex-wrap gap-2">
+          <span class="px-2 py-0.5 rounded bg-sse-good/10 text-sse-good text-xs">RF-001 Landing persona</span>
+          <span class="px-2 py-0.5 rounded bg-sse-good/10 text-sse-good text-xs">RF-002 Setup Wizard</span>
+          <span class="px-2 py-0.5 rounded bg-sse-good/10 text-sse-good text-xs">RF-003 Activation Tracking</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- AGORA -->
+    <div class="relative">
+      <span class="absolute -left-10 top-1 w-8 h-8 rounded-full bg-sse-warn/20 border-2 border-sse-warn grid place-items-center text-sse-warn font-bold text-xs pulse">NOW</span>
+      <div class="bg-sse-panel border border-sse-warn/40 rounded-xl p-5">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-xs text-sse-warn font-bold">EM CURSO</span>
+          <span class="text-xs text-sse-muted">Abril/2026 · BLOCKED em T-20260412-1</span>
+        </div>
+        <h3 class="font-semibold text-white">Deploy API + gaps P2 Fase 1</h3>
+        <div class="text-sm text-slate-300 mt-2">
+          <ul class="space-y-1 text-xs">
+            <li>• T-20260412-1 — Deploy API Fly.io (BLOCKED, diagnóstica em curso)</li>
+            <li>• Gaps P2: B1-3 (vehicle-estimates) · B2-2 (wizard detail) · B3-4 (financial breakdown)</li>
+            <li>• Pós T-20260412-1 sair: ADR-011 Release Cadence</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- +30-60d -->
+    <div class="relative">
+      <span class="absolute -left-10 top-1 w-8 h-8 rounded-full bg-sse-accent/20 border-2 border-sse-accent grid place-items-center text-sse-accent font-bold text-xs">30d</span>
+      <div class="bg-sse-panel border border-sse-border rounded-xl p-5">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-xs text-sse-accent font-bold">30–60 dias</span>
+          <span class="text-xs text-sse-muted">Entrada de Fase 2</span>
+        </div>
+        <h3 class="font-semibold text-white">Fechar gaps P2 + começar Cockpit</h3>
+        <div class="text-sm text-slate-300 mt-2">
+          <ul class="space-y-1 text-xs">
+            <li>• Fechar gaps P2 Fase 1 (Luigi define prioridade)</li>
+            <li>• Iniciar discovery de RF Cockpit (Gap 4) — <strong class="text-sse-warn">incorporar Available Balance na spec</strong></li>
+            <li>• Validar perguntas pendentes (Reversing JE? MACRS Half-Year? Global Search?)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- +60-90d -->
+    <div class="relative">
+      <span class="absolute -left-10 top-1 w-8 h-8 rounded-full bg-sse-accent/20 border-2 border-sse-accent grid place-items-center text-sse-accent font-bold text-xs">60d</span>
+      <div class="bg-sse-panel border border-sse-border rounded-xl p-5">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-xs text-sse-accent font-bold">60–90 dias</span>
+          <span class="text-xs text-sse-muted">Fase 2 P1 — novos RFs</span>
+        </div>
+        <h3 class="font-semibold text-white">Cockpit + Customer 360 + State Machine</h3>
+        <div class="text-sm text-slate-300 mt-2 flex flex-wrap gap-2">
+          <span class="px-2 py-0.5 rounded bg-sse-accent/10 text-sse-accent text-xs">RF Cockpit Owner</span>
+          <span class="px-2 py-0.5 rounded bg-sse-accent/10 text-sse-accent text-xs">RF-004 Customer 360 ★</span>
+          <span class="px-2 py-0.5 rounded bg-sse-accent/10 text-sse-accent text-xs">RF-005 Estimate State Machine</span>
+          <span class="px-2 py-0.5 rounded bg-sse-accent/10 text-sse-accent text-xs">RF-006 Payment Hold ★</span>
+        </div>
+        <div class="text-xs text-sse-muted mt-2">★ = novos desta análise</div>
+      </div>
+    </div>
+
+    <!-- +90-120d -->
+    <div class="relative">
+      <span class="absolute -left-10 top-1 w-8 h-8 rounded-full bg-sse-accent/20 border-2 border-sse-accent grid place-items-center text-sse-accent font-bold text-xs">90d</span>
+      <div class="bg-sse-panel border border-sse-border rounded-xl p-5">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-xs text-sse-accent font-bold">90–120 dias</span>
+          <span class="text-xs text-sse-muted">Fase 2 P2 — mobile + extras</span>
+        </div>
+        <h3 class="font-semibold text-white">Mobile PWA + Export + Cases</h3>
+        <div class="text-sm text-slate-300 mt-2 flex flex-wrap gap-2">
+          <span class="px-2 py-0.5 rounded bg-sse-accent/10 text-sse-accent text-xs">RF Mobile PWA (Gap 2 + offline P8)</span>
+          <span class="px-2 py-0.5 rounded bg-sse-accent/10 text-sse-accent text-xs">RF Export Accountant (Gap 7 parcial)</span>
+          <span class="px-2 py-0.5 rounded bg-sse-accent/10 text-sse-accent text-xs">RF-007 Case Management ★</span>
+          <span class="px-2 py-0.5 rounded bg-slate-500/20 text-slate-300 text-xs">ADR descope FAM 3 métodos</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- +120d -->
+    <div class="relative">
+      <span class="absolute -left-10 top-1 w-8 h-8 rounded-full bg-slate-500/20 border-2 border-slate-500 grid place-items-center text-slate-400 font-bold text-xs">→</span>
+      <div class="bg-sse-panel border border-sse-border rounded-xl p-5 opacity-80">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-xs text-slate-400 font-bold">120–180 dias</span>
+          <span class="text-xs text-sse-muted">Fase 3/4 sem mudanças</span>
+        </div>
+        <h3 class="font-semibold text-slate-300">Portal Contador + Compliance</h3>
+        <div class="text-sm text-slate-400 mt-2">
+          <ul class="space-y-1 text-xs">
+            <li>• Portal Contador completo (Fase 4)</li>
+            <li>• Sales Tax Missouri → multi-state</li>
+            <li>• 1099-NEC generation (mantém diferencial)</li>
+            <li>• Revisão trimestral Bússola (Julho/2026)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================== -->
+<!-- =========== TAB: ADR ========================== -->
+<!-- ============================================== -->
+<section data-section="adr" class="hidden fade-in">
+  <h2 class="text-lg font-bold text-white mb-2">ADR-012 — Accepted (2026-04-21)</h2>
+  <p class="text-sm text-sse-muted mb-6">ADR-011 permanece <strong>reservado</strong> para Release Cadence (depende de T-20260412-1 sair de BLOCKED). Este usou slot 012. Arquivo formal: <code class="text-sse-accent">docs/decisions/012-ns-incorporacao-parcial.md</code>.</p>
+
+  <div class="bg-sse-panel border border-sse-border rounded-xl p-6">
+    <div class="border-b border-sse-border pb-4 mb-4">
+      <h3 class="text-xl font-bold text-white">ADR-012 — Incorporação parcial de padrões NS à Bússola v1.1</h3>
+      <div class="flex flex-wrap gap-3 mt-3 text-xs">
+        <span class="px-2 py-1 rounded bg-sse-bg border border-sse-border"><span class="text-sse-muted">Status:</span> <span class="text-sse-good">ACCEPTED</span></span>
+        <span class="px-2 py-1 rounded bg-sse-bg border border-sse-border"><span class="text-sse-muted">Data:</span> 2026-04-21</span>
+        <span class="px-2 py-1 rounded bg-sse-bg border border-sse-border"><span class="text-sse-muted">Autor:</span> Luigi (PO) + PO Assistant</span>
+      </div>
+    </div>
+
+    <div class="space-y-5 text-sm">
+      <div>
+        <h4 class="font-bold text-white mb-2 flex items-center gap-2"><span class="w-1.5 h-5 bg-sse-accent rounded"></span>Contexto</h4>
+        <p class="text-slate-300 leading-relaxed pl-3">
+          Em 2026-04-21, sessão PO Cowork realizou análise comparativa entre a documentação pública do NS e a Bússola de Produto SSE v1.0 (ADR-009).
+          Análise documentada em <code class="text-sse-accent">docs/strategy/ANALISE_NS_vs_BUSSOLA_v1.md</code>.
+        </p>
+      </div>
+
+      <div>
+        <h4 class="font-bold text-white mb-2 flex items-center gap-2"><span class="w-1.5 h-5 bg-sse-accent rounded"></span>Opções consideradas</h4>
+        <div class="overflow-x-auto pl-3">
+          <table class="w-full text-xs">
+            <thead class="text-sse-muted">
+              <tr class="border-b border-sse-border">
+                <th class="py-2 pr-3 text-left">Opção</th>
+                <th class="py-2 pr-3 text-left">Risco</th>
+                <th class="py-2 pr-3 text-left">Custo</th>
+                <th class="py-2 text-left">Reversão</th>
+              </tr>
+            </thead>
+            <tbody class="text-slate-300">
+              <tr class="border-b border-sse-border bg-sse-good/5">
+                <td class="py-2 pr-3 font-bold">A. Adotar ajustes</td>
+                <td class="py-2 pr-3">Baixo — adições, não redesenho</td>
+                <td class="py-2 pr-3">1 sessão PO</td>
+                <td class="py-2">Revisão trimestral Julho/2026</td>
+              </tr>
+              <tr class="border-b border-sse-border">
+                <td class="py-2 pr-3">B. Esperar revisão trimestral</td>
+                <td class="py-2 pr-3">Perda de janela 2–3 meses</td>
+                <td class="py-2 pr-3">Zero</td>
+                <td class="py-2">N/A</td>
+              </tr>
+              <tr>
+                <td class="py-2 pr-3">C. Descartar aprendizados</td>
+                <td class="py-2 pr-3">Contradiz evolução Bússola</td>
+                <td class="py-2 pr-3">Zero</td>
+                <td class="py-2">Histórico como insumo</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div>
+        <h4 class="font-bold text-white mb-2 flex items-center gap-2"><span class="w-1.5 h-5 bg-sse-accent rounded"></span>Decisão recomendada</h4>
+        <div class="bg-sse-good/10 border border-sse-good/30 rounded p-3 ml-3">
+          <strong class="text-sse-good">Opção A — Adotar ajustes.</strong>
+          <p class="text-slate-300 mt-1">Baixo risco + janela aberta para incorporar em Fase 2 + P8 endereça gap concreto do Gap 2.</p>
+        </div>
+      </div>
+
+      <div>
+        <h4 class="font-bold text-white mb-2 flex items-center gap-2"><span class="w-1.5 h-5 bg-sse-accent rounded"></span>Condição de reversão</h4>
+        <ul class="text-slate-300 space-y-1 pl-3 text-xs">
+          <li>• Se ≥2 dos novos RFs (004–007) forem reavaliados como overhead e cancelados antes de dev → reabrir este ADR.</li>
+          <li>• Se P8 atrasar Gap 2 em &gt;30 dias → reavaliar P8 como "nice-to-have, não requisito".</li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="font-bold text-white mb-2 flex items-center gap-2"><span class="w-1.5 h-5 bg-sse-accent rounded"></span>Consequências</h4>
+        <div class="grid md:grid-cols-2 gap-3 pl-3">
+          <div class="bg-sse-good/5 border border-sse-good/30 rounded p-3">
+            <div class="text-sse-good font-bold text-xs mb-2">POSITIVAS</div>
+            <ul class="text-xs text-slate-300 space-y-1">
+              <li>• Bússola v1.1 com 13 anti-recs explícitas</li>
+              <li>• 4 RFs adicionados com escopo claro</li>
+              <li>• P8 alinha Gap 2 com padrão indústria</li>
+              <li>• §5 mais robusta</li>
+            </ul>
+          </div>
+          <div class="bg-sse-bad/5 border border-sse-bad/30 rounded p-3">
+            <div class="text-sse-bad font-bold text-xs mb-2">NEGATIVAS</div>
+            <ul class="text-xs text-slate-300 space-y-1">
+              <li>• Custo sessão PO para formalizar v1.1</li>
+              <li>• Pressão no Fase 2 (RF-004 + RF-006 P1)</li>
+              <li>• Redação de 4 novos RFs</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-4 border-t border-sse-border text-xs text-sse-muted">
+        <strong>Arquivo final:</strong> <code>docs/decisions/012-ns-incorporacao-parcial.md</code> &nbsp;·&nbsp;
+        <strong>Relacionado:</strong> ADR-009, ADR-010
+      </div>
+    </div>
+  </div>
+
+  <!-- Execução pós-aprovação -->
+  <div class="mt-6 bg-sse-panel border border-sse-good/40 rounded-xl p-6">
+    <h3 class="font-bold text-white mb-4">Execução pós-aprovação (2026-04-21 — DONE)</h3>
+    <ol class="space-y-3 text-sm">
+      <li class="flex gap-3">
+        <span class="w-6 h-6 rounded-full bg-sse-good/20 text-sse-good grid place-items-center flex-shrink-0 text-xs font-bold">✓</span>
+        <div><strong class="text-white">Bússola v1.1 publicada</strong> — §5 (+7 linhas Simplificamos), §5 (1099-NEC Superamos), §6 (P8 offline-first), §7 (Workspace + Cmd+K obrigatório), §8 (5 linhas novas: RF-004/005/006/007 + Cockpit ajuste), §9 (10 decisões datadas).</div>
+      </li>
+      <li class="flex gap-3">
+        <span class="w-6 h-6 rounded-full bg-sse-good/20 text-sse-good grid place-items-center flex-shrink-0 text-xs font-bold">✓</span>
+        <div><strong class="text-white">4 RFs APPROVED em RF_BACKLOG.md v0.2</strong> — RF-004 Customer 360 (P1), RF-005 Estimate State Machine + Inbox (P1, split recomendado), RF-006 Payment Hold (P1, dep RF-005), RF-007 Case Management (P2, com anti-rec #13 explícita).</div>
+      </li>
+      <li class="flex gap-3">
+        <span class="w-6 h-6 rounded-full bg-sse-good/20 text-sse-good grid place-items-center flex-shrink-0 text-xs font-bold">✓</span>
+        <div><strong class="text-white">ADR-012 formal</strong> gravado em <code class="text-sse-accent">docs/decisions/012-ns-incorporacao-parcial.md</code> — Status: Accepted. ADR-011 continua reservado para Release Cadence.</div>
+      </li>
+      <li class="flex gap-3">
+        <span class="w-6 h-6 rounded-full bg-sse-good/20 text-sse-good grid place-items-center flex-shrink-0 text-xs font-bold">✓</span>
+        <div><strong class="text-white">4 tasks DM abertas</strong> em <code class="text-sse-accent">.auto-memory/dm_queue.md</code> — T-20260421-2 (RF-004), T-20260421-3 (RF-005), T-20260421-4 (RF-006, BLOCKED por -3), T-20260421-5 (RF-007). Cada uma com escopo negativo + persona + gap + subagentes obrigatórios.</div>
+      </li>
+      <li class="flex gap-3">
+        <span class="w-6 h-6 rounded-full bg-sse-accent/20 text-sse-accent grid place-items-center flex-shrink-0 text-xs font-bold">→</span>
+        <div><strong class="text-white">3 decisões técnicas delegadas ao DM</strong> (registrar em cada RF no PR):
+          <ul class="mt-1 text-xs text-sse-muted">
+            <li>→ Reversing JE existe no SSE? (relevante para T-20260421-3 / RF-005)</li>
+            <li>→ Half-Year convention em MACRS implementada? (relevante se RF toca FAM)</li>
+            <li>→ Global Search (Cmd+K) está no SSE? (relevante para T-20260421-2 / RF-004 — abrir ENH P1 se não)</li>
+          </ul>
+        </div>
+      </li>
+    </ol>
+  </div>
+</section>
+
+</main>
+
+<footer class="border-t border-sse-border bg-sse-panel mt-16">
+  <div class="max-w-7xl mx-auto px-6 py-6 flex flex-wrap justify-between items-center gap-4 text-xs text-sse-muted">
+    <div>
+      Análise gerada em 2026-04-21 · Base: docs.oracle.com/en/cloud/saas/NS/ns-online-help · Bússola SSE v1.0
+    </div>
+    <div>
+      Artefato vivo — autoritativo via ADR-012 (Accepted 2026-04-21). Manutenção: T-20260421-1.
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ============================ DATA ============================ */
+const AREAS = [
+  { id:'gl', title:'Chart of Accounts & GL', cat:'Core ERP', diag:'aligned', NS:'15+ tipos de conta, COA customizável via CSV import, multi-book', sse:'9 tipos US GAAP (ADR-003), COA fixo no provisioning', rec:'Manter. Reforçar em §5 que COA fixo é deliberado.' },
+  { id:'je', title:'Journal Entries & Fiscal Periods', cat:'Core ERP', diag:'adjust', NS:'Manual + Reversing + Recurring JE. Periods: Open/Closed/Locked.', sse:'Manual JE OK (008). Reversing/Recurring ausentes. 2 status.', rec:'Validar Reversing JE com DM. Se ausente, ENH P2. Manter 2 status.' },
+  { id:'fam', title:'Fixed Assets Management', cat:'Core ERP', diag:'superior', NS:'SL, Declining, SYD, Usage, UOP, user-defined. MACRS via "alternate tax method" separado.', sse:'SL + MACRS nativo. 3 métodos documentados para enterprise.', rec:'Manter Gap 6 (descope formal DB/SYD/UOP). Validar Half-Year convention.' },
+  { id:'ap', title:'AP / Vendor Bills / Bank Reconciliation', cat:'Core ERP', diag:'adjust', NS:'Full AP workflow. Payment Hold em disputed. In-Transit Payments. ML bank match.', sse:'Básico via financial_transactions. Plaid planejado Fase 2.', rec:'Adotar Payment Hold (RF-006). Adotar Available Balance (Cockpit). Plaid simples basta.' },
+  { id:'tax', title:'Sales Tax + 1099', cat:'Core ERP', diag:'superior', NS:'SuiteTax Engine multi-state. 1099 depende de Yearli/Sovos/Track1099 externos.', sse:'Fase 4 planejada. 1099-NEC nativo.', rec:'Reforçar 1099-NEC como diferencial em §5 (mover Herdamos → Superamos).' },
+  { id:'crm', title:'CRM / Customer 360', cat:'CRM', diag:'adjust', NS:'Customer 360 View unificado: Overview, Opportunities, Orders, Receivables, Activities, Cases.', sse:'Páginas fragmentadas. Customer detail + filtros separados.', rec:'★ RF-004 Customer 360 View. Maior ganho de UX identificado.' },
+  { id:'wo', title:'Work Orders / Field Service', cat:'Service', diag:'adjust', NS:'FSM Mobile com offline. Track Service Time auto. Live updates ao scheduler.', sse:'service_orders com status workflow. Timer manual. Sem offline explícito.', rec:'No RF Mobile PWA (Gap 2): exigir offline + timer auto + histórico veículo.' },
+  { id:'nav', title:'Navigation / Dashboards', cat:'UX', diag:'aligned', NS:'Role-based Centers. Portlets KPI/Meter/Scorecard/Trend. Saved Searches. Global Search Alt+G.', sse:'RF-001 (PROPOSED). Dashboard fixo. Saved Searches não. Global Search mencionado.', rec:'Validar que RF-001 inclui Global Search Cmd+K. Portlets drag-and-drop ficam fora (§5).' },
+  { id:'mobile', title:'Mobile', cat:'UX', diag:'aligned', NS:'Native iOS/Android. Offline. My Dashboard. My Approvals. Role change mobile.', sse:'PWA web planejado (Gap 2). Native app em Fase 5.', rec:'Manter estratégia PWA. Adicionar offline como requisito (P8).' },
+  { id:'wf', title:'Workflow / Approvals', cat:'Governança', diag:'reject', NS:'SuiteFlow visual. Multi-level approval. Custom fields. Email automation.', sse:'n8n pré-definidos. Sem approval formal.', rec:'Manter descope. Adicionar SuiteFlow explicitamente em §5.' },
+  { id:'seg', title:'Classifications / Subsidiaries', cat:'Governança', diag:'reject', NS:'Dept/Class/Location/Custom Segments. OneWorld multi-entity.', sse:'Nenhum. 1 tenant = 1 shop.', rec:'Anti-target §1. Adicionar linha explícita em §5.' },
+  { id:'billing', title:'SuiteBilling / Subscription', cat:'SaaS interno', diag:'reject', NS:'Recurring + one-time + usage + overage. Revenue recognition.', sse:'Stripe simples. 4 planos fixos.', rec:'Fase 7+. Documentar como "upgrade possível após 1000 tenants".' },
+];
+
+const CATEGORY_COLORS = {
+  'Core ERP': 'bg-blue-500/10 text-blue-400',
+  'CRM': 'bg-purple-500/10 text-purple-400',
+  'Service': 'bg-green-500/10 text-green-400',
+  'UX': 'bg-pink-500/10 text-pink-400',
+  'Governança': 'bg-orange-500/10 text-orange-400',
+  'SaaS interno': 'bg-gray-500/10 text-gray-400'
+};
+
+const DIAG_META = {
+  aligned:   { label: 'ALINHADO',   color: 'text-sse-good',   bg:'bg-sse-good/10',   border:'border-sse-good/40',   icon:'✓' },
+  adjust:    { label: 'AJUSTAR',    color: 'text-sse-warn',   bg:'bg-sse-warn/10',   border:'border-sse-warn/40',   icon:'⚙' },
+  reject:    { label: 'REJEITADO',  color: 'text-sse-bad',    bg:'bg-sse-bad/10',    border:'border-sse-bad/40',    icon:'✕' },
+  superior:  { label: 'SSE SUPERA', color: 'text-sse-accent', bg:'bg-sse-accent/10', border:'border-sse-accent/40', icon:'★' },
+};
+
+const ANTIRECS = [
+  { title:'SuiteFlow / Workflow Designer', cat:'overhead', rationale:'Approvals formais não são problema do ICP (§5).' },
+  { title:'Saved Searches / Custom KPIs',  cat:'overhead', rationale:'Self-service reporting exige training. ICP não usa.' },
+  { title:'Departments / Classes / Locations / Custom Segments', cat:'antitarget', rationale:'Classification trio = overhead. Tenant = 1 shop.' },
+  { title:'OneWorld / Multi-entity',       cat:'antitarget', rationale:'Anti-target §1 — rede multi-filial.' },
+  { title:'Intelligent Transaction Matching ML', cat:'overhead', rationale:'Regra simples "match by amount+date ±3d" basta (P7).' },
+  { title:'SuiteBilling / Usage billing',  cat:'future', rationale:'Stripe simples basta. Fase 7+ se tração justificar.' },
+  { title:'Multi-book accounting',         cat:'antitarget', rationale:'1 book US GAAP. MACRS em runtime, não book separado.' },
+  { title:'Multi-currency / Multi-language full', cat:'overhead', rationale:'§5. USD/EN primário. PT-BR só equipe interna.' },
+  { title:'Scheduler / Dispatcher role',   cat:'overhead', rationale:'Body shop 5–15 func não tem dispatcher. Owner ou Estimator faz.' },
+  { title:'Native iOS/Android app primeiro', cat:'future', rationale:'PWA cobre 80% do valor. Native app é Fase 7 opcional.' },
+  { title:'Soft + Hard close + sub-ledgers', cat:'overhead', rationale:'Open/Closed binário basta (ADR-003 confirmado).' },
+  { title:'Van inventory real-time',       cat:'antitarget', rationale:'SSE é shop-based. Sem vans móveis.' },
+  { title:'Case Mgmt full (types/rules/territories/auto-assign)', cat:'future', rationale:'RF-007 é versão simplificada, manual assignment.' },
+];
+
+const ANTI_META = {
+  antitarget:{ label:'Anti-target', color:'text-sse-bad',  bg:'bg-sse-bad/10',  border:'border-sse-bad/30' },
+  overhead:  { label:'Overhead',    color:'text-sse-warn', bg:'bg-sse-warn/10', border:'border-sse-warn/30' },
+  future:    { label:'Futuro',      color:'text-sse-muted',bg:'bg-slate-500/10',border:'border-slate-500/30'},
+};
+
+/* ============================ RENDERERS ============================ */
+function renderAreas(filter='all'){
+  const host = document.getElementById('compareList');
+  host.innerHTML = '';
+  AREAS.filter(a => filter==='all' || a.diag===filter).forEach(a => {
+    const meta = DIAG_META[a.diag];
+    const catC = CATEGORY_COLORS[a.cat] || 'bg-slate-500/10 text-slate-400';
+    const el = document.createElement('details');
+    el.className = `bg-sse-panel border ${meta.border} rounded-xl overflow-hidden`;
+    el.innerHTML = `
+      <summary class="cursor-pointer p-4 flex items-center justify-between gap-4 hover:bg-sse-bg">
+        <div class="flex items-center gap-3 flex-wrap">
+          <span class="w-8 h-8 rounded-lg ${meta.bg} ${meta.color} grid place-items-center font-bold flex-shrink-0">${meta.icon}</span>
+          <div>
+            <div class="flex flex-wrap items-center gap-2 mb-1">
+              <h3 class="font-semibold text-white">${a.title}</h3>
+              <span class="px-2 py-0.5 rounded text-xs ${catC}">${a.cat}</span>
+              <span class="px-2 py-0.5 rounded text-xs ${meta.bg} ${meta.color}">${meta.label}</span>
+            </div>
+          </div>
+        </div>
+        <span class="chevron text-sse-muted">›</span>
+      </summary>
+      <div class="border-t border-sse-border p-4 grid md:grid-cols-2 gap-4 text-sm">
+        <div>
+          <div class="text-xs uppercase tracking-wide text-sse-muted mb-1">NS</div>
+          <p class="text-slate-300">${a.NS}</p>
+        </div>
+        <div>
+          <div class="text-xs uppercase tracking-wide text-sse-muted mb-1">SSE (hoje)</div>
+          <p class="text-slate-300">${a.sse}</p>
+        </div>
+        <div class="md:col-span-2 pt-3 border-t border-sse-border">
+          <div class="text-xs uppercase tracking-wide text-sse-muted mb-1">Recomendação</div>
+          <p class="text-white">${a.rec}</p>
+        </div>
+      </div>
+    `;
+    host.appendChild(el);
+  });
+  if (!host.children.length) {
+    host.innerHTML = '<div class="text-center py-12 text-sse-muted">Nenhuma área nesta categoria.</div>';
+  }
+}
+
+function renderAntirecs(filter='all'){
+  const host = document.getElementById('antirecList');
+  host.innerHTML = '';
+  ANTIRECS.filter(a => filter==='all' || a.cat===filter).forEach(a => {
+    const meta = ANTI_META[a.cat];
+    const el = document.createElement('div');
+    el.className = `bg-sse-panel border ${meta.border} rounded-xl p-4 card-hover transition`;
+    el.innerHTML = `
+      <div class="flex items-start justify-between gap-2 mb-2">
+        <h4 class="font-semibold text-white text-sm">${a.title}</h4>
+        <span class="text-xs px-2 py-0.5 rounded ${meta.bg} ${meta.color} flex-shrink-0">${meta.label}</span>
+      </div>
+      <p class="text-xs text-slate-400">${a.rationale}</p>
+    `;
+    host.appendChild(el);
+  });
+}
+
+/* ============================ TABS ============================ */
+function activateTab(tabId){
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === tabId);
+  });
+  document.querySelectorAll('[data-section]').forEach(s => {
+    s.classList.toggle('hidden', s.dataset.section !== tabId);
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ============================ INIT ============================ */
+document.addEventListener('DOMContentLoaded', () => {
+  renderAreas('all');
+  renderAntirecs('all');
+
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => activateTab(btn.dataset.tab));
+  });
+
+  // Comparison filters
+  document.querySelectorAll('[data-diag]').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('[data-diag]').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      renderAreas(chip.dataset.diag);
+    });
+  });
+
+  // Anti-recs filters
+  document.querySelectorAll('[data-anti]').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('[data-anti]').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      renderAntirecs(chip.dataset.anti);
+    });
+  });
+});
+</script>
+</body>
+</html>

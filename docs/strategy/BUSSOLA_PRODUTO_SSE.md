@@ -1,11 +1,13 @@
-# Bússola de Produto — Storm Shield Enterprise
+﻿# Bússola de Produto — Storm Shield Enterprise
+
+> **Nota:** Neste documento, "NS" refere-se a um ERP proprietário de terceiros usado exclusivamente como referência comparativa externa, sem relação comercial, licenciamento ou endosso. O nome da marca foi substituído por precaução (ver ADR-014).
 
 > Documento de referência estratégica para decisões de roadmap, redesenho de UX e priorização de RFs no SSE.
 > Criado em: 2026-04-17 (v1.0 via ADR-009). Atualizado em: 2026-04-21 (v1.1 via ADR-012, v1.2 via ADR-013).
 > Autor: Luigi (PO) + PO Assistant
 > **Propósito:** Servir de norte a todas as decisões de produto. Deve ser lido antes de qualquer sessão de redesenho, priorização ou discovery de RF.
 > **Natureza:** Não é backlog. Não é arquitetura técnica. É bússola — orienta "que produto estamos construindo e para quem".
-> **v1.1 (2026-04-21):** incorpora aprendizados de `ANALISE_NETSUITE_vs_BUSSOLA_v1.md` — novo princípio P8 (offline-first), §5 expandida, §7 Global Search + nomenclatura "Workspace", §8 estendida com RF-004/006/007.
+> **v1.1 (2026-04-21):** incorpora aprendizados de `ANALISE_NS_vs_BUSSOLA_v1.md` — novo princípio P8 (offline-first), §5 expandida, §7 Global Search + nomenclatura "Workspace", §8 estendida com RF-004/006/007.
 > **v1.2 (2026-04-21):** incorporação parcial do pacote MF (ADR-013) — §6 reorganizada em §6.1 Produto (P1–P8 intactos), §6.2 Visuais (PV1–PV6 novos), §6.3 UX (PUX1–PUX6 novos). Zero mudança em P1–P8 nem em §1–§5, §7–§8.
 
 ---
@@ -30,7 +32,7 @@ Decisões de produto **devem ser recusadas** se servirem estes perfis em detrime
 | Perfil | Por que não é nosso cliente |
 |---|---|
 | **PDR solo/mobile (1 pessoa)** | Não precisa de ERP. Planilha + Zelle resolve. Se construirmos para ele, perdemos foco multi-persona. |
-| **Rede multi-filial (15+ func, múltiplas locations)** | Compra NetSuite ou Mitchell+QuickBooks integrado. Ciclo de venda longo, requer customização. Fuga de ICP. |
+| **Rede multi-filial (15+ func, múltiplas locations)** | Compra NS ou Mitchell+QuickBooks integrado. Ciclo de venda longo, requer customização. Fuga de ICP. |
 | **General auto repair (oil change, tires, mechanical)** | Workflow diferente — insurance é marginal, parts inventory é central. Domínio adjacente, não alvo. |
 | **Glass repair, detailing, windshield** | Volume alto/ticket baixo. Precisa de POS + scheduling robusto. Não é o jogo. |
 
@@ -38,7 +40,7 @@ Decisões de produto **devem ser recusadas** se servirem estes perfis em detrime
 
 **SSE é a alternativa "simpler + cheaper + purpose-built" para body shops médios nos EUA.**
 
-Não é o "NetSuite com desconto". É o ERP que um dono de body shop **consegue adotar sem consultor**, que o técnico **usa no celular sem treinamento**, e que o contador **exporta para QuickBooks sem dor de cabeça**. Simplicidade radical é feature, não lacuna.
+Não é o "NS com desconto". É o ERP que um dono de body shop **consegue adotar sem consultor**, que o técnico **usa no celular sem treinamento**, e que o contador **exporta para QuickBooks sem dor de cabeça**. Simplicidade radical é feature, não lacuna.
 
 ### Métrica de sucesso (12 meses)
 
@@ -121,7 +123,7 @@ Fase 1 está ~95% concluída. 12 módulos, 98 endpoints, 293 testes, 11 migratio
 
 O `CLAUDE.md` organiza o projeto em 7 Fases × 12 domínios × 65 entidades. Cada Fase é um bloco técnico coerente (MVP, IA+Integrações, Contabilidade+FAM, etc). **Nenhuma Fase começa com "qual pergunta da persona esta fase responde?"**
 
-Consequência concreta: FAM (Fixed Asset Management) entregou 5 métodos de depreciação com MACRS completa (apenas 2 métodos implementados em TS, os outros 3 documentados — ver ADR-008). O body shop médio do ICP usa Straight-Line e pronto — talvez MACRS simplificado se o contador pede. Os outros 3 métodos são paridade com NetSuite que **contradiz o posicionamento "simpler + cheaper"**.
+Consequência concreta: FAM (Fixed Asset Management) entregou 5 métodos de depreciação com MACRS completa (apenas 2 métodos implementados em TS, os outros 3 documentados — ver ADR-008). O body shop médio do ICP usa Straight-Line e pronto — talvez MACRS simplificado se o contador pede. Os outros 3 métodos são paridade com NS que **contradiz o posicionamento "simpler + cheaper"**.
 
 Essa lógica se repete em outros módulos — listada na seção 4 como gaps.
 
@@ -166,7 +168,7 @@ Gaps ordenados por **impacto na activation rate / retenção de tenants** — n�
 
 **Por que é crítico:** sem mobile pro técnico, a operação **continua no papel**. Dono vê relatórios bonitos, técnico continua anotando horas em folha avulsa, estimator continua tirando foto com app da câmera padrão. A adoção fica parcial → tenants "ativados por login" mas não "ativados na operação".
 
-**Impacto:** contradiz o posicionamento. Um dos grandes argumentos contra NetSuite é que mobile é fraco — se SSE também é, perdemos o diferencial.
+**Impacto:** contradiz o posicionamento. Um dos grandes argumentos contra NS é que mobile é fraco — se SSE também é, perdemos o diferencial.
 
 **Solução alvo:** não é React Native na Fase 5. É **mobile web PWA responsiva** começando na Fase 2, cobrindo: minhas SOs + timer + upload de fotos + consulta de estimate. Next.js já é Server Components — entrega isso sem novo stack.
 
@@ -196,7 +198,7 @@ Gaps ordenados por **impacto na activation rate / retenção de tenants** — n�
 
 **Por que é crítico:** é **o** ciclo operacional do ICP. Se SSE não modela isso bem, é uma planilha bonita.
 
-**Impacto:** diferencial frente a NetSuite (que não tem DRP nativo) — perdemos se não entregamos.
+**Impacto:** diferencial frente a NS (que não tem DRP nativo) — perdemos se não entregamos.
 
 **Solução alvo:** estimate como state machine visível ao Estimator: draft → submitted → awaiting_approval → approved → supplement_pending → paid. Kanban ou timeline. Isso encaixa em Fase 2 ou Fase 1.5 (interim release).
 
@@ -206,7 +208,7 @@ Gaps ordenados por **impacto na activation rate / retenção de tenants** — n�
 
 **O que o ICP usa:** Straight-Line para 90% dos assets (tools, equipment, office furniture). MACRS para veículos (requisito IRS). Disposal ocasional.
 
-**Avaliação:** os 3 métodos não implementados (Declining Balance, Sum-of-Years, Units of Production) são paridade com NetSuite. Mantê-los no backlog pesa na cognição do produto sem retorno para o ICP.
+**Avaliação:** os 3 métodos não implementados (Declining Balance, Sum-of-Years, Units of Production) são paridade com NS. Mantê-los no backlog pesa na cognição do produto sem retorno para o ICP.
 
 **Solução alvo:** **Descope formal dos 3 métodos** para o plano `enterprise` apenas (ou Fase 7). FAM encerra Fase 3 com Straight-Line + MACRS. Poupa 2–4 semanas de dev que vão para Gap 1/2/4.
 
@@ -232,13 +234,13 @@ Gaps ordenados por **impacto na activation rate / retenção de tenants** — n�
 
 ---
 
-## 5. Posicionamento vs. NetSuite / Mitchell / CCC
+## 5. Posicionamento vs. NS / Mitchell / CCC
 
-Tabela de filtro para toda feature nova. Se uma feature está em "Simplificamos", não implementamos nível-NetSuite.
+Tabela de filtro para toda feature nova. Se uma feature está em "Simplificamos", não implementamos nível-NS.
 
 ### Onde SIMPLIFICAMOS (consciência deliberada)
 
-| Dimensão | NetSuite / Mitchell faz | SSE faz | Racional |
+| Dimensão | NS / Mitchell faz | SSE faz | Racional |
 |---|---|---|---|
 | Approval workflows | Multi-nível, matriz de aprovadores | Aprovação presencial/oral; log de status | Body shop 5–15 func aprova cara-a-cara. Workflow formal cria burocracia sem valor. |
 | Depreciação | 5+ métodos (SL, MACRS, DB, SYD, UOP) | 2 métodos (SL + MACRS simplificado) | 90% dos assets do ICP é SL. MACRS simplificado atende IRS em primeira aproximação. |
@@ -274,13 +276,13 @@ Tabela de filtro para toda feature nova. Se uma feature está em "Simplificamos"
 | Dimensão | Como superamos |
 |---|---|
 | UX purpose-built | Não é ERP genérico adaptado — é ERP desenhado para body shop. Landing por persona, linguagem do domínio, fluxos operacionais do shop. |
-| DRP / Insurance workflow nativo | NetSuite não tem. Mitchell tem estimate mas não ERP integrado. SSE tem ambos. Gap 5 transforma isso em diferencial visível. |
-| Mobile-first para técnico | NetSuite mobile é business-user oriented (vendedor consultando CRM). SSE mobile é shop-floor oriented (técnico registrando hora com câmera). Gap 2. |
-| Onboarding <1h | NetSuite requer implementação com parceiro (semanas). SSE requer wizard (minutos). Gap 3. |
+| DRP / Insurance workflow nativo | NS não tem. Mitchell tem estimate mas não ERP integrado. SSE tem ambos. Gap 5 transforma isso em diferencial visível. |
+| Mobile-first para técnico | NS mobile é business-user oriented (vendedor consultando CRM). SSE mobile é shop-floor oriented (técnico registrando hora com câmera). Gap 2. |
+| Onboarding <1h | NS requer implementação com parceiro (semanas). SSE requer wizard (minutos). Gap 3. |
 | Preço | $30–$200/mês vs. $500–$5000/mês. Permite o ICP existir como cliente. |
-| **1099-NEC nativo** | NetSuite **não gera 1099** — depende de integradores externos (Yearli, Sovos, Track1099). SSE gera nativamente. Essencial ao ICP (contractors 1099 são operação padrão do shop). Movido de Herdamos → Superamos em v1.1. |
-| **MACRS nativo em FAM** | NetSuite trata MACRS como "alternate tax method" separado, exigindo configuração. SSE tem MACRS nativo (ADR-008) porque é requisito IRS para veículos do shop. Feature essencial, não extensão. Adicionado v1.1. |
-| **Activation tracking instrumentado** | NetSuite tem dashboards pós-implementação; não trata activation rate como métrica padrão. SSE tem tabela `activation_events` + dashboard interno (RF-003). Diferencial de governança PO/PM. Adicionado v1.1. |
+| **1099-NEC nativo** | NS **não gera 1099** — depende de integradores externos (Yearli, Sovos, Track1099). SSE gera nativamente. Essencial ao ICP (contractors 1099 são operação padrão do shop). Movido de Herdamos → Superamos em v1.1. |
+| **MACRS nativo em FAM** | NS trata MACRS como "alternate tax method" separado, exigindo configuração. SSE tem MACRS nativo (ADR-008) porque é requisito IRS para veículos do shop. Feature essencial, não extensão. Adicionado v1.1. |
+| **Activation tracking instrumentado** | NS tem dashboards pós-implementação; não trata activation rate como métrica padrão. SSE tem tabela `activation_events` + dashboard interno (RF-003). Diferencial de governança PO/PM. Adicionado v1.1. |
 
 ---
 
@@ -306,13 +308,13 @@ Violação de qualquer princípio sem justificativa registrada em ADR → descop
 
 **P4 — Operação do shop não depende do owner estar logado.** Owner viaja, o shop opera. Técnico e estimator têm autonomia completa dentro de seus escopos.
 
-**P5 — Insurance-first, não out-of-pocket-first.** Fluxo padrão de estimate e SO é insurance claim com adjuster. Out-of-pocket é caminho paralelo menor. Invertido do que NetSuite faz.
+**P5 — Insurance-first, não out-of-pocket-first.** Fluxo padrão de estimate e SO é insurance claim com adjuster. Out-of-pocket é caminho paralelo menor. Invertido do que NS faz.
 
 **P6 — Contabilidade nos bastidores.** Tech/estimator nunca veem "journal entry" ou "debit/credit". Owner vê KPIs agregados em linguagem de negócio ("margem", "receivable", "cash"). Accountant vê GL detalhado — é quem fala a língua contábil.
 
-**P7 — NetSuite é referência, não benchmark.** Feature nova só entra se passa no filtro "body shop médio de 5–15 func usa isso?". Se a justificativa é "NetSuite tem" ou "pode ser necessário no futuro", desprioriza.
+**P7 — NS é referência, não benchmark.** Feature nova só entra se passa no filtro "body shop médio de 5–15 func usa isso?". Se a justificativa é "NS tem" ou "pode ser necessário no futuro", desprioriza.
 
-**P8 — Offline-first para shop floor (v1.1).** Técnico não pode perder trabalho quando WiFi cai. Operações críticas do mobile (timer, fotos, SO status) funcionam offline e sincronizam quando reconectar. Desktop pode assumir online; mobile do Technician **não**. Sem offline, mobile do técnico vira "ferramenta que só funciona no escritório" — contradiz P2. Origem: gap identificado em `ANALISE_NETSUITE_vs_BUSSOLA_v1.md §2.7` (FSM Mobile).
+**P8 — Offline-first para shop floor (v1.1).** Técnico não pode perder trabalho quando WiFi cai. Operações críticas do mobile (timer, fotos, SO status) funcionam offline e sincronizam quando reconectar. Desktop pode assumir online; mobile do Technician **não**. Sem offline, mobile do técnico vira "ferramenta que só funciona no escritório" — contradiz P2. Origem: gap identificado em `ANALISE_NS_vs_BUSSOLA_v1.md §2.7` (FSM Mobile).
 
 ---
 
@@ -402,12 +404,12 @@ Accountant   → /app/books           [Fiscal cycle: período + JE + export]
 
 - **User com múltiplos roles** (ex: owner que também estima) escolhe workspace ativo no topo (pattern tipo "switch workspace"). Default é role mais "alto" (owner > manager > estimator > technician > accountant > viewer).
 - **Settings** (categorias, contas, users, plan) fica fora dos workspaces — sempre acessível por owner/admin via menu do avatar.
-- **Search global (Cmd/Ctrl+K) é obrigatório** em todos os workspaces — customer name, VIN, estimate #, SO #. User acessa qualquer entidade digitando parte do nome/número sem navegar menu. Se não existir no SSE hoje, é ENH P1 independente dos outros RFs (ver `ANALISE_NETSUITE_vs_BUSSOLA_v1.md §2.8`).
+- **Search global (Cmd/Ctrl+K) é obrigatório** em todos os workspaces — customer name, VIN, estimate #, SO #. User acessa qualquer entidade digitando parte do nome/número sem navegar menu. Se não existir no SSE hoje, é ENH P1 independente dos outros RFs (ver `ANALISE_NS_vs_BUSSOLA_v1.md §2.8`).
 - **Não implementar** navegação horizontal de botões tipo Minhas Finanças ("14 páginas, todas iguais"). Hierarquia de persona > workspace > seção > tela é explícita.
 
 ### Nota de nomenclatura (v1.1)
 
-Adotamos o termo **"Workspace"** (e não "Center" como NetSuite) para não importar jargão de ERP genérico para o SSE. "Workspace" é autodescritivo em EN e PT-BR, e sinaliza melhor a intenção de "ambiente de trabalho da persona" do que "centro" (que sugere centralidade hierárquica). Origem: `ANALISE_NETSUITE_vs_BUSSOLA_v1.md §2.8`.
+Adotamos o termo **"Workspace"** (e não "Center" como NS) para não importar jargão de ERP genérico para o SSE. "Workspace" é autodescritivo em EN e PT-BR, e sinaliza melhor a intenção de "ambiente de trabalho da persona" do que "centro" (que sugere centralidade hierárquica). Origem: `ANALISE_NS_vs_BUSSOLA_v1.md §2.8`.
 
 ---
 
@@ -420,15 +422,15 @@ Adotamos o termo **"Workspace"** (e não "Center" como NetSuite) para não impor
 | **P0** | 30–60 dias | Setup Wizard + Event tracking de activation (Fase 1.5) | Gap 3, Gap 8 | Instrumenta a métrica. Sem isso, roadmap é vibe. |
 | **P0** | 30–60 dias | Landing por persona + sidebar por workspace (Fase 1.5) | Gap 1 | Habilita time-to-first-value. Baixa complexidade, alto impacto. |
 | **P1** | 60–90 dias | Cockpit do Owner (5 KPIs + alertas) (Fase 2 early) | Gap 4 | Ancoragem de retenção. Owner é decisor de cancelamento. |
-| **P1** | 60–90 dias | Insurance workflow visual (state machine + inbox do Estimator) (Fase 2) | Gap 5 | Diferencial vs. NetSuite. Core do ICP. |
+| **P1** | 60–90 dias | Insurance workflow visual (state machine + inbox do Estimator) (Fase 2) | Gap 5 | Diferencial vs. NS. Core do ICP. |
 | **P1** | 90–120 dias | Mobile PWA para Technician (SOs + timer + fotos) (Fase 2) | Gap 2 | Completa adoption interna. Destrava "shop inteiro usando". |
 | **P2** | 90–120 dias | Export básico para Accountant (GL + TB + JE em CSV/XLSX) (Fase 2) | Gap 7 parcial | Antecipa cobertura da persona influenciadora. |
 | **P2** | 120–150 dias | Descope formal dos 3 métodos de depreciação extras para plano enterprise | Gap 6 | Poupa dev time. Documentar em ADR. |
 | **P3** | 150–180 dias | Portal do Contador completo (Fase 4 conforme CLAUDE.md) | Gap 7 total | Cobre persona com experiência dedicada. |
-| **P1** (v1.1) | 60–90 dias | **RF-004 Customer 360 View** — tela unificada com 7 abas | Fricção CRM (Gap 9 candidato) | Padrão NetSuite validado. 90% dos cliques do Estimator caem aqui. |
+| **P1** (v1.1) | 60–90 dias | **RF-004 Customer 360 View** — tela unificada com 7 abas | Fricção CRM (Gap 9 candidato) | Padrão NS validado. 90% dos cliques do Estimator caem aqui. |
 | **P1** (v1.1) | 60–90 dias | **RF-005 Estimate State Machine + Inbox** | Gap 5 | Formaliza o "RF futuro — Insurance workflow visual". Core do ICP. |
-| **P1** (v1.1) | 60–90 dias | **RF-006 Payment Hold / Disputed Estimate** | Gap 5 complementar | Evita shop continuar trabalho enquanto claim está travado. Inspiração NetSuite Payment Hold. |
-| **P1** (v1.1) | Concorrente com Cockpit | **Ajuste RF do Cockpit** — incluir Available Balance distinct from Cash Balance | Gap 4 refinado | Sem isso, KPI "Cash disponível" é enganoso durante float bancário. Inspiração NetSuite In-Transit Payments. |
+| **P1** (v1.1) | 60–90 dias | **RF-006 Payment Hold / Disputed Estimate** | Gap 5 complementar | Evita shop continuar trabalho enquanto claim está travado. Inspiração NS Payment Hold. |
+| **P1** (v1.1) | Concorrente com Cockpit | **Ajuste RF do Cockpit** — incluir Available Balance distinct from Cash Balance | Gap 4 refinado | Sem isso, KPI "Cash disponível" é enganoso durante float bancário. Inspiração NS In-Transit Payments. |
 | **P2** (v1.1) | 90–120 dias | **RF-007 Case Management simplificado** | Gap 5 parcial | Customer complaint + disputes não-estimate. Estrutura leve, anti-rec #13 formaliza limite de escopo. |
 
 ### Nota sobre Fase 2 (IA + Integrações)
@@ -454,8 +456,8 @@ Este reordenamento é **sugestão do PO** e entra como input para o Dev Manager.
 | 2026-04-17 | Reordenamento sugerido para Fase 2 (activation/cockpit/insurance/mobile antes de IA) — a ratificar | PO Cowork |
 | 2026-04-17 | Descope formal dos 3 métodos de depreciação extras para plano enterprise — a registrar em ADR próprio | PO Cowork |
 | 2026-04-17 | Bússola SSE v0.1 oficializada via ADR-009 | PO Cowork |
-| 2026-04-21 | Análise comparativa NetSuite vs Bússola concluída (v1) | PO Cowork |
-| 2026-04-21 | Dashboard NetSuite↔Bússola adotado como artefato vivo (HTML interativo) | PO Cowork |
+| 2026-04-21 | Análise comparativa NS vs Bússola concluída (v1) | PO Cowork |
+| 2026-04-21 | Dashboard NS↔Bússola adotado como artefato vivo (HTML interativo) | PO Cowork |
 | 2026-04-21 | **RF-004 a RF-007 aprovados** (Customer 360, Estimate State Machine, Payment Hold, Case Management) | PO Cowork |
 | 2026-04-21 | **Princípio P8 (offline-first shop floor)** adicionado a §6 | PO Cowork |
 | 2026-04-21 | **§5 expandida** — 7 novas linhas em Simplificamos; 1099-NEC movido para Superamos; MACRS e activation tracking adicionados a Superamos | PO Cowork |

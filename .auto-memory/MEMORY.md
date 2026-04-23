@@ -1,4 +1,6 @@
-# Auto Memory Index
+﻿# Auto Memory Index
+
+> **Nota:** "NS" = ERP de referência externo. Nome substituído por precaução (ADR-014).
 
 > Atualizado em 2026-04-17. Referência canônica: `docs/process/HANDOFF_PROTOCOL.md` §3 (ownership matrix).
 
@@ -25,4 +27,4 @@
 
 ## Dashboards estratégicos (leitura contínua)
 
-- **NetSuite↔Bússola v1** (HTML interativo): `docs/strategy/ANALISE_NETSUITE_vs_BUSSOLA_v1.html` — adotado pelo Luigi em 2026-04-21 como artefato canônico de acompanhamento estratégico. Fonte textual: `ANALISE_NETSUITE_vs_BUSSOLA_v1.md`. Manutenção governada por **T-20260421-1** em `dm_queue.md` (gatilhos: mudança de status RF-004..007, ajuste da Bússola, novas anti-recs/áreas NetSuite, ADR-012). **Owner (conteúdo):** PO. **Owner (sync):** DM via gatilho.
+- **NS↔Bússola v1** (HTML interativo): `docs/strategy/ANALISE_NS_vs_BUSSOLA_v1.html` — adotado pelo Luigi em 2026-04-21 como artefato canônico de acompanhamento estratégico. Fonte textual: `ANALISE_NS_vs_BUSSOLA_v1.md`. Manutenção governada por **T-20260421-1** em `dm_queue.md` (gatilhos: mudança de status RF-004..007, ajuste da Bússola, novas anti-recs/áreas NS, ADR-012). **Owner (conteúdo):** PO. **Owner (sync):** DM via gatilho.

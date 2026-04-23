@@ -1,3 +1,6 @@
+﻿-- NOTA: Neste documento, "NS" refere-se a um ERP proprietário de terceiros
+-- usado exclusivamente como referência comparativa externa, sem relação comercial,
+-- licenciamento ou endosso. O nome da marca foi substituído por precaução (ver ADR-014).
 -- ============================================================================
 -- STORM SHIELD ENTERPRISE — Fixed Asset Management (FAM) Module
 -- Migration 001: Core Tables + Constraints
@@ -58,7 +61,7 @@ CREATE TABLE asset_categories (
     category_name               VARCHAR(100) NOT NULL,
     description                 TEXT,
 
-    -- 4 contas GL obrigatórias (Leading Practice Oracle/NetSuite)
+    -- 4 contas GL obrigatórias (Leading Practice Oracle/NS)
     asset_account_id            UUID NOT NULL REFERENCES chart_of_accounts(id),
     depreciation_account_id     UUID NOT NULL REFERENCES chart_of_accounts(id),
     expense_account_id          UUID NOT NULL REFERENCES chart_of_accounts(id),
