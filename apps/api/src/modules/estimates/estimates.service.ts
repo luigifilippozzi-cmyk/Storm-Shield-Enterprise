@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException, ConflictException } from '@nestjs/common';
 import { EstimateStatus } from '@sse/shared-types';
 import { TenantDatabaseService } from '../../config/tenant-database.service';
 import { StorageService } from '../../common/services/storage.service';
@@ -8,7 +8,10 @@ import { UpdateEstimateDto } from './dto/update-estimate.dto';
 import { QueryEstimateDto } from './dto/query-estimate.dto';
 import { UpdateEstimateStatusDto } from './dto/update-status.dto';
 import { CreateSupplementDto } from './dto/create-supplement.dto';
+import { OpenDisputeDto } from './dto/open-dispute.dto';
+import { ResolveDisputeDto } from './dto/resolve-dispute.dto';
 import { ActivationEventsService } from '../admin/activation/activation.service';
+import { EstimateStateMachineService } from './estimate-state-machine.service';
 
 const ALLOWED_DOC_TYPES = [
   'application/pdf',
@@ -51,6 +54,7 @@ export class EstimatesService {
     private readonly tenantDb: TenantDatabaseService,
     private readonly storageService: StorageService,
     private readonly activationEvents: ActivationEventsService,
+    private readonly stateMachine: EstimateStateMachineService,
   ) {}
 
   async findAll(
@@ -411,5 +415,106 @@ export class EstimatesService {
       .returning('*');
 
     return record;
+  }
+
+  // ── RF-006: Dispute workflow ──
+
+  async openDispute(tenantId: string, estimateId: string, dto: OpenDisputeDto, userId: string) {
+    const knex = await this.tenantDb.getConnection();
+
+    const estimate = await knex('estimates')
+      .where({ id: estimateId, tenant_id: tenantId, deleted_at: null })
+      .first();
+    if (!estimate) throw new NotFoundException('Estimate not found');
+
+    if (estimate.status === 'disputed') {
+      throw new ConflictException('Estimate is already in disputed status');
+    }
+
+    // Delegate to state machine — throws BadRequestException if transition not allowed
+    await this.stateMachine.transition(tenantId, estimateId, 'disputed', userId, dto.dispute_notes);
+
+    const now = new Date();
+    const [updated] = await knex('estimates')
+      .where({ id: estimateId, tenant_id: tenantId })
+      .update({
+        dispute_reason: dto.dispute_reason,
+        dispute_notes: dto.dispute_notes ?? null,
+        dispute_opened_at: now,
+        dispute_resolved_at: null,
+        updated_at: now,
+      })
+      .returning('*');
+
+    // Pause all active service orders linked to this estimate
+    await knex('service_orders')
+      .where({ estimate_id: estimateId, tenant_id: tenantId, deleted_at: null })
+      .whereNotIn('status', ['completed', 'delivered', 'cancelled'])
+      .update({ is_paused_by_dispute: true, updated_at: now });
+
+    // Notify all owner-role users for this tenant
+    await this.notifyOwners(tenantId, knex, {
+      type: 'warning',
+      title: `Estimate ${estimate.estimate_number} Disputed`,
+      message: `Estimate ${estimate.estimate_number} has been moved to disputed status. Reason: ${dto.dispute_reason.replace(/_/g, ' ')}. Linked service orders are paused.`,
+      data: { estimate_id: estimateId, dispute_reason: dto.dispute_reason },
+    });
+
+    return updated;
+  }
+
+  async resolveDispute(tenantId: string, estimateId: string, dto: ResolveDisputeDto, userId: string) {
+    const knex = await this.tenantDb.getConnection();
+
+    const estimate = await knex('estimates')
+      .where({ id: estimateId, tenant_id: tenantId, deleted_at: null })
+      .first();
+    if (!estimate) throw new NotFoundException('Estimate not found');
+
+    if (estimate.status !== 'disputed') {
+      throw new BadRequestException(`Cannot resolve dispute: estimate is in '${estimate.status}' status, expected 'disputed'`);
+    }
+
+    // Delegate status transition to state machine — validates allowed targets
+    await this.stateMachine.transition(tenantId, estimateId, dto.resolution_status, userId, dto.notes);
+
+    const now = new Date();
+    const [updated] = await knex('estimates')
+      .where({ id: estimateId, tenant_id: tenantId })
+      .update({ dispute_resolved_at: now, updated_at: now })
+      .returning('*');
+
+    // Unpause all service orders linked to this estimate
+    await knex('service_orders')
+      .where({ estimate_id: estimateId, tenant_id: tenantId, is_paused_by_dispute: true })
+      .update({ is_paused_by_dispute: false, updated_at: now });
+
+    return updated;
+  }
+
+  private async notifyOwners(
+    tenantId: string,
+    knex: any,
+    payload: { type: string; title: string; message: string; data: Record<string, unknown> },
+  ) {
+    const ownerUsers = await knex('user_role_assignments')
+      .join('roles', 'user_role_assignments.role_id', 'roles.id')
+      .where({ 'user_role_assignments.tenant_id': tenantId, 'roles.name': 'owner' })
+      .select('user_role_assignments.user_id');
+
+    if (!ownerUsers.length) return;
+
+    const notifications = ownerUsers.map((u: { user_id: string }) => ({
+      id: generateId(),
+      tenant_id: tenantId,
+      user_id: u.user_id,
+      type: payload.type,
+      channel: 'in_app',
+      title: payload.title,
+      message: payload.message,
+      data: JSON.stringify(payload.data),
+    }));
+
+    await knex('notifications').insert(notifications);
   }
 }

@@ -18,6 +18,11 @@ export interface Estimate {
   approved_at: string | null;
   approved_by: string | null;
   valid_until: string | null;
+  dispute_reason: string | null;
+  dispute_notes: string | null;
+  dispute_opened_at: string | null;
+  dispute_resolved_at: string | null;
+  blocks_so_progression: boolean;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;

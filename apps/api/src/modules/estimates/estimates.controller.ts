@@ -11,6 +11,8 @@ import { UpdateEstimateDto } from './dto/update-estimate.dto';
 import { QueryEstimateDto } from './dto/query-estimate.dto';
 import { UpdateEstimateStatusDto } from './dto/update-status.dto';
 import { CreateSupplementDto } from './dto/create-supplement.dto';
+import { OpenDisputeDto } from './dto/open-dispute.dto';
+import { ResolveDisputeDto } from './dto/resolve-dispute.dto';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { TenantGuard } from '../../common/guards/tenant.guard';
 import { RbacGuard } from '../../common/guards/rbac.guard';
@@ -173,5 +175,36 @@ export class EstimatesController {
     @Body() dto: CreateSupplementDto,
   ) {
     return this.estimatesService.createSupplement(tenantId, estimateId, userId, dto);
+  }
+
+  // ── RF-006: Dispute workflow ──
+
+  @Post(':id/dispute')
+  @ApiOperation({ summary: 'Open a dispute on an estimate — transitions to disputed, pauses linked SOs, notifies Owner' })
+  @ApiResponse({ status: 201, description: 'Dispute opened' })
+  @ApiResponse({ status: 400, description: 'Invalid status transition or already disputed' })
+  @ApiResponse({ status: 409, description: 'Estimate already disputed' })
+  @RequirePermissions('estimates:write:update')
+  openDispute(
+    @CurrentTenant() tenantId: string,
+    @CurrentUser('id') userId: string,
+    @Param('id', ParseUUIDPipe) estimateId: string,
+    @Body() dto: OpenDisputeDto,
+  ) {
+    return this.estimatesService.openDispute(tenantId, estimateId, dto, userId);
+  }
+
+  @Post(':id/resolve-dispute')
+  @ApiOperation({ summary: 'Resolve a disputed estimate — clears dispute fields, unpauses linked SOs' })
+  @ApiResponse({ status: 201, description: 'Dispute resolved' })
+  @ApiResponse({ status: 400, description: 'Estimate is not in disputed status or invalid resolution target' })
+  @RequirePermissions('estimates:write:update')
+  resolveDispute(
+    @CurrentTenant() tenantId: string,
+    @CurrentUser('id') userId: string,
+    @Param('id', ParseUUIDPipe) estimateId: string,
+    @Body() dto: ResolveDisputeDto,
+  ) {
+    return this.estimatesService.resolveDispute(tenantId, estimateId, dto, userId);
   }
 }

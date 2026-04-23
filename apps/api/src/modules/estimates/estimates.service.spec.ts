@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { EstimatesService } from './estimates.service';
+import { EstimateStateMachineService } from './estimate-state-machine.service';
 import { TenantDatabaseService } from '../../config/tenant-database.service';
 import { StorageService } from '../../common/services/storage.service';
 import { ActivationEventsService } from '../admin/activation/activation.service';
@@ -11,7 +12,7 @@ const mockKnex = () => {
     'where', 'insert', 'update', 'select', 'first', 'returning',
     'clone', 'count', 'orderBy', 'limit', 'offset', 'del',
     'leftJoin', 'whereILike', 'orWhereILike', 'raw', 'groupBy',
-    'sum', 'groupByRaw', 'whereIn',
+    'sum', 'groupByRaw', 'whereIn', 'whereNotIn', 'join',
   ];
   methods.forEach((m) => {
     chain[m] = jest.fn().mockReturnValue(chain);
@@ -49,6 +50,7 @@ describe('EstimatesService', () => {
         { provide: TenantDatabaseService, useValue: { getConnection: jest.fn().mockResolvedValue(knex) } },
         { provide: StorageService, useValue: { upload: jest.fn(), delete: jest.fn(), generateKey: jest.fn().mockReturnValue('key') } },
         { provide: ActivationEventsService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
+        { provide: EstimateStateMachineService, useValue: { transition: jest.fn().mockResolvedValue({ estimate: {}, statusChange: {} }) } },
       ],
     }).compile();
     service = module.get<EstimatesService>(EstimatesService);
@@ -441,6 +443,96 @@ describe('EstimatesService', () => {
 
       await expect(
         service.createSupplement(TENANT_ID, ESTIMATE_ID, 'user-1', { reason: 'test', amount: 100 } as any),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  // ── RF-006: Dispute workflow tests ──
+
+  describe('openDispute', () => {
+    const USER_ID = '00000000-0000-0000-0000-000000000042';
+    const dto = { dispute_reason: 'adjuster_underpayment' as any };
+
+    it('should open a dispute, update fields, pause linked SOs, and notify owners', async () => {
+      const mockEstimate = { id: ESTIMATE_ID, estimate_number: 'EST-001', status: 'awaiting_approval', tenant_id: TENANT_ID };
+      const mockUpdated = { ...mockEstimate, status: 'disputed', dispute_reason: 'adjuster_underpayment' };
+      const ownerUsers = [{ user_id: '00000000-0000-0000-0000-000000000010' }];
+
+      // first() → estimate; returning() → updated estimate; join select → owner users; insert notifications
+      knex._chain.first.mockReturnValueOnce(mockEstimate);
+      knex._chain.returning.mockReturnValueOnce([mockUpdated]);
+      knex._chain.select.mockReturnValueOnce(ownerUsers);
+
+      const result = await service.openDispute(TENANT_ID, ESTIMATE_ID, dto, USER_ID);
+
+      expect(result).toEqual(mockUpdated);
+      expect(knex._chain.update).toHaveBeenCalledWith(
+        expect.objectContaining({ dispute_reason: 'adjuster_underpayment' }),
+      );
+    });
+
+    it('should throw ConflictException if estimate is already disputed', async () => {
+      knex._chain.first.mockReturnValueOnce({ id: ESTIMATE_ID, status: 'disputed' });
+
+      await expect(
+        service.openDispute(TENANT_ID, ESTIMATE_ID, dto, USER_ID),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('should throw NotFoundException when estimate not found', async () => {
+      knex._chain.first.mockReturnValueOnce(null);
+
+      await expect(
+        service.openDispute(TENANT_ID, ESTIMATE_ID, dto, USER_ID),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should bubble up BadRequestException from state machine on invalid transition', async () => {
+      const mockEstimate = { id: ESTIMATE_ID, status: 'draft', tenant_id: TENANT_ID };
+      knex._chain.first.mockReturnValueOnce(mockEstimate);
+
+      // Simulate state machine rejecting transition from draft → disputed
+      const stateMachine = service['stateMachine'] as jest.Mocked<EstimateStateMachineService>;
+      stateMachine.transition.mockRejectedValueOnce(new BadRequestException('Transition not allowed'));
+
+      await expect(
+        service.openDispute(TENANT_ID, ESTIMATE_ID, dto, USER_ID),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('resolveDispute', () => {
+    const USER_ID = '00000000-0000-0000-0000-000000000042';
+    const dto = { resolution_status: 'awaiting_approval' as any };
+
+    it('should resolve dispute, clear dispute_resolved_at, and unpause SOs', async () => {
+      const mockEstimate = { id: ESTIMATE_ID, status: 'disputed', tenant_id: TENANT_ID };
+      const mockUpdated = { ...mockEstimate, status: 'awaiting_approval', dispute_resolved_at: new Date() };
+
+      knex._chain.first.mockReturnValueOnce(mockEstimate);
+      knex._chain.returning.mockReturnValueOnce([mockUpdated]);
+
+      const result = await service.resolveDispute(TENANT_ID, ESTIMATE_ID, dto, USER_ID);
+
+      expect(result).toEqual(mockUpdated);
+      expect(knex._chain.update).toHaveBeenCalledWith(
+        expect.objectContaining({ dispute_resolved_at: expect.any(Date) }),
+      );
+    });
+
+    it('should throw BadRequestException if estimate is not disputed', async () => {
+      knex._chain.first.mockReturnValueOnce({ id: ESTIMATE_ID, status: 'approved' });
+
+      await expect(
+        service.resolveDispute(TENANT_ID, ESTIMATE_ID, dto, USER_ID),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw NotFoundException when estimate not found', async () => {
+      knex._chain.first.mockReturnValueOnce(null);
+
+      await expect(
+        service.resolveDispute(TENANT_ID, ESTIMATE_ID, dto, USER_ID),
       ).rejects.toThrow(NotFoundException);
     });
   });

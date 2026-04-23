@@ -1,10 +1,11 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { TenantDatabaseService } from '../../config/tenant-database.service';
 import { generateId } from '@sse/shared-utils';
 import { CreateServiceOrderDto } from './dto/create-service-order.dto';
 import { UpdateServiceOrderDto } from './dto/update-service-order.dto';
 import { QueryServiceOrderDto } from './dto/query-service-order.dto';
 import { UpdateServiceOrderStatusDto } from './dto/update-status.dto';
+import { ForceProgressDto } from './dto/force-progress.dto';
 import { ActivationEventsService } from '../admin/activation/activation.service';
 
 export interface PaginatedResult<T> {
@@ -138,6 +139,13 @@ export class ServiceOrdersService {
       .first();
     if (!order) throw new NotFoundException('Service order not found');
 
+    // RF-006: block progression if paused by an active dispute
+    if (order.is_paused_by_dispute) {
+      throw new ConflictException(
+        'Service order is paused due to a disputed estimate. Resolve the dispute or use force-progress (Owner only).',
+      );
+    }
+
     const allowed = ALLOWED_STATUS_TRANSITIONS[order.status] || [];
     if (!allowed.includes(dto.status)) {
       throw new BadRequestException(
@@ -189,5 +197,80 @@ export class ServiceOrdersService {
       .where({ id, tenant_id: tenantId })
       .update({ deleted_at: new Date() });
     return { deleted: true };
+  }
+
+  // RF-006: Owner-only override for dispute-locked service orders
+  async forceProgress(
+    tenantId: string,
+    id: string,
+    dto: ForceProgressDto,
+    user: { id: string; roles?: string[] },
+  ) {
+    if (!user.roles?.includes('owner')) {
+      throw new ForbiddenException('Force progress requires the owner role');
+    }
+
+    const knex = await this.tenantDb.getConnection();
+    const order = await knex('service_orders')
+      .where({ id, tenant_id: tenantId, deleted_at: null })
+      .first();
+    if (!order) throw new NotFoundException('Service order not found');
+
+    if (!order.is_paused_by_dispute) {
+      throw new BadRequestException('Service order is not paused by a dispute');
+    }
+
+    const allowed = ALLOWED_STATUS_TRANSITIONS[order.status] || [];
+    if (!allowed.includes(dto.target_status)) {
+      throw new BadRequestException(
+        `Cannot transition from '${order.status}' to '${dto.target_status}'. Allowed: ${allowed.join(', ') || 'none'}`,
+      );
+    }
+
+    const now = new Date();
+    const updateFields: Record<string, unknown> = {
+      status: dto.target_status,
+      is_paused_by_dispute: false,
+      updated_at: now,
+    };
+    if (dto.target_status === 'in_progress' && !order.started_at) {
+      updateFields.started_at = now;
+    }
+    if (dto.target_status === 'completed') {
+      updateFields.completed_at = now;
+    }
+
+    const [record] = await knex('service_orders')
+      .where({ id, tenant_id: tenantId })
+      .update(updateFields)
+      .returning('*');
+
+    await knex('so_status_history').insert({
+      id: generateId(),
+      tenant_id: tenantId,
+      service_order_id: id,
+      from_status: order.status,
+      to_status: dto.target_status,
+      changed_by: user.id,
+      notes: `[FORCE PROGRESS — dispute override] ${dto.reason}`,
+    });
+
+    // Audit log for compliance (owner override is a high-risk action)
+    try {
+      await knex('audit_logs').insert({
+        id: generateId(),
+        tenant_id: tenantId,
+        user_id: user.id,
+        action: 'service_order.force_progress',
+        resource_type: 'service_order',
+        resource_id: id,
+        new_values: JSON.stringify({ to_status: dto.target_status, reason: dto.reason }),
+        created_at: now,
+      });
+    } catch {
+      // audit_logs non-blocking — failure here must not roll back the progression
+    }
+
+    return record;
   }
 }
