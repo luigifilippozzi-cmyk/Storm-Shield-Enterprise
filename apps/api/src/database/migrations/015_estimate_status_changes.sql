@@ -1,89 +1,17 @@
--- Migration 014: Estimate State Machine (RF-005a)
--- Purpose: Expand estimate_status ENUM to 10 canonical values + append-only status history table
--- Scope: TENANT schema (executed per-tenant; no public.prefix)
--- Ref: RF-005a, ADR-012, dm_queue.md T-20260421-3a, Split A ratificado 2026-04-22
+-- Migration 015: estimate_status_changes table + legacy mapping (RF-005a, part 2/2)
+-- Purpose: Map legacy status values to canonical equivalents; create append-only
+--   audit table estimate_status_changes with RLS and immutability triggers.
+-- PREREQUISITE: Migration 014 must be applied first (new ENUM values must be committed
+--   in a separate transaction before being referenced here — PG requirement).
+-- Scope: TENANT schema (executed per-tenant; no public. prefix)
+-- Ref: RF-005a, ADR-012, T-20260421-3a, Split A ratificado 2026-04-22
 
 -- ══════════════════════════════════════
--- STEP 1: Expand ENUM (idempotent via DO block)
--- New canonical values: submitted_to_adjuster, awaiting_approval, supplement_pending,
---   approved_with_supplement, disputed, paid, closed
--- Retained values: draft, approved, rejected
--- Legacy values kept in type (can't remove in PG): sent, supplement_requested, converted
--- ══════════════════════════════════════
-DO $$ BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_enum
-    WHERE enumlabel = 'submitted_to_adjuster'
-      AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'estimate_status')
-  ) THEN
-    ALTER TYPE estimate_status ADD VALUE 'submitted_to_adjuster';
-  END IF;
-END $$;
-
-DO $$ BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_enum
-    WHERE enumlabel = 'awaiting_approval'
-      AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'estimate_status')
-  ) THEN
-    ALTER TYPE estimate_status ADD VALUE 'awaiting_approval';
-  END IF;
-END $$;
-
-DO $$ BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_enum
-    WHERE enumlabel = 'supplement_pending'
-      AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'estimate_status')
-  ) THEN
-    ALTER TYPE estimate_status ADD VALUE 'supplement_pending';
-  END IF;
-END $$;
-
-DO $$ BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_enum
-    WHERE enumlabel = 'approved_with_supplement'
-      AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'estimate_status')
-  ) THEN
-    ALTER TYPE estimate_status ADD VALUE 'approved_with_supplement';
-  END IF;
-END $$;
-
-DO $$ BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_enum
-    WHERE enumlabel = 'disputed'
-      AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'estimate_status')
-  ) THEN
-    ALTER TYPE estimate_status ADD VALUE 'disputed';
-  END IF;
-END $$;
-
-DO $$ BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_enum
-    WHERE enumlabel = 'paid'
-      AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'estimate_status')
-  ) THEN
-    ALTER TYPE estimate_status ADD VALUE 'paid';
-  END IF;
-END $$;
-
-DO $$ BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_enum
-    WHERE enumlabel = 'closed'
-      AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'estimate_status')
-  ) THEN
-    ALTER TYPE estimate_status ADD VALUE 'closed';
-  END IF;
-END $$;
-
--- ══════════════════════════════════════
--- STEP 2: Map legacy status values to canonical equivalents
--- Only updates rows with explicit mapping; no forced defaults
--- Idempotent: re-running when rows already migrated is a no-op
+-- STEP 1: Map legacy status values to canonical equivalents
+-- Only updates rows with explicit mapping; no forced defaults.
+-- Idempotent: re-running when rows already migrated is a no-op.
+-- Legacy values (sent, supplement_requested, converted) remain in the ENUM type
+-- but should not be used going forward.
 -- ══════════════════════════════════════
 UPDATE estimates SET status = 'submitted_to_adjuster', updated_at = NOW()
   WHERE status = 'sent';
@@ -95,7 +23,7 @@ UPDATE estimates SET status = 'closed', updated_at = NOW()
   WHERE status = 'converted';
 
 -- ══════════════════════════════════════
--- STEP 3: Create estimate_status_changes (append-only audit trail)
+-- STEP 2: Create estimate_status_changes (append-only audit trail)
 -- ══════════════════════════════════════
 CREATE TABLE IF NOT EXISTS estimate_status_changes (
   id                  UUID          NOT NULL,
@@ -119,7 +47,7 @@ CREATE INDEX IF NOT EXISTS idx_estimate_status_changes_user
   ON estimate_status_changes (tenant_id, changed_by_user_id, changed_at DESC);
 
 -- ══════════════════════════════════════
--- STEP 4: Enforce append-only semantics (no UPDATE / DELETE)
+-- STEP 3: Enforce append-only semantics (no UPDATE / DELETE)
 -- ══════════════════════════════════════
 CREATE OR REPLACE FUNCTION prevent_estimate_status_changes_mutation()
 RETURNS TRIGGER LANGUAGE plpgsql AS $$
@@ -139,7 +67,7 @@ CREATE TRIGGER trg_estimate_status_changes_no_delete
   FOR EACH ROW EXECUTE FUNCTION prevent_estimate_status_changes_mutation();
 
 -- ══════════════════════════════════════
--- STEP 5: Row Level Security
+-- STEP 4: Row Level Security
 -- ══════════════════════════════════════
 ALTER TABLE estimate_status_changes ENABLE ROW LEVEL SECURITY;
 
