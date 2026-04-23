@@ -21,6 +21,8 @@
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 25 95% 20%;
     --radius: 0.5rem;
   }
 
@@ -39,6 +41,8 @@
     --accent-foreground: 210 40% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
+    --warning: 38 80% 45%;
+    --warning-foreground: 25 95% 90%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 224.3 76.3% 48%;

@@ -270,31 +270,46 @@ export class EstimatesService {
     });
   }
 
-  async updateStatus(tenantId: string, id: string, dto: UpdateEstimateStatusDto) {
-    const knex = await this.tenantDb.getConnection();
-    const estimate = await knex('estimates')
-      .where({ id, tenant_id: tenantId, deleted_at: null })
-      .first();
-    if (!estimate) throw new NotFoundException('Estimate not found');
-
-    const allowed = ALLOWED_STATUS_TRANSITIONS[estimate.status] || [];
-    if (!allowed.includes(dto.status)) {
-      throw new BadRequestException(
-        `Cannot transition from '${estimate.status}' to '${dto.status}'. Allowed: ${allowed.join(', ') || 'none'}`,
-      );
+  async updateStatus(
+    tenantId: string,
+    id: string,
+    dto: UpdateEstimateStatusDto,
+    user?: { id: string; roles?: string[] },
+  ) {
+    // Estimators may only change status of their own estimates.
+    if (user?.roles?.includes('estimator')) {
+      const knex = await this.tenantDb.getConnection();
+      const estimate = await knex('estimates')
+        .where({ id, tenant_id: tenantId, deleted_at: null })
+        .select('estimated_by')
+        .first();
+      if (!estimate) throw new NotFoundException('Estimate not found');
+      if (estimate.estimated_by !== user.id) {
+        throw new ForbiddenException('Estimators can only change status of their own estimates');
+      }
     }
 
-    const updateFields: Record<string, unknown> = { status: dto.status, updated_at: new Date() };
+    // Delegate to canonical state machine (RF-005a). Validates transition,
+    // updates estimates.status, and writes audit entry to estimate_status_changes.
+    const { estimate } = await this.stateMachine.transition(
+      tenantId,
+      id,
+      dto.status,
+      user?.id ?? 'system',
+      dto.notes,
+    );
+
+    // Keep approved_at stamp for backward compat with financial reporting.
     if (dto.status === 'approved') {
-      updateFields.approved_at = new Date();
+      const knex = await this.tenantDb.getConnection();
+      const [updated] = await knex('estimates')
+        .where({ id, tenant_id: tenantId })
+        .update({ approved_at: new Date() })
+        .returning('*');
+      return updated;
     }
 
-    const [record] = await knex('estimates')
-      .where({ id, tenant_id: tenantId })
-      .update(updateFields)
-      .returning('*');
-
-    return record;
+    return estimate;
   }
 
   async remove(tenantId: string, id: string) {
