@@ -64,12 +64,14 @@ export class EstimatesController {
   @ApiOperation({ summary: 'Get estimate by ID with lines and supplements' })
   @ApiResponse({ status: 200, description: 'Estimate found' })
   @ApiResponse({ status: 404, description: 'Estimate not found' })
+  @ApiResponse({ status: 403, description: 'Estimator can only view their own estimates' })
   @RequirePermissions('estimates:read:detail')
   findOne(
     @CurrentTenant() tenantId: string,
+    @CurrentUser() user: { id: string; roles?: string[] },
     @Param('id', ParseUUIDPipe) id: string,
   ) {
-    return this.estimatesService.findOne(tenantId, id);
+    return this.estimatesService.findOne(tenantId, id, user);
   }
 
   @Put(':id')
