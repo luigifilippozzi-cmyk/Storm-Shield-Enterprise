@@ -223,10 +223,10 @@
         <h3 class="font-semibold text-sse-warn">AJUSTAR — adotar</h3>
       </div>
       <ul class="text-sm space-y-2 text-slate-300">
-        <li>• Customer 360 View <span class="text-xs text-sse-muted">(RF-004, P1)</span></li>
-        <li>• Payment Hold / Disputed <span class="text-xs text-sse-muted">(RF-006, P1)</span></li>
-        <li>• Case Management light <span class="text-xs text-sse-muted">(RF-007, P2)</span></li>
-        <li>• Estimate state machine <span class="text-xs text-sse-muted">(RF-005, P1)</span></li>
+        <li>• Customer 360 View <span class="text-xs text-sse-good font-semibold">✓ DONE</span> <span class="text-xs text-sse-muted">(RF-004, PR #44)</span></li>
+        <li>• Payment Hold / Disputed <span class="text-xs text-sse-good font-semibold">✓ DONE</span> <span class="text-xs text-sse-muted">(RF-006, PR #51)</span></li>
+        <li>• Case Management light <span class="text-xs text-sse-muted">(RF-007, P2 — próxima sessão)</span></li>
+        <li>• Estimate state machine <span class="text-xs text-sse-good font-semibold">✓ DONE</span> <span class="text-xs text-sse-muted">(RF-005, PRs #48–52)</span></li>
         <li>• Available Balance no Cockpit</li>
         <li>• Offline-first shop floor (P8)</li>
         <li>• Track Service Time auto</li>
@@ -287,13 +287,13 @@
   <div class="grid md:grid-cols-2 gap-4">
 
     <!-- RF-004 -->
-    <details class="bg-sse-panel border border-sse-border rounded-xl overflow-hidden group">
+    <details class="bg-sse-panel border border-sse-good/30 rounded-xl overflow-hidden group">
       <summary class="cursor-pointer p-5 flex items-start justify-between gap-4 hover:bg-sse-bg">
         <div>
           <div class="flex items-center gap-2 mb-1">
             <span class="px-2 py-0.5 rounded text-xs font-bold bg-sse-accent/20 text-sse-accent">RF-004</span>
-            <span class="px-2 py-0.5 rounded text-xs bg-sse-warn/20 text-sse-warn">P1</span>
-            <span class="px-2 py-0.5 rounded text-xs bg-slate-700/40 text-slate-300">Fase 2</span>
+            <span class="px-2 py-0.5 rounded text-xs bg-sse-good/20 text-sse-good font-semibold">✓ DONE</span>
+            <span class="px-2 py-0.5 rounded text-xs bg-slate-700/40 text-slate-300">PR #44</span>
           </div>
           <h3 class="font-bold text-white">Customer 360 View</h3>
           <p class="text-xs text-sse-muted mt-1">Tela unificada do cliente — 6 abas</p>
@@ -325,13 +325,13 @@
     </details>
 
     <!-- RF-005 -->
-    <details class="bg-sse-panel border border-sse-border rounded-xl overflow-hidden group">
+    <details class="bg-sse-panel border border-sse-good/30 rounded-xl overflow-hidden group">
       <summary class="cursor-pointer p-5 flex items-start justify-between gap-4 hover:bg-sse-bg">
         <div>
           <div class="flex items-center gap-2 mb-1">
             <span class="px-2 py-0.5 rounded text-xs font-bold bg-sse-accent/20 text-sse-accent">RF-005</span>
-            <span class="px-2 py-0.5 rounded text-xs bg-sse-warn/20 text-sse-warn">P1</span>
-            <span class="px-2 py-0.5 rounded text-xs bg-slate-700/40 text-slate-300">Fase 2</span>
+            <span class="px-2 py-0.5 rounded text-xs bg-sse-good/20 text-sse-good font-semibold">✓ DONE</span>
+            <span class="px-2 py-0.5 rounded text-xs bg-slate-700/40 text-slate-300">PRs #48–52</span>
           </div>
           <h3 class="font-bold text-white">Estimate State Machine + Inbox</h3>
           <p class="text-xs text-sse-muted mt-1">Formaliza Gap 5 (insurance workflow)</p>
@@ -355,13 +355,13 @@
     </details>
 
     <!-- RF-006 -->
-    <details class="bg-sse-panel border border-sse-border rounded-xl overflow-hidden group">
+    <details class="bg-sse-panel border border-sse-good/30 rounded-xl overflow-hidden group">
       <summary class="cursor-pointer p-5 flex items-start justify-between gap-4 hover:bg-sse-bg">
         <div>
           <div class="flex items-center gap-2 mb-1">
             <span class="px-2 py-0.5 rounded text-xs font-bold bg-sse-accent/20 text-sse-accent">RF-006</span>
-            <span class="px-2 py-0.5 rounded text-xs bg-sse-warn/20 text-sse-warn">P1</span>
-            <span class="px-2 py-0.5 rounded text-xs bg-slate-700/40 text-slate-300">Fase 2</span>
+            <span class="px-2 py-0.5 rounded text-xs bg-sse-good/20 text-sse-good font-semibold">✓ DONE</span>
+            <span class="px-2 py-0.5 rounded text-xs bg-slate-700/40 text-slate-300">PR #51</span>
           </div>
           <h3 class="font-bold text-white">Payment Hold / Disputed Estimate</h3>
           <p class="text-xs text-sse-muted mt-1">Inspiração NS Payment Hold</p>
@@ -469,8 +469,8 @@
 <!-- =========== TAB: BÚSSOLA ====================== -->
 <!-- ============================================== -->
 <section data-section="bussola" class="hidden fade-in">
-  <h2 class="text-lg font-bold text-white mb-2">Ajustes propostos à Bússola v1.0 → v1.1</h2>
-  <p class="text-sm text-sse-muted mb-6">Diff visual das mudanças. Aplicação depende de ADR-012 e sessão PO de revisão.</p>
+  <h2 class="text-lg font-bold text-white mb-2">Ajustes propostos à Bússola v1.0 → v1.2</h2>
+  <p class="text-sm text-sse-muted mb-6">Diff visual das mudanças. v1.1 via ADR-012 (2026-04-21) — descopes, P8, 4 RFs. v1.2 via ADR-013 (2026-04-22) — §6 reorganizado, PV/PUX adotados.</p>
 
   <div class="space-y-6">
 
@@ -563,6 +563,33 @@
       </div>
     </div>
 
+    <!-- v1.2 ADR-013 -->
+    <div class="bg-sse-panel border border-sse-accent/30 rounded-xl overflow-hidden">
+      <div class="bg-sse-bg border-b border-sse-accent/30 p-4">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="px-2 py-0.5 rounded text-xs font-bold bg-sse-accent/20 text-sse-accent">v1.2</span>
+          <span class="px-2 py-0.5 rounded text-xs bg-sse-good/20 text-sse-good">ADR-013 · 2026-04-22</span>
+        </div>
+        <h3 class="font-bold text-white">§6 — Reorganização + PV/PUX (Bússola v1.1 → v1.2)</h3>
+        <p class="text-xs text-sse-muted mt-1">Incorporação parcial de princípios de valor e UX derivados do pacote MF.</p>
+      </div>
+      <div class="p-4 space-y-2 text-sm">
+        <div class="diff-added rounded p-3">
+          <span class="text-sse-good font-mono text-xs mr-2">+</span>
+          <strong class="text-white">§6.1 Princípios de Produto (P1–P8)</strong> — reorganização do §6 original. P8 offline-first já adicionado em v1.1.
+        </div>
+        <div class="diff-added rounded p-3">
+          <span class="text-sse-good font-mono text-xs mr-2">+</span>
+          <strong class="text-white">§6.2 Princípios de Valor (PV1–PV6)</strong> — clareza de proposta de valor por persona, sem over-engineering, sem feature-parity.
+        </div>
+        <div class="diff-added rounded p-3">
+          <span class="text-sse-good font-mono text-xs mr-2">+</span>
+          <strong class="text-white">§6.3 Princípios de UX (PUX1–PUX6)</strong> — checklist de UI aplicado em PRs de frontend via <code>frontend-reviewer</code> (Regra 19 CLAUDE.md).
+        </div>
+        <p class="text-xs text-sse-muted pt-2">Referência: <code>docs/decisions/013-incorporacao-parcial-pv-pux.md</code></p>
+      </div>
+    </div>
+
     <!-- §8 additions -->
     <div class="bg-sse-panel border border-sse-border rounded-xl overflow-hidden">
       <div class="bg-sse-bg border-b border-sse-border p-4">
@@ -582,14 +609,14 @@
             </thead>
             <tbody class="text-slate-300">
               <tr class="diff-added">
-                <td class="py-2 pr-3"><span class="px-2 py-0.5 rounded text-xs bg-sse-warn/20 text-sse-warn">P1</span></td>
-                <td class="py-2 pr-3 text-xs">60–90d</td>
+                <td class="py-2 pr-3"><span class="px-2 py-0.5 rounded text-xs bg-sse-good/20 text-sse-good font-semibold">✓ DONE</span></td>
+                <td class="py-2 pr-3 text-xs">PR #44</td>
                 <td class="py-2 pr-3 font-semibold text-white">RF-004 Customer 360</td>
                 <td class="py-2 text-xs">Fecha fricção CRM. NS tem como padrão.</td>
               </tr>
               <tr class="diff-added">
-                <td class="py-2 pr-3"><span class="px-2 py-0.5 rounded text-xs bg-sse-warn/20 text-sse-warn">P1</span></td>
-                <td class="py-2 pr-3 text-xs">60–90d</td>
+                <td class="py-2 pr-3"><span class="px-2 py-0.5 rounded text-xs bg-sse-good/20 text-sse-good font-semibold">✓ DONE</span></td>
+                <td class="py-2 pr-3 text-xs">PR #51</td>
                 <td class="py-2 pr-3 font-semibold text-white">RF-006 Payment Hold</td>
                 <td class="py-2 text-xs">Complementa Gap 5. Congelar SO quando supplement em disputa.</td>
               </tr>
@@ -690,11 +717,11 @@
         <h3 class="font-semibold text-white">Cockpit + Customer 360 + State Machine</h3>
         <div class="text-sm text-slate-300 mt-2 flex flex-wrap gap-2">
           <span class="px-2 py-0.5 rounded bg-sse-accent/10 text-sse-accent text-xs">RF Cockpit Owner</span>
-          <span class="px-2 py-0.5 rounded bg-sse-accent/10 text-sse-accent text-xs">RF-004 Customer 360 ★</span>
-          <span class="px-2 py-0.5 rounded bg-sse-accent/10 text-sse-accent text-xs">RF-005 Estimate State Machine</span>
-          <span class="px-2 py-0.5 rounded bg-sse-accent/10 text-sse-accent text-xs">RF-006 Payment Hold ★</span>
+          <span class="px-2 py-0.5 rounded bg-sse-good/20 text-sse-good text-xs font-semibold">✓ RF-004 Customer 360</span>
+          <span class="px-2 py-0.5 rounded bg-sse-good/20 text-sse-good text-xs font-semibold">✓ RF-005 Estimate State Machine</span>
+          <span class="px-2 py-0.5 rounded bg-sse-good/20 text-sse-good text-xs font-semibold">✓ RF-006 Payment Hold</span>
         </div>
-        <div class="text-xs text-sse-muted mt-2">★ = novos desta análise</div>
+        <div class="text-xs text-sse-muted mt-2">✓ = entregues · RF Cockpit Owner = próximo P1</div>
       </div>
     </div>
 
