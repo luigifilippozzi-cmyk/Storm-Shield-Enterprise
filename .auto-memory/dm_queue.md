@@ -24,7 +24,7 @@ type: project
 **Claimed:** DM Agent (sessão 2026-04-22)
 **Closed:** 2026-04-22
 **Branch:** `chore/SSE-trademark-hygiene-netsuite`
-**PR:** #46 (a abrir)
+**PR:** #47
 **Dependência invertida:** T-20260421-1 (sync dashboard) deve ser executada **após** conclusão desta; o path `ANALISE_NS_vs_BUSSOLA_v1.*` será renomeado e sua referência no corpo do T-20260421-1 precisa ser atualizada no mesmo PR.
 
 ### Objetivo

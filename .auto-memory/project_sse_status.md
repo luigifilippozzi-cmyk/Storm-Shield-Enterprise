@@ -10,11 +10,22 @@ type: project
 
 ## Revisão DM — 2026-04-22 (sessão completa: subagentes + PR #44 + PR #45)
 
-**Saúde: VERDE** — Deploy API VERDE. CI VERDE. Deploy Web VERDE. PRs abertos: 0. ADR count: 13.
+**Saúde: VERDE** — Deploy API VERDE. CI VERDE. Deploy Web VERDE. PRs abertos: 0. ADR count: 14.
 
-**Fase 1:** ~97% | Módulos: 13/15 | Testes: 368 | Endpoints: 112 | Migrations: 14 | ADRs: 13 | Controllers: 16
+**Fase 1:** ~97% | Módulos: 13/15 | Testes: 368 | Endpoints: 112 | Migrations: 14 | ADRs: 14 | Controllers: 16
 
-**CI:** VERDE | **Deploy Web:** VERDE | **Deploy API:** VERDE | **PRs abertos:** 0 | **PRs merged:** 45
+**CI:** VERDE | **Deploy Web:** VERDE | **Deploy API:** VERDE | **PRs abertos:** 0 | **PRs merged:** 47
+
+### Novidades adicionais — 2026-04-22 (trademark hygiene T-20260422-1)
+- **PR #47 merged:** chore(docs) trademark hygiene — 293 substituições, 3 renames, stubs 60 dias, ADR-014 Accepted, GitHub sweep zero residual
+- **ADR-014 Accepted:** remoção de menção direta à marca ERP de referência. ADR count: 13 → **14**
+- **T-20260422-1 COMPLETED**
+- **T-20260421-9 desbloqueado** (Bússola v1.2 publicada + paths renomeados para ANALISE_NS_*)
+
+### Prioridades para próxima sessão DM (atualizado pós trademark hygiene)
+1. **P1** — T-20260421-3 (RF-005): **CONSULTAR PO ANTES de branch** — split XL RF-005a/b/c
+2. **P2** — T-20260421-9: sync NS dashboard com Bússola v1.2 (path agora: `ANALISE_NS_vs_BUSSOLA_v1.*`)
+3. **P2** — T-20260421-5 (RF-007): Case Management M, independente
 
 ### Novidades desta sessão (2026-04-22 tarde/noite)
 - **PR #44 merged:** feat(web,api) RF-004 Customer 360 View (SSE-053) — 7 tabs unificadas, 2 endpoints novos, Suspense boundary corrigida, ARIA compliance, plan gate adicionado, cross-tenant bug crítico corrigido

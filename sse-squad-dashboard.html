@@ -289,10 +289,10 @@
 <script>
 // <!--METRICS_START-->
 const D = {
-  lastUpdated: "2026-04-22 (Dev Manager — RF-004 PR#44 + ADR-013 PR#45 merged)",
+  lastUpdated: "2026-04-22 (Dev Manager — RF-004 #44 + ADR-013 #45 + trademark hygiene #47)",
   updatedBy: "Dev Manager",
   health: "green",
-  healthText: "VERDE. Deploy API VERDE. CI VERDE. Deploy Web VERDE. PRs abertos: 0. RF-004 Customer 360 merged (PR #44) — 7 abas, subagentes PASS (test+security+frontend). ADR-013 merged (PR #45) — Bussola v1.2 + Regra 19 + frontend-reviewer 20 itens. ADRs: 13. Testes: 368. /ready 503 esperado (DATABASE_URL+REDIS_URL ausentes nos Fly secrets — acao Luigi).",
+  healthText: "VERDE. Deploy API VERDE. CI VERDE. PRs abertos: 0. PR #47 merged (trademark hygiene: 293 substituicoes, 3 renames, ADR-014). ADR count: 14. Testes: 368. /ready 503 esperado (DATABASE_URL+REDIS_URL ausentes nos Fly secrets — acao Luigi).",
   activeFase: "2",
   kpis: {
     backendModules: 13,
@@ -302,7 +302,7 @@ const D = {
     specFiles: 23,
     tests: 368,
     migrations: 14,
-    adrs: 13,
+    adrs: 14,
     excelTotal: 36,
     excelDone: 30
   },
@@ -315,6 +315,7 @@ const D = {
     { name: "frontend-reviewer", role: "Next.js + shadcn/ui", color: "var(--cyan)", bg: "rgba(6,182,212,.12)", icon: "layout", status: "active", statusText: "Checklist expandido: 20 itens (8 base + 6 PV + 6 PUX via ADR-013). PR #44 FAIL→PASS (B1 Suspense, B2 ARIA, B3 customer_id). Regra 19 vigente.", stats: [["Framework","Next.js 15 + React 19"],["Checklist","20 itens (ADR-013)"],["Trigger","UI/component changes — Regra 19"]] }
   ],
   activity: [
+    { time: "Abr 22", color: "var(--orange)", msg: "<strong>PR #47 merged</strong> chore(docs): trademark hygiene — 293 substituicoes em 19 arquivos, 3 renames com stubs 60 dias, ADR-014 Accepted, sweep GitHub zero residual. T-20260422-1 COMPLETED. ADRs: 14.", tag: "fix" },
     { time: "Abr 22", color: "var(--accent2)", msg: "<strong>PR #45 merged</strong> docs: ADR-013 — Bussola v1.2 (PV1-PV6 + PUX1-PUX6, §6.1/§6.2/§6.3), Operating Model v2.1 (§5.4 squad health), CLAUDE.md Regra 19, frontend-reviewer 8→20 itens, AGENTS.md atualizado. ADRs: 13.", tag: "merge" },
     { time: "Abr 22", color: "var(--accent2)", msg: "<strong>PR #44 merged</strong> feat(web,api): RF-004 Customer 360 View (SSE-053) — 7 abas unificadas, 368/368 testes. Fixes: cross-tenant bug (Critical), plan gate ausente (High), unbounded limit (Medium), @IsUUID (Medium), Suspense boundary (B1), ARIA roles (B2), customer_id param (B3). Estimator / Gap 9 candidato.", tag: "merge" },
     { time: "Abr 22", color: "var(--blue)", msg: "<strong>PM Agent</strong> revisao diaria — Saude VERDE. Deploy API VERDE (T-20260421-10 done). CI verde. PR #44 open (RF-004 Customer 360, Estimator, Gap 9). Metricas: 13/15 modulos, 38 pages, 368 testes, 110 endpoints, 14 migrations, 12 ADRs. Regras 1-18 OK. Sem violacoes Bussola. Prioridade: review PR #44 + Luigi configura Fly secrets (/ready). Proximo P1: RF-005 (split XL).", tag: "pm" },
