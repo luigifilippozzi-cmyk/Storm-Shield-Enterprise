@@ -563,10 +563,11 @@ Justificativa: migration contida, lógica de guard é clara, UI relativamente si
 
 ## RF-007 — Case Management simplificado
 
-**Status:** APPROVED
+**Status:** DONE
 **Prioridade:** P2
 **Fase:** 2
 **Aprovado em:** 2026-04-21 (sessão PO, via ADR-012)
+**Implementado em:** 2026-04-23 — PR #56 merged
 **Gap fechado:** complementa Gap 5 e serve customer complaints em geral — estrutura leve, não é CRM ticket full. NS Case Management é a inspiração, mas com 13ª anti-recomendação explícita (`ANALISE §7.13`): sem tipos/origens/regras/territórios/auto-assignment.
 **Persona primária:** Estimator (abre casos). Secundárias: Owner-Operator (revisa), Customer (subject).
 **Princípio respeitado:** P7 (complexidade proporcional ao ICP).
