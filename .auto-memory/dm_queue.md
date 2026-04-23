@@ -576,12 +576,12 @@ Se após 3a + 3b em staging o Estimator (entrevista rápida via ritual Operating
 
 **Origin:** PO
 **Priority:** P1
-**Status:** PENDING
+**Status:** COMPLETED
 **Created:** 2026-04-21
-**Updated:** 2026-04-23 (DESBLOQUEADO — T-20260421-3a COMPLETED, PR #48+#49 merged)
-**Claimed:** —
-**Branch:** `feature/SSE-XXX-rf-006-payment-hold`
-**PR:** —
+**Updated:** 2026-04-25 (COMPLETED — PR #51 aberto)
+**Claimed:** DM Agent (sessão 2026-04-25)
+**Branch:** `feature/SSE-056-rf-006-payment-hold`
+**PR:** #51
 
 ### Objetivo
 Implementar RF-006 conforme spec em `docs/strategy/RF_BACKLOG.md` (v0.2) — bloqueio automático de pagamentos (insurance + out-of-pocket) quando estimate transiciona para `disputed` na state machine (RF-005a), com workflow de resolução e auditoria.

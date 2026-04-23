@@ -6,6 +6,48 @@ type: project
 > **Nota:** "NS" = ERP de referência externo. Nome substituído por precaução (ADR-014).
 
 
+# SSE Project Status — 2026-04-25 (DM Agent — T-20260421-4 COMPLETED)
+
+## Revisão DM — 2026-04-25 (RF-006 Payment Hold / Disputed Estimate)
+
+**Saúde: VERDE** — CI VERDE. Deploy Web VERDE. Deploy API VERDE. 1 PR aberto (#51). T-20260421-4 COMPLETED.
+
+**Fase 1:** ~99% | Módulos: 13/15 | Testes: 501 | Endpoints: ~116 | Migrations: 17 | ADRs: 14 | Controllers: 16 | Pages: 39 | Specs: 24
+
+**CI:** VERDE | **Deploy Web:** VERDE | **Deploy API:** VERDE | **PRs abertos:** 1 (#51) | **PRs merged:** 50
+
+### Novidades desta sessão (2026-04-25 — RF-006)
+- **PR #51 aberto:** feat(estimates) RF-006 payment hold / disputed estimate workflow (SSE-056)
+  - Migration 016: dispute_reason ENUM + 5 dispute fields on estimates + is_paused_by_dispute on service_orders
+  - EstimatesService: openDispute() + resolveDispute() + notifyOwners()
+  - ServiceOrdersService: dispute guard in updateStatus() + forceProgress() Owner-only override
+  - 3 DTOs: OpenDisputeDto, ResolveDisputeDto, ForceProgressDto
+  - 14 new unit tests → 501 total; build clean
+  - Frontend: DisputeModal, ResolveDisputeModal, ForceProgressModal; dispute info panel; "Paused by Dispute" badge
+  - Shared types: 5 dispute fields on Estimate + is_paused_by_dispute on ServiceOrder
+- **T-20260421-4 COMPLETED** (RF-006 done)
+- **Subagentes acionados:** security-reviewer [PASS], db-reviewer [PASS], frontend-reviewer [FAIL→PASS — unsafe error casts + ARIA fixed + api<any> eliminated]
+
+### Prioridades P0/P1 para próxima sessão DM
+1. **P1** — T-20260421-3c: RF-005c Kanban drag-drop + SLA alerts (soft-dep satisfeita após 3b)
+2. **P2** — T-20260421-9: sync NS dashboard com Bússola v1.2 (PR doc-only)
+3. **P2** — T-20260421-5: RF-007 Case Management simplificado
+
+### Alertas
+- PR #51 open — aguarda CI + merge
+- Coverage <80% branches em 3 services: contractors (77.77%), customers (71.79%), financial (66.66%) — standing issue
+- blocks_so_progression DEFAULT true em migration 016 — coluna informacional na tabela estimates (não afeta lógica de bloqueio — IS_PAUSED_BY_DISPUTE na SO é o gate real)
+
+### Handoff DM aberto (dm_queue.md)
+- **COMPLETED:** T-20260422-1, T-20260421-10, T-20260421-2, T-20260421-6/7/8, T-20260421-3a, T-20260421-3b, **T-20260421-4**
+- **PENDING P1:** T-20260421-3c (RF-005c kanban SLA)
+- **PENDING P2:** T-20260421-1 (standing), T-20260421-5 (RF-007), T-20260421-9 (NS dashboard v1.2), T-036 (accounting frontend)
+- **Legacy:** T-20260412-2 (ratificação PO pendente)
+
+### Última sessão DM: 2026-04-25 (RF-006 PR #51)
+
+---
+
 # SSE Project Status — 2026-04-25 (DM Agent — T-20260421-3b COMPLETED)
 
 ## Revisão DM — 2026-04-25 (RF-005b Estimates Inbox)
