@@ -10,10 +10,12 @@ interface VehicleComboboxProps {
   customerId: string;
   value: string;
   onChange: (id: string) => void;
+  /** Optional callback that also receives the human-readable display label */
+  onChangeWithLabel?: (id: string, label: string) => void;
   error?: string;
 }
 
-export function VehicleCombobox({ customerId, value, onChange, error }: VehicleComboboxProps) {
+export function VehicleCombobox({ customerId, value, onChange, onChangeWithLabel, error }: VehicleComboboxProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
 
@@ -60,7 +62,9 @@ export function VehicleCombobox({ customerId, value, onChange, error }: VehicleC
                   key={vehicle.id}
                   value={vehicle.id}
                   onSelect={() => {
+                    const label = `${vehicle.year} ${vehicle.make} ${vehicle.model}`;
                     onChange(vehicle.id);
+                    onChangeWithLabel?.(vehicle.id, label);
                     setOpen(false);
                   }}
                 >

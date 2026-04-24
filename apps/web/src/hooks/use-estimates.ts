@@ -10,6 +10,7 @@ export interface EstimateFilters {
   status?: string;
   statuses?: string;
   customer_id?: string;
+  vehicle_id?: string;
   insurance_company_id?: string;
   scope?: 'mine' | 'all';
   date_from?: string;
@@ -138,6 +139,16 @@ export function useDeleteEstimate() {
       return api<void>(`/estimates/${id}`, { method: 'DELETE', token });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['estimates'] }),
+  });
+}
+
+/** Convenience hook: all estimates linked to a specific vehicle (B1-3). */
+export function useVehicleEstimates(vehicleId: string) {
+  return useEstimates({
+    vehicle_id: vehicleId,
+    limit: 10,
+    sort_by: 'created_at',
+    sort_order: 'desc',
   });
 }
 

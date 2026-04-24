@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn, formatDate } from '@/lib/utils';
 import { TransactionForm } from '@/components/financial/transaction-form';
 import { TrendChart } from '@/components/financial/trend-chart';
+import { CategoryBreakdown } from '@/components/financial/category-breakdown';
 
 const TYPE_COLORS: Record<string, string> = {
   income: 'bg-green-100 text-green-800',
@@ -78,6 +79,30 @@ export default function FinancialPage() {
         <div className="rounded-lg border bg-card p-6">
           <h2 className="mb-4 text-lg font-semibold">Monthly Trend</h2>
           <TrendChart data={dashboard.monthly_trend} />
+        </div>
+      )}
+
+      {/* Category Breakdown (B3-4) */}
+      {!dashboardLoading && dashboard && (
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-lg border bg-card p-6">
+            <h2 className="mb-4 text-base font-semibold">Income by Category</h2>
+            <CategoryBreakdown
+              items={dashboard.income_by_category}
+              color="green"
+              listLabel="Income by category"
+              emptyLabel="No income transactions yet"
+            />
+          </div>
+          <div className="rounded-lg border bg-card p-6">
+            <h2 className="mb-4 text-base font-semibold">Expenses by Category</h2>
+            <CategoryBreakdown
+              items={dashboard.expense_by_category}
+              color="red"
+              listLabel="Expenses by category"
+              emptyLabel="No expense transactions yet"
+            />
+          </div>
         </div>
       )}
 
