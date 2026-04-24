@@ -4,6 +4,8 @@ import { use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useVehicle, useDeleteVehicle } from '@/hooks/use-vehicles';
+import { useVehicleEstimates } from '@/hooks/use-estimates';
+import type { Estimate } from '@sse/shared-types';
 import { VehiclePhotos } from '@/components/vehicles/vehicle-photos';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,6 +25,19 @@ const CONDITION_COLORS: Record<string, string> = {
   poor: 'bg-red-100 text-red-800',
 };
 
+const ESTIMATE_STATUS_COLORS: Record<string, string> = {
+  draft: 'bg-gray-100 text-gray-700',
+  submitted_to_adjuster: 'bg-blue-100 text-blue-800',
+  awaiting_approval: 'bg-yellow-100 text-yellow-800',
+  approved: 'bg-green-100 text-green-800',
+  supplement_pending: 'bg-orange-100 text-orange-800',
+  approved_with_supplement: 'bg-green-100 text-green-800',
+  rejected: 'bg-red-100 text-red-800',
+  disputed: 'bg-red-100 text-red-800',
+  paid: 'bg-emerald-100 text-emerald-800',
+  closed: 'bg-neutral-100 text-neutral-800',
+};
+
 function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
   if (!value) return null;
   return (
@@ -38,6 +53,7 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
   const router = useRouter();
   const { data: vehicle, isLoading, error } = useVehicle(id);
   const deleteVehicle = useDeleteVehicle();
+  const { data: estimatesData, isLoading: estimatesLoading } = useVehicleEstimates(id);
 
   const handleDelete = async () => {
     if (!vehicle) return;
@@ -153,6 +169,44 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
           <div className="px-4 py-3 text-sm whitespace-pre-wrap">{vehicle.notes}</div>
         </section>
       )}
+
+      {/* Linked Estimates (B1-3) */}
+      <section className="rounded-lg border">
+        <div className="flex items-center justify-between border-b px-4 py-3">
+          <h2 className="font-semibold">Linked Estimates</h2>
+          <Link href={`/estimates/new?vehicle_id=${vehicle.id}`}>
+            <Button variant="outline" size="sm">+ New Estimate</Button>
+          </Link>
+        </div>
+        {estimatesLoading ? (
+          <div className="flex items-center justify-center p-6">
+            <div className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          </div>
+        ) : !estimatesData?.data.length ? (
+          <p className="px-4 py-4 text-sm text-muted-foreground">No estimates linked to this vehicle yet.</p>
+        ) : (
+          <ul className="divide-y text-sm">
+            {estimatesData.data.map((est: Estimate) => (
+              <li key={est.id} className="flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors">
+                <div className="flex items-center gap-3 min-w-0">
+                  <Link href={`/estimates/${est.id}`} className="font-medium hover:underline truncate">
+                    {est.estimate_number || est.id.slice(0, 8)}
+                  </Link>
+                  <Badge className={cn('border-transparent capitalize text-xs', ESTIMATE_STATUS_COLORS[est.status] || 'bg-gray-100 text-gray-700')}>
+                    {est.status.replace(/_/g, ' ')}
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-4 shrink-0 ml-2">
+                  <span className="font-medium text-right">
+                    ${parseFloat(est.total || '0').toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  </span>
+                  <span className="text-muted-foreground text-xs">{formatDate(est.created_at)}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       {/* Meta */}
       <section className="rounded-lg border">

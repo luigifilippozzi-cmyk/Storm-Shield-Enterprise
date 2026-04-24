@@ -9,10 +9,12 @@ import { Button } from '@/components/ui/button';
 interface CustomerComboboxProps {
   value: string;
   onChange: (id: string) => void;
+  /** Optional callback that also receives the human-readable display label */
+  onChangeWithLabel?: (id: string, label: string) => void;
   error?: string;
 }
 
-export function CustomerCombobox({ value, onChange, error }: CustomerComboboxProps) {
+export function CustomerCombobox({ value, onChange, onChangeWithLabel, error }: CustomerComboboxProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -61,7 +63,9 @@ export function CustomerCombobox({ value, onChange, error }: CustomerComboboxPro
                   key={customer.id}
                   value={customer.id}
                   onSelect={() => {
+                    const label = `${customer.first_name} ${customer.last_name}`;
                     onChange(customer.id);
+                    onChangeWithLabel?.(customer.id, label);
                     setOpen(false);
                   }}
                 >
