@@ -6,6 +6,38 @@ type: project
 > **Nota:** "NS" = ERP de referência externo. Nome substituído por precaução (ADR-014).
 
 
+# SSE Project Status — 2026-04-24 (DM Agent — Gaps B1-3/B2-2/B3-4 + PR #59 merged)
+
+## Revisão DM — 2026-04-24 (PRs #59 + #60 merged — Fase 1 complete)
+
+**Saúde: VERDE** — CI VERDE. Deploy API VERDE. Deploy Web VERDE. 0 PRs abertos. 60 merged.
+
+**Fase 1:** 100% | Módulos: 14/15 | Testes: 561 | Endpoints: 120 | Migrations: 18 | ADRs: 15 | Controllers: 17 | Pages: 42 | Specs: 26
+
+### Novidades desta sessão (2026-04-24)
+- **HEAD recovery:** arquivo `.git/HEAD` corrompido (null bytes) detectado e restaurado sem perda de commits.
+- **PR #59 merged:** branch coverage ≥80% — contractors 88.88%, customers 84.61%, financial 83.33%. T-20260423-2 COMPLETED.
+- **PR #60 merged:** gaps B1-3/B2-2/B3-4 fechados. B1-3 (vehicle estimates), B2-2 (wizard form), B3-4 (category breakdown). frontend-reviewer FAIL→PASS. T-20260424-1 COMPLETED.
+- **0 gaps P2 remanescentes Fase 1** — todos os 17 gaps do Grupo B fechados.
+
+### Prioridades para próxima sessão DM
+1. P2 — T-20260421-1: NS dashboard (aguarda próximo gatilho — nenhum ativo agora)
+2. P3 — T-20260412-2: aguarda ratificação PO (15+ dias)
+3. P3 — Módulos ausentes: inventory, rental, notifications (não bloqueantes Fase 1)
+
+### Alertas
+- T-20260412-2: aguarda decisão PO há 15+ dias
+- Módulos ausentes: inventory, rental, notifications (meta 15/15 incompleta)
+
+### Handoff DM (dm_queue.md)
+- **COMPLETED esta sessão:** T-20260423-2 (PR #59), T-20260424-1 (PR #60)
+- **PENDING P2 standing:** T-20260421-1 (aguarda gatilho)
+- **Legacy:** T-20260412-2 (ratificação PO)
+
+### Última sessão DM: 2026-04-24 (PR #59 + PR #60 merged — 0 gaps P2 Fase 1)
+
+---
+
 # SSE Project Status — 2026-04-23 (DM Agent — branch coverage ≥80%)
 
 ## Revisão DM — 2026-04-23 (PR #59 aberto — coverage improvement)

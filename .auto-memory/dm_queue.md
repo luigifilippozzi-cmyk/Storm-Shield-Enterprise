@@ -15,6 +15,33 @@ type: project
 
 ---
 
+## T-20260424-1 — Fechar gaps B1-3, B2-2, B3-4 (Fase 1 frontend polish)
+
+**Origin:** DM (standing gaps identificados em grupo-b-gaps.md)
+**Priority:** P2
+**Status:** COMPLETED
+**Created:** 2026-04-24
+**Claimed:** DM Agent (sessão 2026-04-24)
+**Closed:** 2026-04-24
+**Branch:** `feature/SSE-064-gaps-b1-3-b2-2-b3-4`
+**PR:** #60 (merged 2026-04-24)
+
+### Objetivo
+Fechar os 3 gaps P2 remanescentes da Fase 1 (conforme `docs/audits/grupo-b-gaps.md`):
+- B1-3: Vehicle detail — estimates vinculados (frontend query por vehicle_id)
+- B2-2: Estimate form — wizard multi-step completo
+- B3-4: Financial breakdown por categoria (frontend)
+
+### Resultado
+PR #60 merged. Build limpo. 561/561 testes (frontend-only, sem spec novos necessários).
+- B1-3: `useVehicleEstimates(vehicleId)` + seção "Linked Estimates" em `vehicles/[id]/page.tsx`
+- B2-2: `estimate-form.tsx` convertido para wizard 3 passos com step indicator, validação por etapa, `onChangeWithLabel?` nos comboboxes (non-breaking), summary com nomes legíveis
+- B3-4: `CategoryBreakdown` component + painéis Income/Expenses na `financial/page.tsx`
+- 4 issues frontend-reviewer corrigidos: motion-safe:transition-all, aria-label único, UUID→label no summary, StepIndicator extraído
+- 0 gaps P2 remanescentes Fase 1
+
+---
+
 ## T-20260423-2 — Branch coverage ≥80% em contractors, customers, financial
 
 **Origin:** DM (standing issue — identificado 2026-04-23)
@@ -24,7 +51,7 @@ type: project
 **Claimed:** DM Agent (sessão 2026-04-23)
 **Closed:** 2026-04-23
 **Branch:** `test/SSE-063-branch-coverage-contractors-customers-financial`
-**PR:** #59 (aberto — aguarda CI + merge)
+**PR:** #59 (merged 2026-04-24)
 
 ### Objetivo
 Subir branch coverage de 3 services abaixo do limiar de 80% (CLAUDE.md regra 6):
