@@ -225,7 +225,7 @@
       <ul class="text-sm space-y-2 text-slate-300">
         <li>• Customer 360 View <span class="text-xs text-sse-good font-semibold">✓ DONE</span> <span class="text-xs text-sse-muted">(RF-004, PR #44)</span></li>
         <li>• Payment Hold / Disputed <span class="text-xs text-sse-good font-semibold">✓ DONE</span> <span class="text-xs text-sse-muted">(RF-006, PR #51)</span></li>
-        <li>• Case Management light <span class="text-xs text-sse-muted">(RF-007, P2 — próxima sessão)</span></li>
+        <li>• Case Management light <span class="text-xs text-sse-good font-semibold">✓ DONE</span> <span class="text-xs text-sse-muted">(RF-007, PR #56)</span></li>
         <li>• Estimate state machine <span class="text-xs text-sse-good font-semibold">✓ DONE</span> <span class="text-xs text-sse-muted">(RF-005, PRs #48–52)</span></li>
         <li>• Available Balance no Cockpit</li>
         <li>• Offline-first shop floor (P8)</li>
@@ -668,20 +668,38 @@
       </div>
     </div>
 
+    <!-- DONE RF-004..007 -->
+    <div class="relative">
+      <span class="absolute -left-10 top-1 w-8 h-8 rounded-full bg-sse-good/20 border-2 border-sse-good grid place-items-center text-sse-good font-bold text-sm">✓</span>
+      <div class="bg-sse-panel border border-sse-good/40 rounded-xl p-5">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-xs text-sse-good font-bold">DONE</span>
+          <span class="text-xs text-sse-muted">Fase 2 — concluída Abril/2026 (PRs #44–56)</span>
+        </div>
+        <h3 class="font-semibold text-white">RF-004 a RF-007 — todos entregues</h3>
+        <div class="text-sm text-slate-300 mt-2 flex flex-wrap gap-2">
+          <span class="px-2 py-0.5 rounded bg-sse-good/10 text-sse-good text-xs">RF-004 Customer 360 (PR #44)</span>
+          <span class="px-2 py-0.5 rounded bg-sse-good/10 text-sse-good text-xs">RF-005 State Machine + Inbox (PRs #48–52)</span>
+          <span class="px-2 py-0.5 rounded bg-sse-good/10 text-sse-good text-xs">RF-006 Payment Hold (PR #51)</span>
+          <span class="px-2 py-0.5 rounded bg-sse-good/10 text-sse-good text-xs">RF-007 Case Mgmt (PR #56)</span>
+        </div>
+      </div>
+    </div>
+
     <!-- AGORA -->
     <div class="relative">
       <span class="absolute -left-10 top-1 w-8 h-8 rounded-full bg-sse-warn/20 border-2 border-sse-warn grid place-items-center text-sse-warn font-bold text-xs pulse">NOW</span>
       <div class="bg-sse-panel border border-sse-warn/40 rounded-xl p-5">
         <div class="flex items-center gap-2 mb-2">
           <span class="text-xs text-sse-warn font-bold">EM CURSO</span>
-          <span class="text-xs text-sse-muted">Abril/2026 · BLOCKED em T-20260412-1</span>
+          <span class="text-xs text-sse-muted">Abril/2026 — Health VERDE, deploy API VERDE</span>
         </div>
-        <h3 class="font-semibold text-white">Deploy API + gaps P2 Fase 1</h3>
+        <h3 class="font-semibold text-white">Gaps P2 Fase 1 + coverage</h3>
         <div class="text-sm text-slate-300 mt-2">
           <ul class="space-y-1 text-xs">
-            <li>• T-20260412-1 — Deploy API Fly.io (BLOCKED, diagnóstica em curso)</li>
             <li>• Gaps P2: B1-3 (vehicle-estimates) · B2-2 (wizard detail) · B3-4 (financial breakdown)</li>
-            <li>• Pós T-20260412-1 sair: ADR-011 Release Cadence</li>
+            <li>• Coverage &lt;80% branches: contractors · customers · financial</li>
+            <li>• ADR-011 Release Cadence (desbloqueado — T-20260412-1 RESOLVED)</li>
           </ul>
         </div>
       </div>
@@ -884,7 +902,7 @@
       </li>
       <li class="flex gap-3">
         <span class="w-6 h-6 rounded-full bg-sse-good/20 text-sse-good grid place-items-center flex-shrink-0 text-xs font-bold">✓</span>
-        <div><strong class="text-white">4 RFs APPROVED em RF_BACKLOG.md v0.2</strong> — RF-004 Customer 360 (P1), RF-005 Estimate State Machine + Inbox (P1, split recomendado), RF-006 Payment Hold (P1, dep RF-005), RF-007 Case Management (P2, com anti-rec #13 explícita).</div>
+        <div><strong class="text-white">4 RFs DONE em RF_BACKLOG.md v0.2</strong> — RF-004 ✓ (PR #44), RF-005 ✓ (PRs #48–52), RF-006 ✓ (PR #51), RF-007 ✓ (PR #56). Todos concluídos Abril/2026.</div>
       </li>
       <li class="flex gap-3">
         <span class="w-6 h-6 rounded-full bg-sse-good/20 text-sse-good grid place-items-center flex-shrink-0 text-xs font-bold">✓</span>
@@ -931,7 +949,7 @@ const AREAS = [
   { id:'tax', title:'Sales Tax + 1099', cat:'Core ERP', diag:'superior', NS:'SuiteTax Engine multi-state. 1099 depende de Yearli/Sovos/Track1099 externos.', sse:'Fase 4 planejada. 1099-NEC nativo.', rec:'Reforçar 1099-NEC como diferencial em §5 (mover Herdamos → Superamos).' },
   { id:'crm', title:'CRM / Customer 360', cat:'CRM', diag:'adjust', NS:'Customer 360 View unificado: Overview, Opportunities, Orders, Receivables, Activities, Cases.', sse:'Páginas fragmentadas. Customer detail + filtros separados.', rec:'★ RF-004 Customer 360 View. Maior ganho de UX identificado.' },
   { id:'wo', title:'Work Orders / Field Service', cat:'Service', diag:'adjust', NS:'FSM Mobile com offline. Track Service Time auto. Live updates ao scheduler.', sse:'service_orders com status workflow. Timer manual. Sem offline explícito.', rec:'No RF Mobile PWA (Gap 2): exigir offline + timer auto + histórico veículo.' },
-  { id:'nav', title:'Navigation / Dashboards', cat:'UX', diag:'aligned', NS:'Role-based Centers. Portlets KPI/Meter/Scorecard/Trend. Saved Searches. Global Search Alt+G.', sse:'RF-001 (PROPOSED). Dashboard fixo. Saved Searches não. Global Search mencionado.', rec:'Validar que RF-001 inclui Global Search Cmd+K. Portlets drag-and-drop ficam fora (§5).' },
+  { id:'nav', title:'Navigation / Dashboards', cat:'UX', diag:'aligned', NS:'Role-based Centers. Portlets KPI/Meter/Scorecard/Trend. Saved Searches. Global Search Alt+G.', sse:'RF-001 ✓ DONE (PR #31). Dashboard fixo. Saved Searches não. Global Search mencionado.', rec:'RF-001 entregue. Portlets drag-and-drop ficam fora (§5). Global Search (Cmd+K) via ENH futuro.' },
   { id:'mobile', title:'Mobile', cat:'UX', diag:'aligned', NS:'Native iOS/Android. Offline. My Dashboard. My Approvals. Role change mobile.', sse:'PWA web planejado (Gap 2). Native app em Fase 5.', rec:'Manter estratégia PWA. Adicionar offline como requisito (P8).' },
   { id:'wf', title:'Workflow / Approvals', cat:'Governança', diag:'reject', NS:'SuiteFlow visual. Multi-level approval. Custom fields. Email automation.', sse:'n8n pré-definidos. Sem approval formal.', rec:'Manter descope. Adicionar SuiteFlow explicitamente em §5.' },
   { id:'seg', title:'Classifications / Subsidiaries', cat:'Governança', diag:'reject', NS:'Dept/Class/Location/Custom Segments. OneWorld multi-entity.', sse:'Nenhum. 1 tenant = 1 shop.', rec:'Anti-target §1. Adicionar linha explícita em §5.' },
