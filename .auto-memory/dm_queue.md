@@ -15,6 +15,28 @@ type: project
 
 ---
 
+## T-20260423-2 — Branch coverage ≥80% em contractors, customers, financial
+
+**Origin:** DM (standing issue — identificado 2026-04-23)
+**Priority:** P2
+**Status:** COMPLETED
+**Created:** 2026-04-23
+**Claimed:** DM Agent (sessão 2026-04-23)
+**Closed:** 2026-04-23
+**Branch:** `test/SSE-063-branch-coverage-contractors-customers-financial`
+**PR:** #59 (aberto — aguarda CI + merge)
+
+### Objetivo
+Subir branch coverage de 3 services abaixo do limiar de 80% (CLAUDE.md regra 6):
+- contractors.service.ts: 77.77% → 88.88%
+- customers.service.ts: 71.79% → 84.61%
+- financial.service.ts: 66.66% → 83.33%
+
+### Resultado
+18 novos testes adicionados. Total de testes: 543 → 561. Todos os 26 suites PASS. Standing issue resolvido.
+
+---
+
 ## T-20260423-1 — T-036 Accounting Frontend Pages (COA + JE)
 
 **Origin:** PM (backlog standing)

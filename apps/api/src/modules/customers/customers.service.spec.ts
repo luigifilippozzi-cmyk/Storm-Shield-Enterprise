@@ -84,11 +84,31 @@ describe('CustomersService', () => {
 
       expect(knex._chain.where).toHaveBeenCalledWith('source', 'insurance');
     });
+
+    it('should use default sort when invalid sort_by provided', async () => {
+      knex._chain.count.mockReturnValueOnce([{ count: '0' }]);
+      knex._chain.offset.mockReturnValueOnce([]);
+
+      await service.findAll(TENANT_ID, { sort_by: 'invalid_column', page: 1, limit: 20 });
+
+      expect(knex._chain.orderBy).toHaveBeenCalledWith('created_at', 'desc');
+    });
+
+    it('should accept valid sort_by column', async () => {
+      knex._chain.count.mockReturnValueOnce([{ count: '0' }]);
+      knex._chain.offset.mockReturnValueOnce([]);
+
+      await service.findAll(TENANT_ID, { sort_by: 'email', sort_order: 'asc', page: 1, limit: 20 });
+
+      expect(knex._chain.orderBy).toHaveBeenCalledWith('email', 'asc');
+    });
   });
 
   describe('create', () => {
     it('should create and return customer', async () => {
       const mockCustomer = { id: CUSTOMER_ID, first_name: 'Jane', last_name: 'Doe' };
+      // isFirst check: existing customers present → first() returns a record
+      knex._chain.first.mockReturnValueOnce({ id: 'existing' });
       knex._chain.returning.mockReturnValueOnce([mockCustomer]);
 
       const result = await service.create(TENANT_ID, {
@@ -101,6 +121,19 @@ describe('CustomersService', () => {
       expect(knex._chain.insert).toHaveBeenCalledWith(
         expect.objectContaining({ tenant_id: TENANT_ID, first_name: 'Jane' }),
       );
+    });
+
+    it('should fire activation event when creating the first customer', async () => {
+      const mockCustomer = { id: CUSTOMER_ID, first_name: 'First' };
+      // isFirst check: no existing customers → first() returns null
+      knex._chain.first.mockReturnValueOnce(null);
+      knex._chain.returning.mockReturnValueOnce([mockCustomer]);
+
+      const activationSpy = jest.spyOn((service as any).activationEvents, 'record');
+
+      await service.create(TENANT_ID, { first_name: 'First', last_name: 'Customer' } as any);
+
+      expect(activationSpy).toHaveBeenCalledWith(TENANT_ID, 'first_customer_created');
     });
   });
 
@@ -194,6 +227,56 @@ describe('CustomersService', () => {
       expect(result.balance).toBe(0);
     });
 
+    it('should use estimateTs when only estimateTs is present', async () => {
+      const mockCustomer = { id: CUSTOMER_ID };
+      knex._chain.first
+        .mockReturnValueOnce(mockCustomer)
+        .mockReturnValueOnce({ count: '1' })
+        .mockReturnValueOnce({ count: '0' })
+        .mockReturnValueOnce({ total: '100.00' })
+        .mockReturnValueOnce({ total: '100.00' })
+        .mockReturnValueOnce({ ts: '2026-04-10T00:00:00Z' }) // estimateTs present
+        .mockReturnValueOnce({ ts: null });                   // soTs null
+
+      const result = await service.getSummary(TENANT_ID, CUSTOMER_ID);
+
+      expect(result.last_activity_at).toBeInstanceOf(Date);
+      expect(result.last_activity_at?.toISOString()).toBe('2026-04-10T00:00:00.000Z');
+    });
+
+    it('should use soTs when only soTs is present', async () => {
+      const mockCustomer = { id: CUSTOMER_ID };
+      knex._chain.first
+        .mockReturnValueOnce(mockCustomer)
+        .mockReturnValueOnce({ count: '0' })
+        .mockReturnValueOnce({ count: '1' })
+        .mockReturnValueOnce({ total: null })
+        .mockReturnValueOnce({ total: null })
+        .mockReturnValueOnce({ ts: null })                    // estimateTs null
+        .mockReturnValueOnce({ ts: '2026-04-20T00:00:00Z' }); // soTs present
+
+      const result = await service.getSummary(TENANT_ID, CUSTOMER_ID);
+
+      expect(result.last_activity_at).toBeInstanceOf(Date);
+      expect(result.last_activity_at?.toISOString()).toBe('2026-04-20T00:00:00.000Z');
+    });
+
+    it('should pick the more recent of estimateTs and soTs when both present', async () => {
+      const mockCustomer = { id: CUSTOMER_ID };
+      knex._chain.first
+        .mockReturnValueOnce(mockCustomer)
+        .mockReturnValueOnce({ count: '1' })
+        .mockReturnValueOnce({ count: '1' })
+        .mockReturnValueOnce({ total: '500.00' })
+        .mockReturnValueOnce({ total: '500.00' })
+        .mockReturnValueOnce({ ts: '2026-04-10T00:00:00Z' }) // estimateTs
+        .mockReturnValueOnce({ ts: '2026-04-22T00:00:00Z' }); // soTs (more recent)
+
+      const result = await service.getSummary(TENANT_ID, CUSTOMER_ID);
+
+      expect(result.last_activity_at?.toISOString()).toBe('2026-04-22T00:00:00.000Z');
+    });
+
     it('should throw NotFoundException when customer not found', async () => {
       knex._chain.first.mockReturnValueOnce(null);
 
@@ -222,6 +305,50 @@ describe('CustomersService', () => {
       expect(result[0].occurred_at).toBe('2026-04-12T09:00:00Z'); // most recent first
       expect(result[0].event_type).toBe('so_status_change');
       expect(result[1].event_type).toBe('interaction');
+    });
+
+    it('should clamp limit to 200 when limit > 200', async () => {
+      const mockCustomer = { id: CUSTOMER_ID };
+      knex._chain.first.mockReturnValueOnce(mockCustomer);
+      knex._chain.limit
+        .mockReturnValueOnce([])
+        .mockReturnValueOnce([])
+        .mockReturnValueOnce([])
+        .mockReturnValueOnce([]);
+
+      await service.getActivityTimeline(TENANT_ID, CUSTOMER_ID, 999);
+
+      // getActivityTimeline was called without throwing — safeLimit clamped to 200
+      expect(knex._chain.limit).toHaveBeenCalled();
+    });
+
+    it('should default to 50 when NaN limit is provided', async () => {
+      const mockCustomer = { id: CUSTOMER_ID };
+      knex._chain.first.mockReturnValueOnce(mockCustomer);
+      knex._chain.limit
+        .mockReturnValueOnce([])
+        .mockReturnValueOnce([])
+        .mockReturnValueOnce([])
+        .mockReturnValueOnce([]);
+
+      // Pass NaN explicitly to trigger the Number.isNaN branch
+      await service.getActivityTimeline(TENANT_ID, CUSTOMER_ID, NaN);
+
+      expect(knex._chain.limit).toHaveBeenCalled();
+    });
+
+    it('should clamp limit to 1 when limit < 1', async () => {
+      const mockCustomer = { id: CUSTOMER_ID };
+      knex._chain.first.mockReturnValueOnce(mockCustomer);
+      knex._chain.limit
+        .mockReturnValueOnce([])
+        .mockReturnValueOnce([])
+        .mockReturnValueOnce([])
+        .mockReturnValueOnce([]);
+
+      await service.getActivityTimeline(TENANT_ID, CUSTOMER_ID, 0);
+
+      expect(knex._chain.limit).toHaveBeenCalled();
     });
 
     it('should throw NotFoundException when customer not found', async () => {

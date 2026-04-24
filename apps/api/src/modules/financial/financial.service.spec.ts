@@ -89,11 +89,40 @@ describe('FinancialService', () => {
       expect(knex._chain.where).toHaveBeenCalledWith('transaction_date', '>=', '2026-01-01');
       expect(knex._chain.where).toHaveBeenCalledWith('transaction_date', '<=', '2026-12-31');
     });
+
+    it('should filter by search term', async () => {
+      knex._chain.count.mockReturnValueOnce([{ count: '0' }]);
+      knex._chain.offset.mockReturnValueOnce([]);
+
+      await service.findAll(TENANT_ID, { search: 'payment', page: 1, limit: 20 } as any);
+
+      expect(knex._chain.where).toHaveBeenCalled();
+    });
+
+    it('should filter by customer_id', async () => {
+      knex._chain.count.mockReturnValueOnce([{ count: '0' }]);
+      knex._chain.offset.mockReturnValueOnce([]);
+
+      await service.findAll(TENANT_ID, { customer_id: 'cust-123', page: 1, limit: 20 } as any);
+
+      expect(knex._chain.where).toHaveBeenCalledWith('customer_id', 'cust-123');
+    });
+
+    it('should use default sort when invalid sort_by provided', async () => {
+      knex._chain.count.mockReturnValueOnce([{ count: '0' }]);
+      knex._chain.offset.mockReturnValueOnce([]);
+
+      await service.findAll(TENANT_ID, { sort_by: 'invalid_column', page: 1, limit: 20 } as any);
+
+      expect(knex._chain.orderBy).toHaveBeenCalledWith('created_at', 'desc');
+    });
   });
 
   describe('create', () => {
     it('should create and return transaction', async () => {
       const mockTx = { id: TX_ID, description: 'New payment', amount: 250 };
+      // isFirst check: existing transactions present → first() returns a record
+      knex._chain.first.mockReturnValueOnce({ id: 'existing' });
       knex._chain.returning.mockReturnValueOnce([mockTx]);
 
       const result = await service.create(TENANT_ID, {
@@ -108,6 +137,25 @@ describe('FinancialService', () => {
       expect(knex._chain.insert).toHaveBeenCalledWith(
         expect.objectContaining({ tenant_id: TENANT_ID, description: 'New payment' }),
       );
+    });
+
+    it('should fire activation event when creating the first transaction', async () => {
+      const mockTx = { id: TX_ID, description: 'First tx', amount: 100 };
+      // isFirst check: no existing transactions → first() returns null
+      knex._chain.first.mockReturnValueOnce(null);
+      knex._chain.returning.mockReturnValueOnce([mockTx]);
+
+      const activationSpy = jest.spyOn((service as any).activationEvents, 'record');
+
+      await service.create(TENANT_ID, {
+        description: 'First tx',
+        amount: 100,
+        transaction_type: 'income',
+        category: 'pdr_service',
+        transaction_date: '2026-04-06',
+      } as any);
+
+      expect(activationSpy).toHaveBeenCalledWith(TENANT_ID, 'first_financial_transaction_created');
     });
   });
 

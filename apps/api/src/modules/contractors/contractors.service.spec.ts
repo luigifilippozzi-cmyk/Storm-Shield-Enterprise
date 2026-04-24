@@ -91,6 +91,25 @@ describe('ContractorsService', () => {
 
       expect(knex._chain.orderBy).toHaveBeenCalledWith('created_at', 'desc');
     });
+
+    it('should use valid sort_by when provided', async () => {
+      knex._chain.count.mockReturnValueOnce([{ count: '0' }]);
+      knex._chain.offset.mockReturnValueOnce([]);
+
+      await service.findAll(TENANT_ID, { sort_by: 'first_name', sort_order: 'asc', page: 1, limit: 20 });
+
+      expect(knex._chain.orderBy).toHaveBeenCalledWith('first_name', 'asc');
+    });
+
+    it('should compute correct totalPages', async () => {
+      knex._chain.count.mockReturnValueOnce([{ count: '45' }]);
+      knex._chain.offset.mockReturnValueOnce([]);
+
+      const result = await service.findAll(TENANT_ID, { page: 2, limit: 20 });
+
+      expect(result.meta.totalPages).toBe(3);
+      expect(result.meta.page).toBe(2);
+    });
   });
 
   describe('create', () => {
@@ -124,6 +143,17 @@ describe('ContractorsService', () => {
       expect(result.first_name).toBe('Mike');
       expect(result.payments).toEqual(mockPayments);
       expect(result.total_paid).toBe(1500);
+    });
+
+    it('should return total_paid as 0 when sum is null (no payments)', async () => {
+      const mockContractor = { id: CONTRACTOR_ID, first_name: 'Mike' };
+      knex._chain.first.mockReturnValueOnce(mockContractor);
+      knex._chain.orderBy.mockReturnValueOnce([]);
+      knex._chain.sum.mockReturnValueOnce([{ total_paid: null }]);
+
+      const result = await service.findOne(TENANT_ID, CONTRACTOR_ID);
+
+      expect(result.total_paid).toBe(0);
     });
 
     it('should throw NotFoundException when not found', async () => {
@@ -242,6 +272,28 @@ describe('ContractorsService', () => {
 
       expect(result.ytd_total).toBe(400);
       expect(result.requires_1099).toBe(false);
+    });
+
+    it('should return ytd_total as 0 when sum is null (no payments in year)', async () => {
+      const mockContractor = { id: CONTRACTOR_ID };
+      knex._chain.first.mockReturnValueOnce(mockContractor);
+      knex._chain.sum.mockReturnValueOnce([{ total: null }]);
+
+      const result = await service.getYtdPayments(TENANT_ID, CONTRACTOR_ID, 2026);
+
+      expect(result.ytd_total).toBe(0);
+      expect(result.requires_1099).toBe(false);
+    });
+
+    it('should use current year when year param not provided', async () => {
+      const mockContractor = { id: CONTRACTOR_ID };
+      knex._chain.first.mockReturnValueOnce(mockContractor);
+      knex._chain.sum.mockReturnValueOnce([{ total: '200.00' }]);
+
+      const result = await service.getYtdPayments(TENANT_ID, CONTRACTOR_ID);
+
+      expect(result.year).toBe(new Date().getFullYear());
+      expect(result.ytd_total).toBe(200);
     });
 
     it('should throw NotFoundException if contractor not found', async () => {
