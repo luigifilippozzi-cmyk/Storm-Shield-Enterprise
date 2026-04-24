@@ -6,6 +6,43 @@ type: project
 > **Nota:** "NS" = ERP de referência externo. Nome substituído por precaução (ADR-014).
 
 
+# SSE Project Status — 2026-04-23 (DM Agent — branch coverage ≥80%)
+
+## Revisão DM — 2026-04-23 (PR #59 aberto — coverage improvement)
+
+**Saúde: VERDE** — CI VERDE. Deploy API VERDE. Deploy Web VERDE. 1 PR aberto (#59). 58 merged (PR #58 doc-only). Standing issue coverage RESOLVIDO.
+
+**Fase 1:** ~100% | Módulos: 14/15 | Testes: 561 | Endpoints: 120 | Migrations: 18 | ADRs: 15 | Controllers: 17 | Pages: 42 | Specs: 26
+
+### Novidades desta sessão (2026-04-23 — continuação)
+- **PR #58 merged (doc-only):** RF_BACKLOG.md status fixes (RF-001/002/004/006 stale statuses corrigidos) + NS dashboard sync (T-20260421-1 Trigger #1: RF-007 DONE). T-20260421-1 atualizado com anotação de última execução.
+- **PR #59 aberto:** test(api) SSE-063 — 18 novos testes de branch coverage em 3 services:
+  - `contractors.service.spec.ts`: valid sort_by, totalPages, null total_paid, null YTD sum, year default
+  - `customers.service.spec.ts`: invalid/valid sort_by, isFirst activation event, getSummary timestamps (estimateTs only, soTs only, both), getActivityTimeline limit clamping (>200, NaN, <1)
+  - `financial.service.spec.ts`: search filter, customer_id filter, invalid sort_by fallback, isFirst activation event
+  - Branch coverage: contractors 77.77→**88.88%**, customers 71.79→**84.61%**, financial 66.66→**83.33%**
+  - Total testes: 543→**561**. Todos os 26 suites PASS.
+- **T-20260423-2 COMPLETED** (branch coverage ≥80%)
+
+### Prioridades para próxima sessão DM
+1. P2 — T-20260421-1: NS dashboard (aguarda próximo gatilho)
+2. P2 — Gaps B1-3/B2-2/B3-4 (sem task explícita)
+3. Legacy — T-20260412-2: aguarda ratificação PO
+
+### Alertas
+- T-20260412-2: aguarda ratificação PO há 14+ dias
+- Módulos ausentes: inventory, rental, notifications (não bloqueantes para Fase 1)
+
+### Handoff DM (dm_queue.md)
+- **COMPLETED esta sessão:** T-20260421-1 (Trigger #1), T-20260423-2 (coverage)
+- **PR ABERTO:** #59 (coverage — aguarda CI + merge)
+- **PENDING P2:** T-20260421-1 (standing, próximo gatilho)
+- **Legacy:** T-20260412-2
+
+### Última sessão DM: 2026-04-23 (PR #58 doc-only + PR #59 coverage)
+
+---
+
 # SSE Project Status — 2026-04-23 (DM Agent — sessão agendada autônoma)
 
 ## Revisão DM — 2026-04-23 (PRs #56 + #57 merged)
