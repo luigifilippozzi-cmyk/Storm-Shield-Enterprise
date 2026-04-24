@@ -266,6 +266,7 @@ DM avalia: se a mudança `ESNext/bundler → NodeNext` tiver impacto material al
 **Status:** PENDING
 **Created:** 2026-04-21
 **Tipo:** Standing task (acionada por gatilho, não por data)
+**Última execução:** 2026-04-23 — Gatilho #1 disparado (RF-007 DONE → PR #56). Edições: RF-007 DONE em card Ajustar, Roadmap bloco EM CURSO atualizado, "4 RFs APPROVED" → "4 RFs DONE", RF-001 DONE na tabela comparação. Fonte .md atualizada com Status RFs completo. PR #58.
 
 ### Objetivo
 Manter `docs/strategy/ANALISE_NS_vs_BUSSOLA_v1.html` sincronizado com o estado real do projeto. O Luigi adotou este dashboard como artefato canônico de acompanhamento estratégico (NS↔Bússola) em 2026-04-21. Fonte textual pareada: `ANALISE_NS_vs_BUSSOLA_v1.md`.

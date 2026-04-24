@@ -13,7 +13,7 @@
 
 ## RF-001 — Landing por Persona + Workspace Switcher
 
-**Status:** PROPOSED
+**Status:** ✅ DONE — PR #31 merged (feature/SSE-047-rf001-landing-por-persona)
 **Prioridade:** P0
 **Fase:** 1.5 (interim release antes da Fase 2 conforme Bússola §8)
 **Gap fechado:** Gap 1 (landing única, não por persona) — Bússola §4
@@ -92,7 +92,7 @@ Justificativa: cria 4 páginas novas mas a maioria pode começar como wrapper so
 
 ## RF-002 — Setup Wizard de Onboarding (5 passos)
 
-**Status:** PROPOSED
+**Status:** ✅ DONE — PR #37 merged (feature/SSE-051-rf-002-setup-wizard)
 **Prioridade:** P0
 **Fase:** 1.5
 **Gap fechado:** Gap 3 (onboarding não instrumentado) — Bússola §4
@@ -307,7 +307,7 @@ Justificativa: migration nova + módulo backend novo + alteração em 6 services
 
 ## RF-004 — Customer 360 View
 
-**Status:** IN_PROGRESS
+**Status:** ✅ DONE — PR #44 merged (feature/SSE-053-rf-004-customer-360)
 **PR:** #44 (feature/SSE-053-rf-004-customer-360)
 **Prioridade:** P1
 **Fase:** 2
@@ -478,7 +478,7 @@ Justificativa: state machine + kanban + inbox + SLA jobs + migrations. Sugestão
 
 ## RF-006 — Payment Hold / Disputed Estimate
 
-**Status:** APPROVED
+**Status:** ✅ DONE — PR #51 merged (feature/SSE-056-rf-006-payment-hold)
 **Prioridade:** P1
 **Fase:** 2
 **Aprovado em:** 2026-04-21 (sessão PO, via ADR-012)
