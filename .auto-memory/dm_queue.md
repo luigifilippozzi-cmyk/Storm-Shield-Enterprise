@@ -1572,11 +1572,12 @@ N/A.
 
 **Origin:** PO
 **Priority:** P1
-**Status:** PENDING
+**Status:** COMPLETED
 **Created:** 2026-04-17
-**Claimed:** —
+**Claimed:** DM Agent (sessão 2026-04-26 — marcado COMPLETED por obsolescência)
 **Branch:** —
 **PR:** —
+**Closed:** 2026-04-26 — Gap 1 implementado via RF-001 (PR #31), Gap 3 via RF-002 (PR #37), Gap 8 via RF-003 (PR #33). Discovery desnecessário pós-implementação.
 
 ### Objetivo
 Produzir material técnico para a próxima sessão PO converter os 3 gaps P0 da Bússola §8 em RFs formais com critério de aceite.

@@ -289,18 +289,18 @@
 <script>
 // <!--METRICS_START-->
 const D = {
-  lastUpdated: "2026-04-24 (PM Agent — revisão diária)",
-  updatedBy: "PM Agent",
+  lastUpdated: "2026-04-26 (Dev Manager — notifications module PR #61)",
+  updatedBy: "Dev Manager",
   health: "green",
-  healthText: "VERDE. CI VERDE. Deploy API VERDE. Deploy Web VERDE. 0 PRs abertos. 60 merged. Fase 1 100% completa — gaps B1-3/B2-2/B3-4 fechados (PR #60), coverage ≥80% todos services (PR #59). Regras 1-18 OK. Sem violações Bússola. Inconsistência detectada: T-20260417-4 stale (Gaps 1+3+8 DONE via RF-001/002/003 — marcar COMPLETED).",
+  healthText: "VERDE. CI VERDE. Deploy API VERDE. Deploy Web VERDE. 0 PRs abertos. 61 merged. META 15/15 MÓDULOS ATINGIDA — notifications module implementado (PR #61). 580 testes. T-20260417-4 COMPLETED (stale task). Regras 1-18 OK. Sem violações Bússola.",
   activeFase: "2",
   kpis: {
-    backendModules: 14,
-    controllers: 17,
-    endpoints: 120,
+    backendModules: 15,
+    controllers: 18,
+    endpoints: 126,
     frontendPages: 42,
-    specFiles: 26,
-    tests: 561,
+    specFiles: 27,
+    tests: 580,
     migrations: 18,
     adrs: 15,
     excelTotal: 36,
@@ -315,6 +315,7 @@ const D = {
     { name: "frontend-reviewer", role: "Next.js + shadcn/ui", color: "var(--cyan)", bg: "rgba(6,182,212,.12)", icon: "layout", status: "active", statusText: "Checklist expandido: 20 itens (8 base + 6 PV + 6 PUX via ADR-013). PR #44 FAIL→PASS. Regra 19 vigente.", stats: [["Framework","Next.js 15 + React 19"],["Checklist","20 itens (ADR-013)"],["Trigger","UI/component changes — Regra 19"]] }
   ],
   activity: [
+    { time: "Abr 26", color: "var(--accent2)", msg: "<strong>PR #61 merged</strong> feat(api): notifications module (SSE-065) — 15/15 módulos atingido. NotificationsService: findAll+countUnread+create+markRead+markAllRead+remove. Segurança: user_id cross-tenant validation em create(), ForbiddenException consistente (sem ID enumeration), route ordering read-all→:id/read. 19 testes, 100% stmt/func, 95.65% branch. @RequirePlanFeature('notifications') pro+enterprise. T-20260417-4 COMPLETED (stale task). Deploy API+Web VERDE.", tag: "merge" },
     { time: "Abr 24", color: "var(--blue)", msg: "<strong>PM Agent</strong> revisão diária — Saúde VERDE. CI+API+Web VERDE. 0 PRs abertos. 60 merged. 561 testes / 26 suites / 14 módulos / 120 endpoints / 18 migrations / 15 ADRs / 42 pages. Fase 1 100% completa. Regras 1-18 OK. Sem violações Bússola. Inconsistência: T-20260417-4 stale (Gaps P0: 1+3+8 todos DONE via RF-001/002/003 — marcar COMPLETED). 3 tasks PENDING dm_queue: T-20260421-1 standing, T-20260417-4 stale, T-20260412-2 aguarda PO.", tag: "pm" },
     { time: "Abr 24", color: "var(--accent2)", msg: "<strong>PR #60 merged</strong> feat(web): Gaps B1-3/B2-2/B3-4 — (B1-3) Vehicle detail: secao 'Linked Estimates' com lista, badge status, total, link; (B2-2) Estimate form wizard 3 passos (Customer/Vehicle → Line Items → Details/Review), step indicator, validacao por etapa, summary com nomes legiveis; (B3-4) Financial page: paineis Income/Expenses by Category com barras proporcionais. onChangeWithLabel? adicionado aos comboboxes (non-breaking). frontend-reviewer PASS apos 4 fixes (motion-safe, aria-label unico, UUID→label no summary, StepIndicator externo). 561 testes. Estimator+Owner-Operator / Gap 5+7.", tag: "merge" },
     { time: "Abr 24", color: "var(--accent2)", msg: "<strong>PR #59 merged</strong> test(api): branch coverage ≥80% — contractors, customers, financial (SSE-063). 18 novos testes. 543→561 testes. contractors 77.77→88.88%, customers 71.79→84.61%, financial 66.66→83.33%. Standing issue coverage RESOLVIDO.", tag: "merge" },
@@ -402,18 +403,17 @@ const D = {
     alinhamentoBussola: []
   },
   inconsistencias: [
-    { tipo: "T-20260417-4 — task stale (Gaps P0 DONE)", desc: "T-20260417-4 (discovery tecnico Gaps 1+3+8) com Status PENDING mas Gaps 1, 3 e 8 totalmente implementados via RF-001 (PR#31), RF-002 (PR#37), RF-003 (PR#33). Marcar COMPLETED no dm_queue." },
-    { tipo: "T-20260412-2 — aguarda ratificacao PO", desc: "Frontend Polish aguarda decisao PO ha 15+ dias. Decidir: executar agora ou encerrar scope." },
+    { tipo: "T-20260417-4 — RESOLVIDO", desc: "Marcada COMPLETED 2026-04-26 por obsolescencia — Gaps 1+3+8 todos implementados via RF-001/002/003." },
+    { tipo: "T-20260412-2 — aguarda ratificacao PO", desc: "Frontend Polish aguarda decisao PO ha 17+ dias. Decidir: executar agora ou encerrar scope." },
     { tipo: "Coverage <80% branches — RESOLVIDO", desc: "PR #59 merged 2026-04-24. contractors 88.88%, customers 84.61%, financial 83.33%. Todos ≥80%." },
     { tipo: "Gaps B1-3/B2-2/B3-4 — RESOLVIDOS", desc: "PR #60 merged 2026-04-24. Vehicle estimates, Wizard form, Financial breakdown — todos fechados." },
     { tipo: "POST /tenants sem AuthGuard — RESOLVIDO", desc: "PR #38 merged 2026-04-21. Issue HIGH fechada." },
     { tipo: "/ready 503 — RESOLVIDO", desc: "Confirmado 2026-04-24: /ready retorna 200. Fly secrets configurados por Luigi." }
   ],
   recomendacoes: [
-    { prioridade: "P2 (DM)", texto: "Marcar T-20260417-4 COMPLETED no dm_queue — Gaps 1+3+8 todos implementados (RF-001/PR#31, RF-002/PR#37, RF-003/PR#33). Task stale desde 2026-04-21." },
     { prioridade: "P2 (DM/PO)", texto: "T-20260421-1 NS dashboard — aguardar proximo gatilho (RF status change, Bussola ajuste). Nenhum gatilho ativo agora." },
-    { prioridade: "P3 (PO)", texto: "Ratificar ou encerrar T-20260412-2 (Frontend Polish) — aguarda decisao PO ha 15+ dias." },
-    { prioridade: "P3 (DM)", texto: "Avaliar implementacao dos modulos ausentes: inventory, rental, notifications. Nao bloqueantes para Fase 1 mas completam meta 15/15." }
+    { prioridade: "P3 (PO)", texto: "Ratificar ou encerrar T-20260412-2 (Frontend Polish) — aguarda decisao PO ha 17+ dias." },
+    { prioridade: "P3 (DM)", texto: "Avaliar implementacao dos modulos inventory e rental (Fases 6-7). Meta 15/15 ja atingida com notifications." }
   ],
   backlog: [
     { id: "RF-004", task: "Customer 360 View (7 abas)", fase: "2", prio: "P1", status: "Concluido", nota: "PR #44 merged 2026-04-22. 368 testes. 2 endpoints novos (/summary + /activity-timeline). 7 abas + ARIA + Suspense. Critical+High+3 Medium corrigidos via subagentes." },
