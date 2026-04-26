@@ -289,10 +289,10 @@
 <script>
 // <!--METRICS_START-->
 const D = {
-  lastUpdated: "2026-04-26 (Dev Manager — notifications module PR #61)",
+  lastUpdated: "2026-04-26 (Dev Manager — sessão agendada autônoma: auditoria situacional)",
   updatedBy: "Dev Manager",
   health: "green",
-  healthText: "VERDE. CI VERDE. Deploy API VERDE. Deploy Web VERDE. 0 PRs abertos. 61 merged. META 15/15 MÓDULOS ATINGIDA — notifications module implementado (PR #61). 580 testes. T-20260417-4 COMPLETED (stale task). Regras 1-18 OK. Sem violações Bússola.",
+  healthText: "VERDE. CI VERDE. Deploy API VERDE. Deploy Web VERDE. 0 PRs abertos. 61 merged. 15/15 módulos. 580 testes. Fase 1 100% completa. Nenhum gatilho T-20260421-1 ativo. Regras 1-18 OK. Sem violações Bússola.",
   activeFase: "2",
   kpis: {
     backendModules: 15,
@@ -308,13 +308,14 @@ const D = {
   },
   agents: [
     { name: "PM Agent", role: "Status Diario + Metricas", color: "var(--blue)", bg: "var(--blue-bg)", icon: "clipboard", status: "active", statusText: "Revisao 2026-04-25 — Saude VERDE. 52 PRs merged (antes sessao DM). T-3c COMPLETED (PR #52). T-20260421-4 COMPLETED (PR #51). RF-005 totalmente concluido. Regras 1-18 OK. Sem violacoes Bussola.", stats: [["Frequencia","Diario"],["Escopo","Read-only"],["Output","Relatorio + Dashboard"]] },
-    { name: "Dev Manager", role: "Implementacao + Orquestracao", color: "var(--accent2)", bg: "var(--teal-bg)", icon: "gear", status: "active", statusText: "Sessao 2026-04-25 autonoma — PR #53 (SSE-058 findOne ownership guard, hardening Medium), PR #54 (T-9 NS dashboard Bussola v1.2 + RF status), PR #55 (SSE-059 tenant-scoped del() estimates+vehicles). 514 testes. 3 PRs mergeados. 0 bloqueios.", stats: [["Autoridade","Execucao tecnica"],["Subagentes","4 configurados"],["PRs merged","#53 #54 #55"]] },
+    { name: "Dev Manager", role: "Implementacao + Orquestracao", color: "var(--accent2)", bg: "var(--teal-bg)", icon: "gear", status: "active", statusText: "Sessao 2026-04-26 autonoma — auditoria situacional. 15/15 modulos, 580 testes, CI VERDE, Deploy API+Web VERDE. Nenhum gatilho T-20260421-1 ativo. 0 PRs criados. Estado Fase 1 confirmado 100%. Proximo: aguardar gatilho NS dashboard (T-20260421-1) ou decisao PO sobre T-20260412-2.", stats: [["Autoridade","Execucao tecnica"],["Subagentes","4 configurados"],["PRs merged","#61 (ultima acao)"]] },
     { name: "test-runner", role: "Jest + Coverage", color: "var(--green)", bg: "var(--green-bg)", icon: "check", status: "active", statusText: "561 testes, 26 suites — GREEN (2026-04-23). Branch coverage: contractors 88.88%, customers 84.61%, financial 83.33% — todos ≥80%. Standing issue resolvido via PR #59.", stats: [["Framework","Jest + ts-jest"],["Specs","26 test suites"],["Trigger","Sempre pre-PR"]] },
     { name: "security-reviewer", role: "RLS + XSS + Auth", color: "var(--red)", bg: "var(--red-bg)", icon: "shield", status: "active", statusText: "PR #53 — Medium corrigido (findOne estimator guard sem user.id), Low pre-existente fechado via PR #55 (del() tenant_id). Todos findings resolvidos.", stats: [["Foco","tenant_id, RLS, AES"],["Checks","OWASP Top 10 + regras 15-18"],["Trigger","auth/db changes"]] },
     { name: "db-reviewer", role: "Migrations + Schema", color: "var(--purple)", bg: "var(--purple-bg)", icon: "database", status: "active", statusText: "Baseline: 000-016 (17 SQL files). migration 016: dispute_reason ENUM + 5 campos estimates + is_paused_by_dispute SO. Auditoria del() — todos 6 calls revisados, 2 corrigidos (PR #55).", stats: [["Foco","RLS, indexes, FK"],["Migrations","17 SQL files"],["Trigger","Schema changes"]] },
     { name: "frontend-reviewer", role: "Next.js + shadcn/ui", color: "var(--cyan)", bg: "rgba(6,182,212,.12)", icon: "layout", status: "active", statusText: "Checklist expandido: 20 itens (8 base + 6 PV + 6 PUX via ADR-013). PR #44 FAIL→PASS. Regra 19 vigente.", stats: [["Framework","Next.js 15 + React 19"],["Checklist","20 itens (ADR-013)"],["Trigger","UI/component changes — Regra 19"]] }
   ],
   activity: [
+    { time: "Abr 26", color: "var(--accent2)", msg: "<strong>Dev Manager</strong> sessao agendada autonoma — auditoria situacional. 15/15 modulos confirmados, 580 testes, build TURBO 4/4. CI+Deploy API+Web VERDE (2026-04-26T09:39Z). 0 PRs abertos. Nenhum gatilho T-20260421-1 ativo. T-20260412-2 aguarda PO. Dashboard atualizado. Sem novas tasks executadas.", tag: "dm" },
     { time: "Abr 26", color: "var(--accent2)", msg: "<strong>PR #61 merged</strong> feat(api): notifications module (SSE-065) — 15/15 módulos atingido. NotificationsService: findAll+countUnread+create+markRead+markAllRead+remove. Segurança: user_id cross-tenant validation em create(), ForbiddenException consistente (sem ID enumeration), route ordering read-all→:id/read. 19 testes, 100% stmt/func, 95.65% branch. @RequirePlanFeature('notifications') pro+enterprise. T-20260417-4 COMPLETED (stale task). Deploy API+Web VERDE.", tag: "merge" },
     { time: "Abr 24", color: "var(--blue)", msg: "<strong>PM Agent</strong> revisão diária — Saúde VERDE. CI+API+Web VERDE. 0 PRs abertos. 60 merged. 561 testes / 26 suites / 14 módulos / 120 endpoints / 18 migrations / 15 ADRs / 42 pages. Fase 1 100% completa. Regras 1-18 OK. Sem violações Bússola. Inconsistência: T-20260417-4 stale (Gaps P0: 1+3+8 todos DONE via RF-001/002/003 — marcar COMPLETED). 3 tasks PENDING dm_queue: T-20260421-1 standing, T-20260417-4 stale, T-20260412-2 aguarda PO.", tag: "pm" },
     { time: "Abr 24", color: "var(--accent2)", msg: "<strong>PR #60 merged</strong> feat(web): Gaps B1-3/B2-2/B3-4 — (B1-3) Vehicle detail: secao 'Linked Estimates' com lista, badge status, total, link; (B2-2) Estimate form wizard 3 passos (Customer/Vehicle → Line Items → Details/Review), step indicator, validacao por etapa, summary com nomes legiveis; (B3-4) Financial page: paineis Income/Expenses by Category com barras proporcionais. onChangeWithLabel? adicionado aos comboboxes (non-breaking). frontend-reviewer PASS apos 4 fixes (motion-safe, aria-label unico, UUID→label no summary, StepIndicator externo). 561 testes. Estimator+Owner-Operator / Gap 5+7.", tag: "merge" },
@@ -385,20 +386,20 @@ const D = {
     { name: "admin/activation", files: 5, spec: true, controller: true, endpoints: 3 }
   ],
   pipeline: [
-    { label: "CI", desc: "Lint + Test + Build (GitHub Actions) — SUCCESS PR #60 (2026-04-24). 561/561 testes. 26 suites. Branch coverage ≥80% todos os services.", status: "green", date: "2026-04-24" },
-    { label: "Deploy Staging (Web)", desc: "Vercel — SUCCESS pos-merge PR #60 (gaps B1-3/B2-2/B3-4).", status: "green", date: "2026-04-24" },
-    { label: "Deploy API", desc: "Fly.io + GHCR — SUCCESS. /ready 200 ATIVO (Fly secrets DATABASE_URL+REDIS_URL configurados).", status: "green", date: "2026-04-24" },
-    { label: "Deploy Web", desc: "Vercel — SUCCESS. PR #60 deployed.", status: "green", date: "2026-04-24" },
-    { label: "PRs Abertos", desc: "0 PRs abertos. 60 total merged. Ultimos: #59 coverage, #60 gaps B1-3/B2-2/B3-4 (2026-04-24).", status: "green", date: "2026-04-24" }
+    { label: "CI", desc: "Lint + Test + Build (GitHub Actions) — SUCCESS main (2026-04-26T09:39Z). 580/580 testes. 27 suites. Branch coverage ≥80% todos os services.", status: "green", date: "2026-04-26" },
+    { label: "Deploy Staging (Web)", desc: "Vercel — SUCCESS (2026-04-26T09:39Z). Ultimo deploy: pos-merge PR #61 notifications.", status: "green", date: "2026-04-26" },
+    { label: "Deploy API", desc: "Fly.io + GHCR — SUCCESS (2026-04-26T09:35Z). /ready 200 ATIVO (Fly secrets DATABASE_URL+REDIS_URL configurados).", status: "green", date: "2026-04-26" },
+    { label: "Deploy Web", desc: "Vercel — SUCCESS. PR #61 deployed (2026-04-24 ultimo build web).", status: "green", date: "2026-04-26" },
+    { label: "PRs Abertos", desc: "0 PRs abertos. 61 total merged. Ultimo: #61 notifications module (2026-04-26).", status: "green", date: "2026-04-26" }
   ],
   alertas: {
     bloqueantes: [],
     overdue: [],
     emRisco: [],
     proximos7: [
-      { titulo: "T-20260421-1: NS dashboard (standing)", desc: "Aguarda gatilho explícito (RF status change, Bussola ajuste, nova anti-rec). Nenhum gatilho ativo no momento." },
-      { titulo: "T-20260412-2 — aguarda ratificacao PO", desc: "Frontend Polish aguarda decisao PO ha 15+ dias. Decidir: executar agora ou encerrar scope." },
-      { titulo: "Modulos ausentes: inventory, rental, notifications", desc: "Nao sao bloqueantes para Fase 1, mas ausentes da meta de 15/15 modulos." }
+      { titulo: "T-20260421-1: NS dashboard (standing)", desc: "Aguarda gatilho explícito (RF status change, Bussola ajuste, nova anti-rec). Nenhum gatilho ativo no momento. Ultima execucao: PR #58 (2026-04-23, Trigger #1 RF-007 DONE)." },
+      { titulo: "T-20260412-2 — aguarda ratificacao PO", desc: "Frontend Polish aguarda decisao PO ha 17+ dias. Decidir: executar agora ou encerrar scope." },
+      { titulo: "Modulos inventory, rental (Fases 6-7)", desc: "Fora do escopo Fase 1. Meta 15/15 ja atingida. Estes modulos sao trabalho de Fases 6-7." }
     ],
     alinhamentoBussola: []
   },
@@ -411,9 +412,9 @@ const D = {
     { tipo: "/ready 503 — RESOLVIDO", desc: "Confirmado 2026-04-24: /ready retorna 200. Fly secrets configurados por Luigi." }
   ],
   recomendacoes: [
-    { prioridade: "P2 (DM/PO)", texto: "T-20260421-1 NS dashboard — aguardar proximo gatilho (RF status change, Bussola ajuste). Nenhum gatilho ativo agora." },
-    { prioridade: "P3 (PO)", texto: "Ratificar ou encerrar T-20260412-2 (Frontend Polish) — aguarda decisao PO ha 17+ dias." },
-    { prioridade: "P3 (DM)", texto: "Avaliar implementacao dos modulos inventory e rental (Fases 6-7). Meta 15/15 ja atingida com notifications." }
+    { prioridade: "P2 (DM)", texto: "T-20260421-1 NS dashboard — aguardar proximo gatilho (RF status change, Bussola ajuste, nova anti-rec). Nenhum gatilho ativo agora. Proxima acao somente quando gatilho disparar." },
+    { prioridade: "P3 (PO)", texto: "Ratificar ou encerrar T-20260412-2 (Frontend Polish) — aguarda decisao PO ha 17+ dias. Risco de tornar-se backlog eterno sem decisao explícita." },
+    { prioridade: "P3 (PO/DM)", texto: "Iniciar planejamento Fase 2 real (IA + integracoes bancarias + n8n automacoes). Fase 1 100% concluida — hora de definir o proximo ciclo." }
   ],
   backlog: [
     { id: "RF-004", task: "Customer 360 View (7 abas)", fase: "2", prio: "P1", status: "Concluido", nota: "PR #44 merged 2026-04-22. 368 testes. 2 endpoints novos (/summary + /activity-timeline). 7 abas + ARIA + Suspense. Critical+High+3 Medium corrigidos via subagentes." },
