@@ -7,7 +7,7 @@ type: project
 
 ## Revisão DM — 2026-04-27 (T-20260412-2 COMPLETED + T-20260422-11 COMPLETED)
 
-**Saúde: VERDE** — CI VERDE. Deploy API VERDE. Deploy Web VERDE. 1 PR aberto (#63). 62 merged.
+**Saúde: VERDE** — CI VERDE. Deploy API VERDE. Deploy Web VERDE. 0 PRs abertos. 63 merged.
 
 **Fase 1:** 100% | Módulos: **15/15** | Testes: **580** | Endpoints: **126** | Migrations: 18 | ADRs: 15 | Controllers: 18 | Pages: 42 | Specs: 27
 
@@ -17,7 +17,7 @@ type: project
   - T-021: `addLine/removeLine/updateLine` em `apps/web/src/components/estimates/estimate-form.tsx` ✅
   - T-022: `useFinancialDashboard + TrendChart` em `apps/web/src/app/(dashboard)/financial/page.tsx` ✅
 - **T-20260422-11 COMPLETED**: `docs/process/HANDOFF_PROTOCOL.md` §5 recebeu subseção "Dashboards estratégicos (obrigatório)" com template de checklist para 6 gatilhos T-20260421-1 + §12 nota de vínculo MEMORY.md ↔ template PM.
-- **PR #63 aberto**: `docs/SSE-067-handoff-protocol-dashboards-t20260412-2-completed` — doc-only, 2 tasks COMPLETED.
+- **PR #63 merged**: `docs/SSE-067-handoff-protocol-dashboards-t20260412-2-completed` — doc-only, 2 tasks COMPLETED. CI PASS.
 - **0 tasks PENDING no dm_queue** (exceto T-20260421-1 standing que aguarda gatilho).
 
 ### Prioridades para próxima sessão DM
