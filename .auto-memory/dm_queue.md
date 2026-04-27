@@ -1842,14 +1842,21 @@ Parcialmente Gap 7 (accountant export) — reports via API é pré-requisito par
 
 **Origin:** PM
 **Priority:** P1
-**Status:** PENDING
+**Status:** COMPLETED
 **Created:** 2026-04-12
-**Claimed:** —
-**Branch:** `feature/SSE-015-frontend-polish`
-**PR:** —
+**Claimed:** DM Agent (auditoria sessão 2026-04-27)
+**Closed:** 2026-04-27
+**Branch:** N/A (implementado em sessões anteriores)
+**PR:** N/A (implementado em sessões anteriores sem task explícita)
 
 ### Objetivo
 Implementar 3 melhorias de UX em vehicles, estimates e financial pages.
+
+### Resultado (auditoria DM 2026-04-27)
+Todos os 3 sub-itens foram implementados em sessões anteriores sem encerramento formal da task:
+- **T-020 DONE** — `apps/web/src/components/vehicles/vehicle-form.tsx` usa `CustomerCombobox` (importado de `@/components/shared/customer-combobox`). Implementado via RF-004 ou sessão anterior.
+- **T-021 DONE** — `apps/web/src/components/estimates/estimate-form.tsx` possui `addLine()`, `removeLine()`, `updateLine()` com tabela editável (description, quantity, unit_price, total calculado). Implementado via B2-2 (PR #60) ou sessão anterior.
+- **T-022 DONE** — `apps/web/src/app/(dashboard)/financial/page.tsx` usa `useFinancialDashboard` + `TrendChart`. Confirmado em CLAUDE.md ("Financial trend chart integrado no dashboard").
 
 ### Contexto
 Migrado de `dm_task_queue.md`. Três gaps de frontend apontados pelo PM em revisão de 2026-04-12.
@@ -1957,7 +1964,10 @@ Diagnóstico de deploy sem consumir logs de boot da máquina é especulação. P
 
 Origin: PO
 Priority: P2 (doc-only, destrava consistência de governança)
-Status: PENDING
+Status: COMPLETED
+Closed: 2026-04-27
+Branch: docs/SSE-067-handoff-protocol-dashboards-t20260412-2-completed
+PR: #63 (merged 2026-04-27)
 Depends on: — (independente)
 
 ### Motivação

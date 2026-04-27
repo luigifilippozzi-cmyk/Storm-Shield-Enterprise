@@ -140,6 +140,18 @@ PM Agent escreve em cada execução um bloco no topo (append-top):
 
 ## Inconsistências detectadas (opcional)
 Apontar drift entre estado declarado e estado real (ex: CLAUDE.md diz X, código faz Y).
+
+## Dashboards estratégicos (obrigatório)
+- NS↔Bússola v1 (`docs/strategy/ANALISE_NS_vs_BUSSOLA_v1.html`):
+  - Última sincronização: YYYY-MM-DD | Versão: vN.N
+  - Gatilhos T-20260421-1 abertos: [lista ou "nenhum"]
+    - [ ] Mudança status RF-004..007
+    - [ ] Ajuste Bússola publicado
+    - [ ] Nova anti-rec / nova área NS
+    - [ ] Mudança em ADR-012
+    - [ ] Mudança de fase do projeto
+  - Divergências vs estado atual: [lista ou "nenhuma"]
+- (adicionar blocos análogos ao incluir novos dashboards vivos no MEMORY.md)
 ```
 
 Revisões sucessivas no mesmo dia: incrementar "Nª revisão" e registrar no topo como bloco novo. **Não sobrescrever** revisão anterior.
@@ -279,6 +291,7 @@ Lição aprendida no projeto MF, registrada aqui para evitar recorrência:
 - Este protocolo é versionado. Mudanças estruturais requerem ADR próprio (ADR-010+).
 - Revisão obrigatória trimestral ou ao atingir 3 ciclos de rotação de `dm_queue_archive.md`.
 - Ajustes de template (campos novos, formatos) podem ser feitos sem ADR desde que retrocompatíveis — append, não breaking.
+- Dashboards vivos registrados em `MEMORY.md` (seção "Dashboards estratégicos") devem ter entrada correspondente no status do PM — §5 subseção "Dashboards estratégicos".
 
 ---
 

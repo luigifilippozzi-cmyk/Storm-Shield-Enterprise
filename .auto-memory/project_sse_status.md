@@ -3,6 +3,53 @@ name: SSE Project Status
 description: Current state of Storm Shield Enterprise project — metrics, health, priorities for Dev Manager
 type: project
 ---
+# SSE Project Status — 2026-04-27 (DM Agent — sessão agendada autônoma)
+
+## Revisão DM — 2026-04-27 (T-20260412-2 COMPLETED + T-20260422-11 COMPLETED)
+
+**Saúde: VERDE** — CI VERDE. Deploy API VERDE. Deploy Web VERDE. 1 PR aberto (#63). 62 merged.
+
+**Fase 1:** 100% | Módulos: **15/15** | Testes: **580** | Endpoints: **126** | Migrations: 18 | ADRs: 15 | Controllers: 18 | Pages: 42 | Specs: 27
+
+### Novidades desta sessão (2026-04-27 — sessão agendada autônoma)
+- **T-20260412-2 COMPLETED** (auditoria): todos os 3 sub-itens confirmados já implementados em sessões anteriores:
+  - T-020: `CustomerCombobox` em `apps/web/src/components/vehicles/vehicle-form.tsx` ✅
+  - T-021: `addLine/removeLine/updateLine` em `apps/web/src/components/estimates/estimate-form.tsx` ✅
+  - T-022: `useFinancialDashboard + TrendChart` em `apps/web/src/app/(dashboard)/financial/page.tsx` ✅
+- **T-20260422-11 COMPLETED**: `docs/process/HANDOFF_PROTOCOL.md` §5 recebeu subseção "Dashboards estratégicos (obrigatório)" com template de checklist para 6 gatilhos T-20260421-1 + §12 nota de vínculo MEMORY.md ↔ template PM.
+- **PR #63 aberto**: `docs/SSE-067-handoff-protocol-dashboards-t20260412-2-completed` — doc-only, 2 tasks COMPLETED.
+- **0 tasks PENDING no dm_queue** (exceto T-20260421-1 standing que aguarda gatilho).
+
+### Prioridades para próxima sessão DM
+1. P2 — T-20260421-1: NS dashboard (standing — aguarda gatilho explícito)
+2. P1 (PO) — Iniciar planejamento Fase 2 (IA + Plaid + n8n) — nenhuma task DM até PO definir RFs
+3. P3 — Módulos inventory, rental (Fases 6-7, não bloqueantes)
+
+### Alertas
+- dm_queue: 0 tasks PENDING executáveis. Apenas T-20260421-1 (standing, aguarda gatilho).
+- Fase 2 depende de PO criar RFs em RF_BACKLOG.md antes de DM iniciar branch.
+
+### Alinhamento Bússola (regras 15-18)
+Sessão de auditoria e doc-only — sem tela nova, sem RF. Regra 16 não aplicável. Nenhuma violação detectada.
+
+### Verificação Regras CLAUDE.md §10
+- Regra 1 (feature branch): OK — branch docs/SSE-067-*
+- Regra 9 (secrets): OK — doc-only
+- Regras 15-18: OK
+
+### Handoff DM (dm_queue.md)
+- **COMPLETED esta sessão:** T-20260412-2 (auditoria), T-20260422-11 (HANDOFF_PROTOCOL §5)
+- **PENDING P2 standing:** T-20260421-1 (NS dashboard — aguarda gatilho)
+
+### Subagentes acionados esta sessão
+- test-runner: N/A (sem código novo)
+- security-reviewer: N/A
+- db-reviewer: N/A
+- frontend-reviewer: N/A
+
+### Última sessão DM: 2026-04-27 (T-20260412-2 + T-20260422-11 COMPLETED)
+
+---
 > **Nota:** "NS" = ERP de referência externo. Nome substituído por precaução (ADR-014).
 
 
