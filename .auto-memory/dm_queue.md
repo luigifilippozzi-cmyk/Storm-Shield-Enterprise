@@ -2032,12 +2032,12 @@ Colar bloco longo com markdown + backticks + caracteres especiais em here-string
 **Resultado:** 7 personas Acme com Clerk users criados, `external_auth_id` populado no DB, role assignments idempotentes. Security-reviewer: PASS após 4 correções (SCHEMA_NAME_RE, env var password, privateMetadata role, skipPasswordChecks condicional).
 ---
 
-## [2026-05-01] T-20260501-2 — BUG-01b — P1 — IN_REVIEW
+## [2026-05-01] T-20260501-2 — BUG-01b — P1 — COMPLETED
 **Origem:** UAT Bug 01 + sessão PO 2026-05-01 + GitHub Issue #65 (BUG-01b)
-**Branch:** `feat/SSE-069-acme-demo-data-seed` → PR #69 OPEN (CI running)
+**Branch:** `feat/SSE-069-acme-demo-data-seed` → PR #69 MERGED (2026-05-02T02:02Z)
 **Artefatos:** `apps/api/src/database/seeds/acme-demo-data.seed.ts` (implementado — substituiu stub)
 **Seed:** 2 seguradoras, 15 customers, 18 vehicles, 12 estimates + 24 lines, 5 SOs, 30 transactions, 3 fiscal periods, COA (13 accounts se ausente), 3 JEs posted, 1 fixed asset + 4 depreciation schedules. Idempotente (guard por contagem). db-reviewer: PASS.
-**Próximo passo DM:** merge PR #69 quando CI verde → informar PO para rodar seeds em staging.
+**Resultado:** PR #69 merged. PO pode rodar seeds em staging: `pnpm --filter api seed:run --tenant=acme --type=personas` → `--type=demo-data`.
 ---
 
 ## [2026-05-01] T-20260501-3 — BUG-02 — P0 — COMPLETED
@@ -2184,4 +2184,153 @@ Reabrir este ADR se:
 **Protocolo:** `docs/process/HANDOFF_PROTOCOL.md` §4 (template canônico) + §7 (ciclo de vida)
 
 **Sequência seguinte (NÃO nesta task):** após v1.3 mergear em main, retomar RF Regra-0 → ADR-017.
+---
+
+
+## [2026-05-01] T-20260501-4 — RF Regra-0 + ADR-017 (Super User Único de Plataforma) — P0 — PENDING (bloqueado por Bússola v1.3)
+
+**Origem:** Sessão PO Cowork 2026-05-01 — luigi.filippozzi@gmail.com formalizou necessidade de "regra 0" (super user único de plataforma com cascade view e provisioning exclusivo de admins de tenants novos).
+**Persona primária servida:** Bússola §2.5 — Platform Operator (NÃO iniciar sem confirmar §2.5 já em main; senão BLOQUEADO).
+**Gap fechado:** governança multi-tenant centralizada (Bússola §2.5 — não-cliente; provisioning hoje exige SQL via `sse_user`, sem audit nativo).
+
+**Branch sugerida:** `feature/SSE-regra0-super-user`
+
+**Subagentes (todos OBRIGATÓRIOS — toca RLS/auth/tenant/UI):**
+- `test-runner`
+- `security-reviewer` — regra-0 atravessa tenant boundary; bypass de RLS exige revisão dedicada
+- `db-reviewer` — migration 011 (audit_logs flag + index)
+- `frontend-reviewer` — PV1–PV6 + PUX1–PUX6 na nova área `/app/platform-admin`
+
+**Bloqueado por:** entrada anterior "Bússola v1.3 + ADR-016 (Persona de Plataforma)". Não iniciar até `docs/strategy/BUSSOLA_PRODUTO_SSE.md` em `main` ter §2.5 + header v1.3.
+**Independente de:** T-20260501-1 (BUG-01a), T-20260501-2 (BUG-01b), T-20260501-3 (BUG-02). Pode ir em paralelo com qualquer um deles após desbloquear.
+
+**Escopo negativo (NÃO fazer nesta task):**
+- NÃO criar tabela `super_users` no DB — super user vive em env var, não em tabela.
+- NÃO permitir múltiplos super users ativos simultaneamente — exatamente 1 primário + 1 backup dormente.
+- NÃO quebrar isolamento RLS para usuários comuns — bypass é exclusivo da sessão super user via `SuperUserContext` per-request.
+- NÃO commitar valor real de `SUPER_USER_EMAIL` no `.env.example` — usar placeholder (`platform-admin@example.com`).
+- NÃO incluir mudanças em Clerk Organizations — provisioning de tenant fica dentro do escopo já existente.
+- NÃO criar dashboards consolidados de saúde da plataforma nesta task — JTBD top 3 da §2.5 inclui isso, mas é RF separada (forthcoming, próximo número livre em `RF_BACKLOG.md`).
+- NÃO mexer em `KNEX_ADMIN_CONNECTION` / `sse_user` — é última linha de defesa, fora do escopo de aplicação.
+
+---
+
+### A. RF — Super User Único de Plataforma (Regra 0)
+
+**Fase:** 1 | **Prioridade:** P0 | **Persona primária:** Platform Operator (Bússola §2.5) | **Gap fechado:** governança multi-tenant centralizada (§2.5)
+
+**Descrição:** Apenas o email configurado em `SUPER_USER_EMAIL` (provisão inicial: `luigi.filippozzi@gmail.com`) é reconhecido como super user da plataforma. Tem full access cross-tenant (ler+escrever em qualquer tenant), é o único capaz de provisionar admins/owners de novos tenants, e enxerga em cascata o estado de todos os tenants a partir de uma única sessão. Backup dormente via `SUPER_USER_BACKUP_EMAIL` (procedimento de break-glass auditado em runbook).
+
+**Regras de negócio:**
+- **RN1** `SUPER_USER_EMAIL` e `SUPER_USER_BACKUP_EMAIL` são env vars; alteração exige deploy.
+- **RN2** Identificação cruza JWT do Clerk (email exato, case-insensitive) + check no backend; mismatch → 403.
+- **RN3** Super user atravessa schema isolation e RLS via `SuperUserContext` de request (não persistente; análogo ao bypass de `sse_user` mas dentro da app, com escopo de uma única request).
+- **RN4** Toda ação grava `audit_logs` com `is_super_user_action=true` + `target_tenant_id`; índice dedicado para auditoria rápida.
+- **RN5** Backup dormente: `SUPER_USER_BACKUP_ACTIVE=false` por padrão; ativação requer PR + deploy + entrada de break-glass no `audit_log`; primário e backup nunca podem coexistir ativos simultaneamente.
+- **RN6** Provisionar role `owner` ou `admin` em tenant novo é privilégio exclusivo do super user; admins existentes só promovem dentro do próprio tenant.
+- **RN7** Super user não é criável, deletável, nem editável via API/UI — só via env+deploy.
+- **RN8** Email não-autorizado tentando rota super-user-only → 403 + alert (Sentry/Datadog) + `audit_logs` entry.
+
+**Módulos impactados:**
+- `apps/api/src/modules/auth` — validação JWT + super user check
+- `apps/api/src/modules/users` — provisioning owner/admin em tenants novos
+- `apps/api/src/modules/tenants` — cascade view + tenant switch
+- `apps/api/src/common/guards/{auth,tenant}.guard.ts` — bypass controlado per-request
+- `apps/api/src/common/services/super-user.service.ts` — NOVO
+- `apps/api/src/common/interceptors/audit-log.interceptor.ts` — flag `is_super_user_action`
+- `apps/web/src/app/(dashboard)/platform-admin/*` — NOVA área restrita (invisível a outras personas)
+- migration `005_row_level_security.sql` — adicionar comentário documentando o bypass de aplicação (não alterar lógica)
+
+**Migrations:**
+Sim — nova migration `011_super_user_audit_flag.sql`:
+- `ALTER audit_logs ADD COLUMN is_super_user_action BOOLEAN DEFAULT FALSE NOT NULL`
+- `ALTER audit_logs ADD COLUMN target_tenant_id UUID NULL`
+- `CREATE INDEX IF NOT EXISTS idx_audit_super_user ON audit_logs(is_super_user_action) WHERE is_super_user_action = TRUE`
+- Idempotente (`IF NOT EXISTS` + `ADD COLUMN IF NOT EXISTS`).
+
+Sem alteração em `users` (super user não vive em DB).
+
+---
+
+### B. Companion ADR — `docs/decisions/017-super-user-plataforma-regra-0.md`
+
+```markdown
+# ADR-017 — Super User Único de Plataforma (Regra 0)
+
+Status: Accepted (2026-05-01)
+Slot: 017 (após ADR-016 Bússola v1.3; ADR-015 reservado p/ release cadence; independente)
+
+## Contexto
+SSE é SaaS multi-tenant com 3 camadas de isolamento (schema-per-tenant + RLS + dual DB users).
+Operações de governança (provisionar admin de novo tenant, suporte, audit cross-tenant) hoje
+exigem acesso direto ao DB com `sse_user` — sem trilha de UI nem audit log estruturado.
+Bússola §2.5 (ADR-016) já formalizou a persona Platform Operator; este ADR materializa
+a infraestrutura de identidade + bypass + audit.
+
+## Opções
+| # | Opção | Trade-off |
+|---|---|---|
+| 1 | **Super user único via env var + break-glass dormente (escolhida)** | Simples, surface mínima, audit_log claro; SPOF mitigado por backup + MFA |
+| 2 | Super user híbrido (env + flag DB + Clerk role) | Defesa em profundidade; 3 fontes de verdade = 3 surfaces para drift/erro |
+| 3 | Sem super user — provisioning sempre via script `sse_user` | Zero exceção arquitetural; opera fora da app, sem UI, sem audit nativo |
+| 4 | Múltiplos super users hierárquicos | Flexibilidade futura; prematuro; sobrepõe ao RBAC existente |
+
+## Decisão
+Opção 1 — env var + break-glass dormente.
+
+## Justificativa
+Simplicidade vence flexibilidade nesta fase. Surface mínima, auditável, alinhada com a filosofia
+"uma pessoa = uma decisão" do Operating Model v2 e com a §2.5 da Bússola (não pluraliza neste estágio).
+Backup dormente cobre bus-factor sem multiplicar superfície de ataque.
+
+## Condição de reversão
+Reabrir este ADR se:
+- Surgir co-fundador / COO / Platform Support Engineer com necessidade de cascade view permanente
+  (Bússola §2.5 prevê este gatilho — revisar §2.5 e ADR-017 juntos)
+- Compliance (SOC2, equivalente) exigir aprovação multi-pessoa para provisioning
+- SSE ultrapassar 100 tenants ativos e provisioning manual virar gargalo
+- Incidente de segurança envolvendo a conta super user
+
+## Consequências
++ Governança auditável via UI; provisioning sai do SQL manual
++ Audit log estruturado para suporte/compliance futuro
++ MFA obrigatório no Clerk + recovery codes offline + backup dormente + sse_user via DB = 4 linhas de defesa
+- Exceção formal ao tenant isolation (mitigada por SuperUserContext per-request + audit obrigatório por RN4/RN8)
+- Conta única é alvo de alto valor (mitigada conforme acima)
+- Migration `005_row_level_security.sql` precisa de comentário documentando o bypass de aplicação
+
+## Atualizações decorrentes
+- Migration nova: `011_super_user_audit_flag.sql`
+- `.env.example`: adicionar `SUPER_USER_EMAIL`, `SUPER_USER_BACKUP_EMAIL`, `SUPER_USER_BACKUP_ACTIVE` (placeholders)
+- `apps/web/src/app/(dashboard)/platform-admin/*`: nova área restrita
+- `apps/api/src/common/services/super-user.service.ts`: novo service
+- `docs/runbooks/super-user-break-glass.md`: NOVO (procedimento de ativação do backup)
+- Bússola §2.5 (ADR-016) referenciada como persona primária na descrição do PR
+- CLAUDE.md regra 16 satisfeita (PR cita §2.5 + gap)
+- `.auto-memory/MEMORY.md`: nova entry "SSE — Regra-0 super user (ADR-017)"
+```
+
+---
+
+### C. Critérios de aceite (Done quando):
+
+- [ ] **CA1** Login com email configurado em `SUPER_USER_EMAIL` concede full access cross-tenant após match exato no JWT do Clerk
+- [ ] **CA2** Outro email não consegue criar `owner`/`admin` em tenant novo, mesmo sendo `owner` em outro tenant (testes negativos com 2 tenants)
+- [ ] **CA3** Super user lista todos os tenants em `/app/platform-admin` e troca de contexto sem logout (preserva sessão)
+- [ ] **CA4** Cada ação do super user gera `audit_logs` entry com `is_super_user_action=true` + `target_tenant_id` preenchido — verificável via SQL query no runbook
+- [ ] **CA5** PUT/DELETE em endpoint que tente alterar dados do super user retorna 403 (RN7)
+- [ ] **CA6** `SUPER_USER_BACKUP_ACTIVE=false` bloqueia login do backup como super user; com `=true`, backup ganha mesmos privilégios mas primário é desativado (mutual exclusion)
+- [ ] **CA7** Runbook `docs/runbooks/super-user-break-glass.md` testado em staging end-to-end (toggle ENV → deploy → login backup → audit visível)
+- [ ] **CA8** Bypass de RLS é exclusivo do request com `SuperUserContext`; teste integrado com 2 sessões paralelas (super user + usuário comum) prova que comum continua sob RLS normal
+- [ ] **CA9** MFA obrigatório no Clerk para o email super user (configurado no Clerk dashboard, validado em runbook)
+- [ ] **CA10** Migration `011_super_user_audit_flag.sql` aplicada em staging + rollback testado + idempotência verificada (rerun não falha)
+- [ ] **CA11** ADR-017 publicado em `docs/decisions/017-super-user-plataforma-regra-0.md`, status `Accepted`
+- [ ] **CA12** PR descrição cita Bússola §2.5 + gap fechado + regras 15/16 do CLAUDE.md
+- [ ] **CA13** PV1–PV6 + PUX1–PUX6 verificados pelo `frontend-reviewer` na nova área `/app/platform-admin` (checklist de 20 itens em `.claude/agents/SSE_Prompts_Squad_IA.md` DM-06)
+- [ ] **CA14** `.env.example` atualizado com placeholders das 3 env vars + comentário explicando regra-0
+- [ ] **CA15** `.auto-memory/MEMORY.md` ganhou entry "SSE — Regra-0 super user (ADR-017)" linkando ADR + RF
+
+**Protocolo:** `docs/process/HANDOFF_PROTOCOL.md` §4 (template canônico) + §7 (ciclo de vida)
+
+**Sequência seguinte (NÃO nesta task):** após RF Regra-0 mergear, abrir RF de "consolidated platform health dashboard" cobrindo o JTBD top 3 da Platform Operator (#tenants ativos + alertas de saúde + activation por tenant) — provavelmente próximo número livre em `docs/strategy/RF_BACKLOG.md`.
 ---

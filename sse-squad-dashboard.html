@@ -289,10 +289,10 @@
 <script>
 // <!--METRICS_START-->
 const D = {
-  lastUpdated: "2026-05-01 (Dev Manager — sessão UAT bugs)",
-  updatedBy: "Dev Manager",
-  health: "yellow",
-  healthText: "AMARELO. UAT em andamento. 1 PR aberto (feat/SSE-069 CI running). BUG-02 (signup público) + BUG-01a (personas login) RESOLVIDOS — PRs #67+#68 merged. BUG-01b (demo data) IN_REVIEW — PR #69 aberto. Fase 1 100% completa — GoNoGo v2 (GO). Todos os bugs são de staging, zero impacto em código de produção.",
+  lastUpdated: "2026-05-02 (PM Agent — revisão diária)",
+  updatedBy: "PM Agent",
+  health: "green",
+  healthText: "VERDE. CI VERDE (2026-05-02T02:09Z). Deploy API VERDE (2026-05-02T02:02Z). Deploy Web VERDE (2026-05-02T01:41Z). 0 PRs abertos. 71 PRs merged. Fase 1 100% completa. 3 UAT bugs (BUG-01a/01b/02) todos RESOLVIDOS e merged. Pendente DM: Bússola v1.3 + ADR-016 (P1). Pendente PO: rodar seeds em staging.",
   activeFase: "2",
   kpis: {
     backendModules: 15,
@@ -307,7 +307,7 @@ const D = {
     excelDone: 36
   },
   agents: [
-    { name: "PM Agent", role: "Status Diario + Metricas", color: "var(--blue)", bg: "var(--blue-bg)", icon: "clipboard", status: "active", statusText: "Revisao 2026-04-28 — Saude VERDE. GoNoGo v2 GO emitido. 63 PRs merged. 15/15 modulos, 580 testes, 126 endpoints, 18 migrations, 15 ADRs, 42 pages. Regras 1-18 OK. Inconsistencia: 2 docs auditoria nao-commitados. ADR-015 destravado.", stats: [["Frequencia","Diario"],["Escopo","Read-only"],["Output","Relatorio + Dashboard"]] },
+    { name: "PM Agent", role: "Status Diario + Metricas", color: "var(--blue)", bg: "var(--blue-bg)", icon: "clipboard", status: "active", statusText: "Revisao 2026-05-02 — Saude VERDE. 71 PRs merged. 15/15 modulos, 580 testes, 126 endpoints, 18 migrations, 15 ADRs, 42 pages. Regras 1-18 OK. Sem inconsistencias de codigo. Pendente DM: Bussola v1.3 + ADR-016 (P1). Pendente PO: seeds staging.", stats: [["Frequencia","Diario"],["Escopo","Read-only"],["Output","Relatorio + Dashboard"]] },
     { name: "Dev Manager", role: "Implementacao + Orquestracao", color: "var(--accent2)", bg: "var(--teal-bg)", icon: "gear", status: "active", statusText: "Sessao 2026-05-01 — 3 UAT bugs corrigidos. BUG-02: signup publico desabilitado (PR #67 merged). BUG-01a: 7 personas Acme com login funcional (PR #68 merged). BUG-01b: demo data seed implementado (PR #69 em review — CI running). security-reviewer+db-reviewer PASS.", stats: [["Autoridade","Execucao tecnica"],["Subagentes","4 configurados"],["PRs merged","#67+#68 (esta sessao)"]] },
     { name: "test-runner", role: "Jest + Coverage", color: "var(--green)", bg: "var(--green-bg)", icon: "check", status: "active", statusText: "561 testes, 26 suites — GREEN (2026-04-23). Branch coverage: contractors 88.88%, customers 84.61%, financial 83.33% — todos ≥80%. Standing issue resolvido via PR #59.", stats: [["Framework","Jest + ts-jest"],["Specs","26 test suites"],["Trigger","Sempre pre-PR"]] },
     { name: "security-reviewer", role: "RLS + XSS + Auth", color: "var(--red)", bg: "var(--red-bg)", icon: "shield", status: "active", statusText: "PR #53 — Medium corrigido (findOne estimator guard sem user.id), Low pre-existente fechado via PR #55 (del() tenant_id). Todos findings resolvidos.", stats: [["Foco","tenant_id, RLS, AES"],["Checks","OWASP Top 10 + regras 15-18"],["Trigger","auth/db changes"]] },
@@ -315,6 +315,10 @@ const D = {
     { name: "frontend-reviewer", role: "Next.js + shadcn/ui", color: "var(--cyan)", bg: "rgba(6,182,212,.12)", icon: "layout", status: "active", statusText: "Checklist expandido: 20 itens (8 base + 6 PV + 6 PUX via ADR-013). PR #44 FAIL→PASS. Regra 19 vigente.", stats: [["Framework","Next.js 15 + React 19"],["Checklist","20 itens (ADR-013)"],["Trigger","UI/component changes — Regra 19"]] }
   ],
   activity: [
+    { time: "Mai 02", color: "var(--blue)", msg: "<strong>PM Agent</strong> revisão diária 2026-05-02 — Saúde VERDE. CI+Deploy API+Deploy Web todos SUCCESS (2026-05-02T02:09Z). 0 PRs abertos. 71 total merged. Métricas: 15/15 módulos, 580 testes, 126 endpoints, 18 migrations, 15 ADRs, 42 pages. Regras 1-14 OK (sem KNEX direto, sem FLOAT, sem CASCADE financeiro, sem secrets). Regras 15-18 OK (PRs #67-71 chore/fix/seeds, sem tela nova). Inconsistência: T-20260501-2 ainda IN_REVIEW no dm_queue — PR #69 merged. Pendente DM: Bússola v1.3 + ADR-016 (P1). Pendente PO: seeds staging + RFs Fase 2.", tag: "pm" },
+    { time: "Mai 02", color: "var(--accent2)", msg: "<strong>PR #71 merged</strong> chore(scripts): PO diagnostic helper scripts (SSE-072) — scripts/po-diagnostic.js adicionado. CI SUCCESS.", tag: "merge" },
+    { time: "Mai 02", color: "var(--accent2)", msg: "<strong>PR #70 merged</strong> chore(memory): session close 2026-05-01 — BUG-01a+01b+02 UAT fixes (SSE-071). Memory atualizada, docs auditoria resolvidos.", tag: "merge" },
+    { time: "Mai 02", color: "var(--accent2)", msg: "<strong>PR #69 merged</strong> feat(seeds): BUG-01b — Acme demo data seed (SSE-069). acme-demo-data.seed.ts: 2 seguradoras, 15 customers, 18 vehicles, 12 estimates+24 lines, 5 SOs, 30 transactions, 3 fiscal periods, COA 13 contas, 3 JEs posted, 1 FAM asset+4 schedules. Idempotente. db-reviewer PASS. T-20260501-2 COMPLETED.", tag: "merge" },
     { time: "Mai 01", color: "var(--accent2)", msg: "<strong>Dev Manager</strong> sessão 2026-05-01 — 3 UAT bugs corrigidos. BUG-02 (P0): signup público fechado — register/page.tsx notFound(), /register(.*) removido do publicRoutes, footerAction__signUp hidden, runbook clerk-signup-restrictions.md criado. PR #67 merged. BUG-01a (P0): 7 personas Acme — acme-personas.seed.ts criado (Clerk users + DB users + role assignments, idempotente, SCHEMA_NAME_RE, DEMO_PASSWORD via env). security-reviewer PASS após 4 fixes. PR #68 merged. BUG-01b (P1): acme-demo-data.seed.ts implementado — 2 seguradoras, 15 customers, 18 vehicles, 12 estimates, 5 SOs, 30 transactions, 3 fiscal periods, 3 JEs posted, 1 FAM asset. db-reviewer PASS. PR #69 aberto (CI running).", tag: "dm" },
     { time: "Mai 01", color: "var(--accent2)", msg: "<strong>PR #68 merged</strong> fix(api): BUG-01a — Acme demo personas seed (SSE-068). acme-personas.seed.ts + run.ts extendido + .env.example. 7 personas com Clerk+DB+roles. Idempotente.", tag: "merge" },
     { time: "Mai 01", color: "var(--accent2)", msg: "<strong>PR #67 merged</strong> fix(web): BUG-02 — disable public self-service signup (SSE-070). register/page.tsx notFound(), middleware sem /register, Clerk appearance sem sign-up link, runbook criado.", tag: "merge" },
@@ -391,39 +395,42 @@ const D = {
     { name: "admin/activation", files: 5, spec: true, controller: true, endpoints: 3 }
   ],
   pipeline: [
-    { label: "CI", desc: "Lint + Test + Build (GitHub Actions) — SUCCESS main (2026-04-27T23:39Z). 580/580 testes. 27 suites. Branch coverage ≥80% todos os services.", status: "green", date: "2026-04-27" },
-    { label: "Deploy Staging", desc: "SUCCESS (2026-04-27T23:39Z). Ultimo workflow: Deploy Staging pos-merge PR #63.", status: "green", date: "2026-04-27" },
-    { label: "Deploy API", desc: "Fly.io + GHCR — SUCCESS (2026-04-26T09:35Z). /ready 200 ATIVO. Fly secrets DATABASE_URL+REDIS_URL configurados. T-20260412-1 superseded.", status: "green", date: "2026-04-27" },
-    { label: "Deploy Web", desc: "Vercel — SUCCESS (2026-04-24T09:06Z). sse-web-staging.vercel.app responde.", status: "green", date: "2026-04-24" },
-    { label: "PRs Abertos", desc: "1 PR aberto: #69 (BUG-01b demo data seed — CI running). 68 total merged. Ultimos merged: #67 (BUG-02 signup), #68 (BUG-01a personas). PR #69 aguarda CI verde para merge.", status: "yellow", date: "2026-05-01" }
+    { label: "CI", desc: "Lint + Test + Build (GitHub Actions) — SUCCESS main (2026-05-02T02:09Z). 580/580 testes. 27 suites. Branch coverage ≥80% todos os services.", status: "green", date: "2026-05-02" },
+    { label: "Deploy Staging", desc: "SUCCESS (2026-05-02T02:09Z). Ultimo workflow: Deploy Staging pos-merge PR #71.", status: "green", date: "2026-05-02" },
+    { label: "Deploy API", desc: "Fly.io + GHCR — SUCCESS (2026-05-02T02:02Z). /ready 200 ATIVO. T-20260412-1 superseded e resolvido.", status: "green", date: "2026-05-02" },
+    { label: "Deploy Web", desc: "Vercel — SUCCESS (2026-05-02T01:41Z). sse-web-staging.vercel.app responde.", status: "green", date: "2026-05-02" },
+    { label: "PRs Abertos", desc: "0 PRs abertos. 71 total merged. Ultimos: #71 (scripts diagnostico PO), #70 (session close UAT), #69 (BUG-01b demo data seed), #68 (BUG-01a personas), #67 (BUG-02 signup).", status: "green", date: "2026-05-02" }
   ],
   alertas: {
     bloqueantes: [],
     overdue: [],
     emRisco: [],
     proximos7: [
-      { titulo: "T-20260421-1: NS dashboard (standing)", desc: "Aguarda gatilho explícito (RF status change, Bussola ajuste, nova anti-rec). Nenhum gatilho ativo no momento. Ultima execucao: PR #58 (2026-04-23, Trigger #1 RF-007 DONE)." },
-      { titulo: "Iniciar planejamento Fase 2 (PO)", desc: "Fase 1 100% concluida. Fase 2 = IA + integracoes bancarias (Plaid) + automacoes n8n. PO deve definir escopo e prioridades do proximo ciclo." },
-      { titulo: "Modulos inventory, rental (Fases 6-7)", desc: "Fora do escopo Fase 1. Meta 15/15 ja atingida. Estes modulos sao trabalho de Fases 6-7." }
+      { titulo: "Bússola v1.3 + ADR-016 (DM — P1)", desc: "Task criada em 2026-05-01. ADR-016 nao existe ainda. Bussola esta em v1.2. DM deve executar branch feature/SSE-bussola-v1-3-persona-plataforma: adicionar §2.5 (Platform Operator) + header v1.3 + ADR-016." },
+      { titulo: "Seeds staging — PO acao manual", desc: "PR #69 merged. Seeds prontos. PO deve rodar: pnpm --filter api seed:run --tenant=acme --type=personas → --type=demo-data. Desbloqueia UAT tour completo." },
+      { titulo: "ADR-015 (release cadence — DM — P2)", desc: "Slot reservado ha meses. Sem bloqueadores. DM pode redigir docs/decisions/015-release-cadence.md a qualquer momento." },
+      { titulo: "T-20260421-1: NS dashboard (standing — P2)", desc: "Aguarda gatilho explicito (RF status change, Bussola ajuste, nova anti-rec). Nenhum gatilho ativo. Ultima execucao: PR #58 (2026-04-23, Trigger #1 RF-007 DONE)." },
+      { titulo: "Iniciar planejamento Fase 2 (PO)", desc: "Fase 1 100% concluida. Fase 2 = IA + integracoes bancarias (Plaid) + automacoes n8n. PO deve definir escopo e RFs em RF_BACKLOG.md." }
     ],
     alinhamentoBussola: []
   },
   inconsistencias: [
-    { tipo: "NOVA — Docs auditoria não-commitados (2026-04-28)", desc: "SSE_GoNoGo_Fase1_MVP_20260420.md (v1 CONDITIONAL-GO → v2 GO) e SSE_Plano_Testes_UI_Fase1_20260420.md (v1 12 módulos → v2 15 módulos) têm modificações locais refletindo o estado atual mas não foram commitados. Ação: PR doc-only para commitar." },
+    { tipo: "T-20260501-2 — status desatualizado no dm_queue", desc: "dm_queue.md ainda mostra IN_REVIEW para T-20260501-2 (BUG-01b). PR #69 foi merged em 2026-05-02T02:02Z. DM deve atualizar status para COMPLETED no dm_queue." },
+    { tipo: "Docs auditoria — RESOLVIDO 2026-05-01", desc: "SSE_GoNoGo_Fase1_MVP_20260420.md e SSE_Plano_Testes_UI_Fase1_20260420.md — marcados como resolvidos na sessao DM 2026-05-01 (incluidos em PR doc-only)." },
     { tipo: "T-20260417-4 — RESOLVIDO", desc: "Marcada COMPLETED 2026-04-26 por obsolescencia — Gaps 1+3+8 todos implementados via RF-001/002/003." },
-    { tipo: "T-20260412-2 — RESOLVIDO 2026-04-27", desc: "Auditoria DM confirmou: T-020 (CustomerCombobox), T-021 (inline line editor), T-022 (trend chart) todos ja implementados. Task marcada COMPLETED. PR #63." },
-    { tipo: "T-20260422-11 — RESOLVIDO 2026-04-27", desc: "HANDOFF_PROTOCOL.md §5 subseção 'Dashboards estratégicos (obrigatório)' adicionada + §12 nota. Task marcada COMPLETED. PR #63." },
+    { tipo: "T-20260412-2 — RESOLVIDO 2026-04-27", desc: "Auditoria DM confirmou: T-020/T-021/T-022 todos implementados. Task COMPLETED. PR #63." },
     { tipo: "Coverage <80% branches — RESOLVIDO", desc: "PR #59 merged 2026-04-24. contractors 88.88%, customers 84.61%, financial 83.33%. Todos ≥80%." },
     { tipo: "Gaps B1-3/B2-2/B3-4 — RESOLVIDOS", desc: "PR #60 merged 2026-04-24. Vehicle estimates, Wizard form, Financial breakdown — todos fechados." },
     { tipo: "POST /tenants sem AuthGuard — RESOLVIDO", desc: "PR #38 merged 2026-04-21. Issue HIGH fechada." },
     { tipo: "/ready 503 — RESOLVIDO", desc: "Confirmado 2026-04-24: /ready retorna 200. Fly secrets configurados por Luigi." }
   ],
   recomendacoes: [
-    { prioridade: "P1 (DM)", texto: "Commitar docs de auditoria pendentes — SSE_GoNoGo_Fase1_MVP_20260420.md (v2 GO) + SSE_Plano_Testes_UI_Fase1_20260420.md (v2) via PR doc-only. Modificações refletem estado correto mas estão apenas locais." },
-    { prioridade: "P1 (PO)", texto: "Iniciar planejamento Fase 2 (IA + integracoes bancarias Plaid + automacoes n8n). Fase 1 100% concluida — GoNoGo v2 GO emitido. Hora de definir RFs do proximo ciclo em RF_BACKLOG.md." },
-    { prioridade: "P2 (DM)", texto: "Redigir ADR-015 (release cadence) — slot estava reservado aguardando T-20260412-1 sair de BLOCKED. Desbloqueio confirmado (T-20260421-10 COMPLETED 2026-04-22, /ready 200 estável). Pode ser redigido agora." },
-    { prioridade: "P2 (DM)", texto: "T-20260421-1 NS dashboard — aguardar proximo gatilho (RF status change, Bussola ajuste, nova anti-rec). Nenhum gatilho ativo agora." },
-    { prioridade: "P3 (PO/DM)", texto: "Modulos inventory e rental (Fases 6-7) — quando entrar no roadmap, criar tasks no dm_queue com spec RF completo antes de branch." }
+    { prioridade: "P1 (DM)", texto: "Bussola v1.3 + ADR-016 — executar branch feature/SSE-bussola-v1-3-persona-plataforma. Spec completo em dm_queue.md (entrada 2026-05-01). Sem dependencias tecnicas." },
+    { prioridade: "P1 (PO)", texto: "Rodar seeds Acme em staging para desbloquear UAT tour: pnpm --filter api seed:run --tenant=acme --type=personas → --type=demo-data. Seeds prontos pos PR #69 merged." },
+    { prioridade: "P1 (DM)", texto: "Atualizar T-20260501-2 de IN_REVIEW para COMPLETED em dm_queue.md — PR #69 merged 2026-05-02T02:02Z." },
+    { prioridade: "P1 (PO)", texto: "Iniciar planejamento Fase 2 (IA + integracoes bancarias Plaid + automacoes n8n). Fase 1 100% concluida — GoNoGo v2 GO. Definir RFs proximos em RF_BACKLOG.md." },
+    { prioridade: "P2 (DM)", texto: "Redigir ADR-015 (release cadence) — sem bloqueadores desde T-20260421-10 COMPLETED. Pode ser redigido agora." },
+    { prioridade: "P2 (DM)", texto: "T-20260421-1 NS dashboard — aguardar proximo gatilho. Nenhum ativo agora." }
   ],
   backlog: [
     { id: "RF-004", task: "Customer 360 View (7 abas)", fase: "2", prio: "P1", status: "Concluido", nota: "PR #44 merged 2026-04-22. 368 testes. 2 endpoints novos (/summary + /activity-timeline). 7 abas + ARIA + Suspense. Critical+High+3 Medium corrigidos via subagentes." },
