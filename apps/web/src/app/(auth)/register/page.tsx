@@ -1,18 +1,5 @@
-import { SignUp } from '@clerk/nextjs';
+import { notFound } from 'next/navigation';
 
 export default function RegisterPage() {
-  return (
-    <div className="flex min-h-screen items-center justify-center">
-      <SignUp
-        routing="hash"
-        fallbackRedirectUrl="/dashboard"
-        appearance={{
-          elements: {
-            rootBox: 'mx-auto',
-            card: 'shadow-lg',
-          },
-        }}
-      />
-    </div>
-  );
+  notFound();
 }
