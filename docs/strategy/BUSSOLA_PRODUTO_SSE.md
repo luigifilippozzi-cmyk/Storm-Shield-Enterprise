@@ -3,12 +3,13 @@
 > **Nota:** Neste documento, "NS" refere-se a um ERP proprietário de terceiros usado exclusivamente como referência comparativa externa, sem relação comercial, licenciamento ou endosso. O nome da marca foi substituído por precaução (ver ADR-014).
 
 > Documento de referência estratégica para decisões de roadmap, redesenho de UX e priorização de RFs no SSE.
-> Criado em: 2026-04-17 (v1.0 via ADR-009). Atualizado em: 2026-04-21 (v1.1 via ADR-012, v1.2 via ADR-013).
+> Criado em: 2026-04-17 (v1.0 via ADR-009). Atualizado em: 2026-04-21 (v1.1 via ADR-012, v1.2 via ADR-013), 2026-05-01 (v1.3 via ADR-016).
 > Autor: Luigi (PO) + PO Assistant
 > **Propósito:** Servir de norte a todas as decisões de produto. Deve ser lido antes de qualquer sessão de redesenho, priorização ou discovery de RF.
 > **Natureza:** Não é backlog. Não é arquitetura técnica. É bússola — orienta "que produto estamos construindo e para quem".
 > **v1.1 (2026-04-21):** incorpora aprendizados de `ANALISE_NS_vs_BUSSOLA_v1.md` — novo princípio P8 (offline-first), §5 expandida, §7 Global Search + nomenclatura "Workspace", §8 estendida com RF-004/006/007.
 > **v1.2 (2026-04-21):** incorporação parcial do pacote MF (ADR-013) — §6 reorganizada em §6.1 Produto (P1–P8 intactos), §6.2 Visuais (PV1–PV6 novos), §6.3 UX (PUX1–PUX6 novos). Zero mudança em P1–P8 nem em §1–§5, §7–§8.
+> **v1.3 (2026-05-01):** §2.5 "Persona de Plataforma" adicionada (Platform Operator). Framing "4 personas primárias do cliente" preservado. Subordina RFs de plataforma (Regra-0, suporte cross-tenant). Zero mudança em §1, §2.1–§2.4, §3–§8.
 
 ---
 
@@ -108,6 +109,35 @@ Toda decisão de roadmap passa pelo filtro: **"isso aumenta activation rate ou m
 | Estimator | `/app/estimates/inbox` | # estimates por status + supplements pendentes | Não existe como inbox — existe como lista |
 | Technician | `/app/my-work` (mobile-first) | Minhas SOs de hoje + timer ativo | Não existe — mobile é Fase 5 no CLAUDE.md |
 | Accountant | `/app/books` | Período aberto + JE pendentes + reconciliação | Não existe — portal contador é Fase 4 |
+
+### §2.5 — Persona de Plataforma (não-cliente)
+
+> **Decisão (v1.3):** Adicionada via ADR-016. As 4 personas primárias da §2 continuam sendo o eixo das decisões de produto e roadmap (§§3, 4, 6, 7, 8). Esta §2.5 documenta uma **persona de plataforma** — interna, operacional, não-cliente — com escopo de governança multi-tenant. Decisões de **produto** não se ancoram nesta persona; decisões de **plataforma** (provisioning, suporte cross-tenant, audit, recovery) sim.
+
+#### Persona 0 — Platform Operator (Operador de Plataforma)
+
+| Dimensão | Detalhe |
+|---|---|
+| **Analogia forte** | Síndico de prédio recém-construído com chave-mestra: não opera o apartamento de ninguém, mas precisa entrar quando vaza e tem que provar que entrou. |
+| **Perfil** | Founder/CEO do SSE (atualmente um único). Tech comfort altíssimo — capaz de resolver via SQL mas prefere ferramenta com audit trail nativo. Encarregado de governança, suporte ad-hoc e provisioning. |
+| **Pergunta central** | "Qual o estado consolidado da plataforma? Quem precisa de mim agora? Consigo intervir sem quebrar isolamento e com trilha auditável?" |
+| **Horizonte dominante** | H0 (incidente em curso) + H1 (provisioning/suporte da semana) + H3 (saúde consolidada, churn risk). |
+| **JTBD top 3** | 1. Provisionar o primeiro admin/owner de um tenant novo via UI, sem tocar SQL nem `sse_user`. 2. Atravessar o tenant boundary para investigar/corrigir incidente com audit trail nativo (todo bypass de RLS registrado em `audit_logs` com flag distintiva). 3. Ver consolidado cross-tenant de saúde da plataforma — activation por tenant, plano, último login, sinais de churn — sem montar query manual. |
+| **Canal primário** | Desktop. Área dedicada `/app/platform-admin`, invisível a todas as outras personas. |
+
+#### Notas de governança
+
+- **Único e imutável por env var:** identificado por `SUPER_USER_EMAIL` no backend; alteração exige deploy. Backup dormente via `SUPER_USER_BACKUP_EMAIL` + `SUPER_USER_BACKUP_ACTIVE=false`. Detalhes em RF Regra-0 e ADR-017 (forthcoming).
+- **Não pluraliza neste estágio:** uma pessoa. Se surgir 2ª persona de plataforma (ex: Platform Support Engineer), reabrir §2.5 e considerar promover para §0 ou expandir.
+- **Não orienta roadmap de produto:** §3 (Diagnóstico), §4 (Gaps), §6 (Princípios), §7 (Navegação) e §8 (Ordem de Ataque) continuam ancorados nas 4 personas primárias do cliente.
+- **Não afeta a métrica de activation:** activation rate é de cliente. Provisionar tenant não é "ativar tenant".
+- **§6.1–6.3 aplicam:** a UI de `/app/platform-admin` segue PV1–PV6 e PUX1–PUX6 normalmente; `frontend-reviewer` audita.
+
+#### Landing — Platform Operator
+
+| Persona | Landing | Primeiro KPI que ela vê | Fricção atual |
+|---|---|---|---|
+| Platform Operator | `/app/platform-admin` | # tenants ativos + alertas de saúde + tenants pendentes de provisioning | **Não existe** — provisioning hoje é via SQL com `sse_user`, sem audit nativo. RF Regra-0 fecha esse gap. |
 
 ---
 
@@ -467,6 +497,8 @@ Este reordenamento é **sugestão do PO** e entra como input para o Dev Manager.
 | 2026-04-21 | **§6 reorganizada** em §6.1 Produto (P1–P8), §6.2 Visuais (PV1–PV6), §6.3 UX (PUX1–PUX6) — P1–P8 intactos | PO Cowork |
 | 2026-04-21 | **PV1–PV6 e PUX1–PUX6 adotados** do pacote MF com redação SSE-specific (Tailwind + shadcn/ui + next-themes + next/font) | PO Cowork |
 | 2026-04-21 | Bússola SSE **v1.2** oficializada via ADR-013 | PO Cowork |
+| 2026-05-01 | **§2.5 adicionada** — "Persona de Plataforma" (Platform Operator) como sub-seção; "4 personas primárias do cliente" preservado; orienta RFs de plataforma (Regra-0) | PO Cowork |
+| 2026-05-01 | Bússola SSE **v1.3** oficializada via ADR-016 | PO Cowork |
 
 ---
 

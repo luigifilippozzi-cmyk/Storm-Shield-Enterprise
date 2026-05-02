@@ -20,9 +20,10 @@
 ## Referências cruzadas
 
 - Protocolo operacional: `docs/process/HANDOFF_PROTOCOL.md`
-- Bússola estratégica: `docs/strategy/BUSSOLA_PRODUTO_SSE.md` — v1.2 (ADR-013): §6.1 P1–P8, §6.2 PV1–PV6, §6.3 PUX1–PUX6
+- Bússola estratégica: `docs/strategy/BUSSOLA_PRODUTO_SSE.md` — **v1.3** (ADR-016): §2.5 Persona de Plataforma (Platform Operator) adicionada; §6.1 P1–P8, §6.2 PV1–PV6, §6.3 PUX1–PUX6
 - Adoção formal Bússola: `docs/decisions/009-adocao-bussola-de-produto.md`
 - Incorporação parcial PV/PUX: `docs/decisions/013-incorporacao-parcial-pv-pux.md` — frontend-reviewer expandido 20 itens, Regra 19 CLAUDE.md
+- Persona de Plataforma (ADR-016): `docs/decisions/016-bussola-persona-plataforma.md` — §2.5 Platform Operator; orienta RF Regra-0 e ADR-017
 - Squad architecture: `docs/decisions/007-agent-squad-architecture.md`
 
 ## Dashboards estratégicos (leitura contínua)
