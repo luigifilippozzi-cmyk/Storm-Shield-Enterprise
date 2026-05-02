@@ -5,10 +5,44 @@ type: project
 ---
 > **Nota:** "NS" = ERP de referência externo. Nome substituído por precaução (ADR-014).
 
-
 # PO Sessions — Storm Shield Enterprise
 
 > Log mantido pelo PO Assistant (modo Cowork). Complementar ao `project_sse_status.md` (mantido pelo PM Agent).
+
+---
+
+## Sessão 2026-05-01 — PO Cowork
+
+**Decisões:**
+- BUG-02 tratado como **fix imediato + RF separado** (signup público fechado já; invite system na Fase 2). Condição de reversão: se cliente real depender de auto-signup, reabrir e priorizar RF-008 como bloqueante.
+- BUG-01 dividido em **01a (login P0)** + **01b (demo data P1)** para destravar UAT antes do tour visual completo.
+- Demo data dimensionada como **mínimo viável** (15 customers, 18 vehicles, 12 estimates, 5 SOs, 30 transactions, 1 FAM, 3 meses). Reversão: subir para "volume realista" se UAT mostrar que indicadores ficam pobres.
+- RF-008 confirmada com 3 perguntas de discovery: convite só por owner+admin; aceite via Clerk set-password; limite reusa Users do PLAN_FEATURES.
+
+**Bugs registrados:** BUG-01a, BUG-01b, BUG-02 (3 issues GitHub)
+**ENH:** 0
+**RF/ADR:** RF-008 (rascunho em RF_BACKLOG.md, aguarda planejamento Fase 2)
+**Issues criadas:** #64 (BUG-01a), #65 (BUG-01b), #66 (BUG-02)
+**PRs revisados:** 0
+**Bloqueios:** UAT inteiro bloqueado por BUG-01a até T-20260501-1 fechar
+**dm_queue:** 3 tasks PENDING adicionadas (T-20260501-1/2/3)
+
+**Alinhamento Bússola:**
+- Persona tocada: Persona 1 (Owner-Operator) — RF-008 é função do dono/admin
+- Gap tocado: Gap 3 (Onboarding / time-to-first-value)
+- §1 ICP/anti-target: BUG-02 reforça posicionamento "body shop 5–15 func", não auto-serviço
+- Regra 16 atendida na descrição da RF-008
+
+**Resultado DM (2026-05-01):**
+- T-20260501-3 BUG-02: COMPLETED — PR #67 MERGED
+- T-20260501-1 BUG-01a: COMPLETED — PR #68 MERGED
+- T-20260501-2 BUG-01b: IN_REVIEW — PR #69 aguarda CI verde
+- Após PR #69 merged: rodar `pnpm --filter api seed:run --tenant=acme --type=personas` + `--type=demo-data` em staging para retomar UAT tour
+
+**Próxima sessão:**
+- Confirmar UAT tour completo após seeds rodarem em staging
+- Iniciar planejamento Fase 2: priorizar RF-008 + RFs de IA/Plaid em RF_BACKLOG.md
+- Confirmar GoNoGo Fase 1 v3 após UAT verde
 
 ---
 
@@ -463,6 +497,55 @@ Durante a sessão, Luigi enviou duas instruções de aprovação:
 1. Aguardar DM consumir T-20260420-1 (P1) — revisar diff quando PR abrir
 2. Monitorar se `Bash(*)` gera comportamento inesperado em subagentes — caso positivo, acionar condição de reversão
 3. Avaliar se T-20260412-1 (Deploy API) avançou para permitir destravar ADR-011 (release cadence)
+
+---
+
+## Sessão 2026-04-28 — PO Cowork (Atualização + Roteiros de Teste para leigos)
+
+**Contexto:** Sessão dupla. Primeiro Luigi pediu para atualizar o relatório de prontidão e revisar passo a passo. Detectado drift massivo: Fase 1 100% fechada, deploy API VERDE, 15/15 módulos, 580 testes, 15 ADRs (snapshot anterior era 12 mód, 343 testes, 10 ADRs, deploy API vermelho). Veredicto v1 CONDITIONAL-GO → v2 GO. Em seguida, Luigi pediu documento para um leigo executar testes. AskUserQuestion identificou 2 públicos distintos: amigo/familiar (happy path 4 personas) e Luigi mesmo (tour completo 15 módulos). Ambos em PT-BR formato .docx.
+
+### Decisões de produto
+
+1. **Go/No-Go v2 promovido para GO** — todas as 3 condições C1/C2/C3 da v1 fecharam (T-20260412-1 superseded por T-20260421-10/ADR-011, RF-002 wizard COMPLETED, RF-003 activation tracking COMPLETED). Squad entregou 6 RFs adicionais durante a janela 20→28/abr (RF-004, RF-005a/b/c, RF-006, RF-007).
+   - *Condição de reversão:* incidente staging >48h ou coverage <80% até 2026-05-12 → regressão para CONDITIONAL.
+2. **Plano de testes UI v2** atualizado cirurgicamente: caveats de T-20260412-1 removidos, matriz de cobertura expandida para 15 módulos (notifications, admin, cases adicionados), tasks renomeadas T-20260420-A..QA → T-20260428-A..QA.
+3. **Doc A — Roteiro Amigável (familiar/amigo)** entregue: 4 sessões por persona × 30-45min cada, ~3h total. Glossário PT-BR↔EN, callouts visuais, espaço para anotações manuscritas. Pré-requisito explícito: tenant Acme precisa estar populado (T-20260428-A pendente).
+4. **Doc B — Tour Completo PO (Luigi)** entregue: 15 módulos um a um, cada um com tabela de cenários (# | ID | Ação | Resultado | Status [ ] OK/[ ] Falha/[ ] N/A), 9 cenários cross-module (CM-01 happy path, CM-02 RF-006 payment hold, CM-03 Customer 360 chain), 24 cenários negativos (RBAC, plan limits, multi-tenant, validação), checklist final consolidado por área. Total estimado 6-8h (executável em 2-3 sessões).
+5. **Decisão de formato:** ambos em .docx polido (não .md) por preferência explícita do Luigi — facilita imprimir e enviar como anexo.
+
+### Artefatos produzidos
+
+| Artefato | Localização | Tamanho |
+|---|---|---|
+| Go/No-Go v2 (atualizado) | `docs/audits/SSE_GoNoGo_Fase1_MVP_20260420.md` | ~12.6 KB |
+| Plano de Testes UI v2 (atualizado cirurgicamente) | `docs/audits/SSE_Plano_Testes_UI_Fase1_20260420.md` | ~24 KB |
+| Roteiro Amigável (família/amigo, novo) | `docs/audits/SSE_Roteiro_Testes_Amigavel_v1.docx` | 24 KB / 476 parágrafos |
+| Tour Completo PO (Luigi, novo) | `docs/audits/SSE_Tour_Completo_Testes_PO_v1.docx` | 37 KB / 1342 parágrafos |
+
+### Issues criadas / PRs revisados / Bloqueios
+
+- Issues criadas: 0 (PO-only session)
+- PRs revisados: 0
+- Bloqueios identificados: nenhum P0/P1 ativo. Apenas T-20260421-1 (NS dashboard) standing P2.
+
+### Alinhamento Bússola
+
+- **Personas tocadas:** todas as 4 (Owner, Estimator, Technician, Accountant) — Doc A organiza-se por persona, Doc B mapeia cada módulo à persona primária servida
+- **Gaps cobertos:** 5 dos 6 gaps Bússola validados; Gap 2 (mobile PWA Technician) explicitamente diferido como caveat MVP em ambos os relatórios
+- **RFs entregues além do mínimo:** RF-004 (Customer 360), RF-005a/b/c (Estimate state machine + Inbox + Kanban), RF-006 (Payment Hold), RF-007 (Case Management)
+
+### Decisões pendentes (4 ratificações solicitadas no walkthrough do Go/No-Go)
+
+1. Ratificar GO formal Fase 1?
+2. Aceitar fechar Fase 1 sem `inventory`/`rental`?
+3. Gap 2 (mobile PWA): caveat aceito ou P0 Fase 2?
+4. Demo Acme antes de GO público ou ratificar interno agora?
+
+Mais a pergunta operacional: quer que registre T-20260428-A..QA no `dm_queue.md` agora?
+
+### Próxima sessão PO
+
+**Foco:** receber decisões de ratificação acima e, se aprovado, redigir RFs Fase 2 (IA OCR + Plaid + n8n) em `RF_BACKLOG.md` para destravar handoffs DM.
 
 ---
 

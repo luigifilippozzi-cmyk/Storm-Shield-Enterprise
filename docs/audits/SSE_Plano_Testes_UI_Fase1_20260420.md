@@ -1,10 +1,12 @@
 # SSE — Plano de Testes de UI Fase 1 MVP
 
-**Data:** 2026-04-20
+**Data da última atualização:** 2026-04-28
+**Versão:** v2 (revisão)
 **Autor:** PO Assistant (Cowork session)
 **Solicitado por:** Luigi Filippozzi (Product Owner)
-**Companheiro de:** `docs/audits/SSE_GoNoGo_Fase1_MVP_20260420.md`
-**Cobertura:** 12 módulos ativos + 36 páginas frontend. Os 3 módulos diferidos (`inventory`, `rental`, `notifications`) estão listados como **N/A Fase 1**.
+**Companheiro de:** `docs/audits/SSE_GoNoGo_Fase1_MVP_20260420.md` v2
+**Cobertura:** 15 módulos ativos + 42 páginas frontend (Fase 1 fechada). Os 2 módulos remanescentes diferidos (`inventory`, `rental`) estão listados como **N/A Fase 1**. `notifications` foi entregue durante a janela 20→28/abr.
+**Histórico:** v1 (2026-04-20, 12 módulos, T-20260412-1 BLOQUEANTE) → v2 (2026-04-28, 15 módulos, deploy API VERDE).
 
 ---
 
@@ -19,13 +21,13 @@ Este plano define **como validar a interface do SSE** com dados fictícios antes
 | C | **Roteiro de QA manual** | PO + QA humano | Antes de cada release (Fase 1 GO final, depois a cada sprint) | Tenant de seed (A) |
 | D | **Smoke test pós-deploy** | CI automático | Imediatamente após cada deploy staging/prod | Endpoints públicos + login de usuário de teste |
 
-**Pré-condição infra:** categorias B/C/D requerem T-20260412-1 (Deploy API Fly.io) desbloqueado. Categoria A pode ser preparada em paralelo (script roda em qualquer ambiente com API viva).
+**Pré-condição infra:** ✅ **DESBLOQUEADO** desde 2026-04-22 (T-20260412-1 superseded por T-20260421-10, ADR-011). Deploy API VERDE, todas as 4 categorias podem rodar imediatamente.
 
 **Escopo negativo:**
 - **Não** cobre performance/load testing (separado, Fase 2+)
-- **Não** cobre mobile native (Fase 5+, fora MVP)
-- **Não** substitui testes unitários de services (cobertos por `pnpm test:cov`)
-- **Não** testa módulos diferidos (`inventory`, `rental`, `notifications`)
+- **Não** cobre mobile native (Fase 5+, fora MVP — Gap 2 Bússola diferido conscientemente)
+- **Não** substitui testes unitários de services (cobertos por `pnpm test:cov`; coverage ≥80% via T-20260423-2 COMPLETED)
+- **Não** testa módulos diferidos (`inventory`, `rental`)
 - **Não** inclui testes de integração externa (Plaid, Stripe, QuickBooks) — Fase 2+
 
 ---
@@ -371,22 +373,26 @@ Detectar em <2 minutos se um deploy quebrou algo crítico. Roda automático em C
 | # | Módulo | Seed (A) | E2E (B) | QA manual (C) | Smoke (D) |
 |---|---|---|---|---|---|
 | 1 | auth | ✅ 7 users | ✅ 1 spec (login por role) | ✅ 4 personas | ✅ login smoke user |
-| 2 | tenants | ✅ Acme | ✅ 1 spec (invite) | ✅ Owner convida | ✅ `GET /tenants/me` |
+| 2 | tenants | ✅ Acme | ✅ 1 spec (invite + wizard RF-002) | ✅ Owner convida + completa wizard | ✅ `GET /tenants/me` |
 | 3 | users | ✅ 7 users | ✅ (em tenants spec) | ✅ Owner convida | — |
-| 4 | customers | ✅ 25 | ✅ 1 spec (CRUD + consent) | ✅ Owner e Estimator | ✅ `GET /customers?limit=1` |
+| 4 | customers | ✅ 25 | ✅ 1 spec (CRUD + consent + Customer 360 RF-004) | ✅ Owner e Estimator | ✅ `GET /customers?limit=1` |
 | 5 | insurance | ✅ 6 | ✅ 1 spec (create + DRP) | ✅ Estimator | — |
-| 6 | vehicles | ✅ 40 + fotos | ✅ 1 spec (CRUD + foto) | ✅ Estimator upload | — |
-| 7 | estimates | ✅ 35 + 8 supplements | ✅ 1 spec (state machine) | ✅ Estimator inbox | — |
+| 6 | vehicles | ✅ 40 + fotos | ✅ 1 spec (CRUD + foto + linked estimates) | ✅ Estimator upload | — |
+| 7 | estimates | ✅ 35 + 8 supplements + estimates em todos os 6 estados | ✅ 1 spec (state machine RF-005a + Inbox RF-005b + Kanban RF-005c) | ✅ Estimator inbox + Kanban | — |
 | 8 | service-orders | ✅ 22 + time + photos | ✅ 1 spec (atribuir + timer) | ✅ Technician | — |
-| 9 | financial | ✅ 150 transactions + 2 bank + 20 ins.payments | ✅ 1 spec (dashboard + chart) | ✅ Owner | — |
+| 9 | financial | ✅ 150 transactions + 2 bank + 20 ins.payments | ✅ 1 spec (dashboard + chart + categoria breakdown) | ✅ Owner | — |
 | 10 | contractors | ✅ 5 + 30 payments | ✅ 1 spec (1099 tracking) | ✅ Accountant | — |
 | 11 | accounting | ✅ COA + 40 JEs + 13 fiscal periods + 3 reports | ✅ 1 spec (JE manual + reports) | ✅ Accountant completo | — |
 | 12 | fixed-assets | ✅ 8 assets + schedules | ✅ 1 spec (create + depreciation run) | ✅ Accountant | — |
-| — | inventory | N/A (Fase 2+) | N/A | N/A | N/A |
-| — | rental | N/A (Fase 6+) | N/A | N/A | N/A |
-| — | notifications | N/A (Fase 2+) | N/A | N/A | N/A |
+| 13 | notifications | ✅ canais + preferências | ✅ 1 spec (criar evento → notificação) | ✅ Owner ou Estimator | — |
+| 14 | admin | ✅ flags `sample_data_flag` | ✅ 1 spec (toggle sample data) | ✅ Owner | — |
+| 15 | cases | ✅ 5 cases (RF-007) | ✅ 1 spec (criar case + workflow) | ✅ Manager | — |
+| — | inventory | N/A (diferido Fase 2/6) | N/A | N/A | N/A |
+| — | rental | N/A (diferido Fase 6) | N/A | N/A | N/A |
 
-**Totais MVP:** 12 módulos ativos — todos cobertos em 4 camadas onde aplicável. 3 módulos marcados como N/A Fase 1 (justificativa: decisão explícita de escopo, não regressão).
+**Cenário cross-module bonus (RF-006):** Disputa de pagamento — Owner coloca estimate em payment hold → estimate transita para `disputed` → JE de bloqueio gerado → resolução manual libera o hold.
+
+**Totais MVP v2:** 15 módulos ativos — todos cobertos em 4 camadas onde aplicável. 2 módulos marcados como N/A Fase 1 (justificativa: decisão explícita de escopo, não regressão). RFs 004-007 entregues além do mínimo MVP estão refletidos nos cenários.
 
 ---
 
@@ -394,15 +400,17 @@ Detectar em <2 minutos se um deploy quebrou algo crítico. Roda automático em C
 
 | Etapa | Dependência | Estimativa | Owner |
 |---|---|---|---|
-| 1. Script seed Acme (categoria A) | Nenhuma — pode paralelizar com C1 Go/No-Go | 3 dias DM | DM |
-| 2. Playwright scaffolding + 2 specs piloto (auth, customers) | Deploy API OK (C1) | 2 dias DM | DM |
-| 3. Playwright specs restantes (10 módulos) | Pilotos OK | 5 dias DM | DM |
-| 4. QA manual execução full | Seed + deploy API OK | 1 dia PO | PO |
-| 5. Smoke test wiring | Deploy API OK | 1 dia DM | DM |
+| 1. Script seed Acme (categoria A) | ✅ Sem bloqueio | 3 dias DM | DM |
+| 2. Playwright scaffolding + 2 specs piloto (auth, customers) | ✅ Sem bloqueio (deploy API verde) | 2 dias DM | DM |
+| 3. Playwright specs restantes (módulos 3-15) | Pilotos OK | 5 dias DM | DM |
+| 4. QA manual execução full | Seed + scaffolding OK | 1 dia PO | PO |
+| 5. Smoke test wiring | ✅ Sem bloqueio | 1 dia DM | DM |
 | 6. Correções de bugs encontrados | Execução C | 2-5 dias DM | DM |
 | **Total** | | **~2 semanas úteis** | |
 
-**Checkpoint alinhado com Go/No-Go:** se 2026-05-05 chegar sem C1/C2/C3 fechadas, plano de testes fica parcial (só categoria A executável). Reavaliar.
+**Status atual (2026-04-28):** todas as dependências infra resolvidas. Execução pode iniciar imediatamente após PO aprovar handoffs T-20260420-A..QA no `dm_queue.md`.
+
+**Checkpoint:** revisitar 2026-05-12 (alinhado com manutenção pós-GO do relatório companheiro).
 
 ---
 
@@ -414,11 +422,11 @@ Este plano **não** executa testes — escreve as especificações. A execução
 
 | ID sugerido | Subject | Prioridade |
 |---|---|---|
-| T-20260420-A | Criar script seed Acme Auto Body (categoria A) | P1 |
-| T-20260420-B | Scaffolding Playwright + 2 specs piloto | P1 (depende T-20260412-1) |
-| T-20260420-C | Specs Playwright módulos 3-12 | P2 |
-| T-20260420-D | Smoke test CI wiring | P2 |
-| T-20260420-QA | Execução roteiro QA manual com PO | P1 (depende A + T-20260412-1) |
+| T-20260428-A | Criar script seed Acme Auto Body (categoria A) | P1 |
+| T-20260428-B | Scaffolding Playwright + 2 specs piloto (auth, customers) | P1 |
+| T-20260428-C | Specs Playwright módulos 3-15 | P2 |
+| T-20260428-D | Smoke test CI wiring | P2 |
+| T-20260428-QA | Execução roteiro QA manual com PO | P1 (depende A + B) |
 
 **Escopo negativo global (regra PO):**
 - DM não altera estrutura deste plano sem ADR
