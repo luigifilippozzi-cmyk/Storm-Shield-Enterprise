@@ -1,11 +1,30 @@
 import knex from 'knex';
 import * as dotenv from 'dotenv';
 import { seedRolesAndPermissions } from './roles_permissions.seed';
+import { seedAcmePersonas } from './acme-personas.seed';
+import { seedAcmeDemoData } from './acme-demo-data.seed';
 
 dotenv.config({ path: '../../../../.env' });
 
-async function run() {
-  const db = knex({
+function parseArgs(): { tenantSlug?: string; tenantId?: string; type: string } {
+  const args = process.argv.slice(2);
+  const result: { tenantSlug?: string; tenantId?: string; type: string } = { type: 'roles' };
+
+  for (const arg of args) {
+    if (arg.startsWith('--tenant=')) result.tenantSlug = arg.split('=')[1];
+    else if (arg.startsWith('--type=')) result.type = arg.split('=')[1];
+    else if (!arg.startsWith('--')) result.tenantId = arg; // legacy positional
+  }
+
+  return result;
+}
+
+function buildKnex() {
+  const connectionString = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL;
+  if (connectionString) {
+    return knex({ client: 'pg', connection: { connectionString, ssl: { rejectUnauthorized: false } } });
+  }
+  return knex({
     client: 'pg',
     connection: {
       host: process.env.POSTGRES_HOST || 'localhost',
@@ -15,20 +34,52 @@ async function run() {
       password: process.env.POSTGRES_PASSWORD || 'sse_password_dev',
     },
   });
+}
 
-  const tenantId = process.argv[2];
-  if (!tenantId) {
-    console.error('Usage: ts-node run.ts <tenant-id>');
-    process.exit(1);
-  }
+async function run() {
+  const { tenantSlug, tenantId: legacyTenantId, type } = parseArgs();
 
-  console.log(`Seeding data for tenant: ${tenantId}`);
+  const db = buildKnex();
 
   try {
-    await seedRolesAndPermissions(db, tenantId);
-    console.log('Roles and permissions seeded.');
+    let tenantId: string;
+    let schemaName: string;
 
-    console.log('Seed completed successfully.');
+    if (tenantSlug) {
+      const tenant = await db('tenants').where({ slug: tenantSlug }).whereNot({ status: 'cancelled' }).first();
+      if (!tenant) {
+        console.error(`Tenant with slug '${tenantSlug}' not found or cancelled`);
+        process.exit(1);
+      }
+      tenantId = tenant.id;
+      schemaName = tenant.schema_name;
+      console.log(`Tenant: ${tenant.name} (${tenantId}) — schema: ${schemaName}`);
+    } else if (legacyTenantId) {
+      tenantId = legacyTenantId;
+      // Legacy: lookup schema_name from tenants table
+      const tenant = await db('tenants').where({ id: tenantId }).first();
+      schemaName = tenant?.schema_name ?? `tenant_${tenantId.replace(/-/g, '_')}`;
+      console.log(`Seeding data for tenant: ${tenantId}`);
+    } else {
+      console.error('Usage: ts-node run.ts --tenant=<slug> --type=<type>');
+      console.error('       ts-node run.ts <tenant-id>  (legacy — roles only)');
+      console.error('Types: roles | personas | demo-data');
+      process.exit(1);
+    }
+
+    if (type === 'roles') {
+      await seedRolesAndPermissions(db, tenantId);
+      console.log('Roles and permissions seeded.');
+    } else if (type === 'personas') {
+      await seedAcmePersonas(db, tenantId, schemaName);
+    } else if (type === 'demo-data') {
+      await seedAcmeDemoData(db, tenantId, schemaName);
+    } else {
+      console.error(`Unknown seed type: ${type}. Valid: roles | personas | demo-data`);
+      process.exit(1);
+    }
+
+    console.log('\nSeed completed successfully.');
   } catch (error) {
     console.error('Seed failed:', error);
     process.exit(1);
