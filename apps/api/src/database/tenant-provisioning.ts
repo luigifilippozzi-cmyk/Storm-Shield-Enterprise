@@ -52,7 +52,13 @@ async function provisionTenant(name: string, slug: string, ownerEmail: string) {
     await db.raw(`SET search_path TO "${schemaName}", public`);
 
     const migrationsDir = path.join(__dirname, 'migrations');
-    const migrationFiles = ['001_platform_iam.sql', '002_crm_insurance_vehicles.sql', '003_estimates_service_orders.sql', '004_financial.sql'];
+    const migrationFiles = [
+      '001_platform_iam.sql',
+      '002_crm_insurance_vehicles.sql',
+      '003_estimates_service_orders.sql',
+      '004_financial.sql',
+      '018_super_user_audit_flag.sql',
+    ];
 
     for (const file of migrationFiles) {
       const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf8');

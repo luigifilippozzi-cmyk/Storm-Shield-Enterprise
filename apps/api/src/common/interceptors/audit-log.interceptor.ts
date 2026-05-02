@@ -23,6 +23,7 @@ export class AuditLogInterceptor implements NestInterceptor {
             resource: url,
             tenantId,
             userId: user?.id,
+            isSuperUserAction: !!(request as any).isSuperUser,
             timestamp: new Date().toISOString(),
           });
         }),
