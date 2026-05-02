@@ -2187,7 +2187,7 @@ Reabrir este ADR se:
 ---
 
 
-## [2026-05-01] T-20260501-4 — RF Regra-0 + ADR-017 (Super User Único de Plataforma) — P0 — PENDING (bloqueado por Bússola v1.3)
+## [2026-05-01] T-20260501-4 — RF Regra-0 + ADR-017 (Super User Único de Plataforma) — P0 — COMPLETED — [PR #74](https://github.com/luigifilippozzi-cmyk/Storm-Shield-Enterprise/pull/74) MERGED 2026-05-02
 
 **Origem:** Sessão PO Cowork 2026-05-01 — luigi.filippozzi@gmail.com formalizou necessidade de "regra 0" (super user único de plataforma com cascade view e provisioning exclusivo de admins de tenants novos).
 **Persona primária servida:** Bússola §2.5 — Platform Operator (NÃO iniciar sem confirmar §2.5 já em main; senão BLOQUEADO).
