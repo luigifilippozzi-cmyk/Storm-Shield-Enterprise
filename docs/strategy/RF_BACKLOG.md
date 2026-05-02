@@ -667,3 +667,61 @@ Da Bússola §8, ainda PENDENTES de virar RF:
 ---
 
 *Este backlog é vivo. Atualizar status de cada RF conforme implementação. Adicionar novos RFs ao final, mantendo numeração sequencial. Cada RF DONE deve mover para uma seção "DONE" no final OU ficar in-place com status atualizado — decisão a tomar quando primeiro RF for DONE.*
+
+---
+
+## RF-008 — Sistema de Convites por Email com Seleção de Persona
+
+- **Fase:** 2
+- **Prioridade:** P1
+- **Status:** Backlog (aguarda início de planejamento Fase 2)
+- **Criada em:** 2026-05-01 (sessão PO — UAT Bug 02)
+- **Persona primária (Bússola §2):** Persona 1 — Owner-Operator
+- **Gap fechado (Bússola §4):** Gap 3 — Onboarding / time-to-first-value não instrumentado (passo 2 do wizard de 5 passos)
+
+### Descrição
+Owner ou admin de tenant convida novos usuários por email, escolhendo a role (owner|admin|manager|estimator|technician|accountant|viewer). Sistema envia link assinado (72h, single-use). Convidado clica → página Clerk para criar senha → conta vinculada ao tenant + role.
+
+### Regras de negócio
+- **RN1** — Apenas roles `owner` e `admin` têm permission `users:invite:create`
+- **RN2** — Convite expira em 72h, single-use, token armazenado como hash (SHA-256)
+- **RN3** — Convites pendentes contam para limite de Users do PLAN_FEATURES (free=3, starter=10, pro=50, enterprise=∞)
+- **RN4** — Email usa template básico com nome do tenant + nome do convidador + role atribuída
+- **RN5** — Auditoria obrigatória: invite_sent, invite_accepted, invite_revoked, invite_expired em audit_logs
+- **RN6** — Reenvio gera novo token (invalida o anterior); revogação invalida imediatamente
+- **RN7** — Email já cadastrado em outro tenant: convite continua válido — Clerk associa user a múltiplos tenants via publicMetadata.tenants[]
+
+### Módulos impactados
+users, auth, notifications, common/guards, plan
+
+### Migrations
+SIM — `011_user_invitations.sql`: tabela `user_invitations` (id UUID v7, tenant_id, email, role ENUM, invited_by_user_id, token_hash, expires_at, accepted_at, revoked_at, created_at, updated_at) + RLS policy padrão + index em (tenant_id, email) e (token_hash). Idempotente conforme regra 13.
+
+### Critérios de aceite
+- [ ] Owner/admin acessa `/settings/users/invite` e envia convite (form: email + role)
+- [ ] Email entregue via provider configurado (Resend/SendGrid — definir em ADR ou ENV)
+- [ ] Link de convite leva a `/accept-invite/[token]` → página Clerk set-password
+- [ ] Após criar senha: user existe no Clerk com publicMetadata.tenantId+role correto, row em tenant.users criada, role assignment gravado
+- [ ] Lista `/settings/users` mostra ativos + convites pendentes + expirados
+- [ ] Botões: Reenviar, Revogar (apenas para pendentes)
+- [ ] Limite de plano respeitado: ao exceder, retorna 402 com mensagem clara
+- [ ] Manager/estimator/tech/accountant/viewer não veem botão "Convidar" (RBAC frontend) e API rejeita 403
+- [ ] Auditoria gravada nas 4 transições
+- [ ] Frontend respeita PV/PUX (ADR-013): frontend-reviewer obrigatório
+
+### Escopo negativo
+- NÃO implementar SSO/magic-link (RF futura)
+- NÃO permitir convidar para role `owner` (apenas owner inicial via tenant provisioning)
+- NÃO permitir editar role após aceite nesta RF
+- NÃO criar templates customizáveis de email pelo tenant (ENH futuro)
+- NÃO implementar bulk invite CSV (ENH futuro)
+- NÃO mexer no fluxo de criação de tenant em si
+
+### Subagentes PR
+test-runner + security-reviewer + db-reviewer + frontend-reviewer
+
+### Vínculos
+- Habilita Gap 3 (passo 2 do wizard de onboarding)
+- Bloqueia parcialmente reabertura completa de signup — após RF-008 entregue, `/sign-up` permanece desativado mas `/accept-invite/[token]` substitui o fluxo
+- Issue origem: GitHub #66 (BUG-02)
+

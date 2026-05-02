@@ -3,6 +3,72 @@ name: SSE Project Status
 description: Current state of Storm Shield Enterprise project — metrics, health, priorities for Dev Manager
 type: project
 ---
+# SSE Project Status — 2026-05-01 (DM Session — UAT Bugs)
+
+## Revisão DM — 2026-05-01
+
+**Saúde: AMARELO** — 2 PRs abertos (UAT bugs). CI VERDE em ambos. Fase 1 UAT em andamento.
+
+**Fase 1: 100% COMPLETA** — GoNoGo v2 (🟢 GO) emitido. UAT revelou 3 bugs de staging (BUG-01a, BUG-01b, BUG-02) — nenhum afeta código de produção. Todos corrigidos nesta sessão.
+
+**Módulos: 15/15** | Testes: **580** | Endpoints: **126** | Migrations: **18** | ADRs: **15** | Controllers: **18** | Pages: **42** | Specs: **27**
+
+**CI:** PR #68 MERGED (2026-05-02T01:56Z) | PR #67 MERGED (2026-05-02T01:41Z) | PR #69 OPEN (CI running) | **PRs abertos:** 1 (feat/SSE-069)
+
+### Sessão 2026-05-01 — Atividades DM
+
+| Task | Prioridade | Status | PR |
+|---|---|---|---|
+| T-20260501-3 BUG-02 — disable public signup | P0 | COMPLETED | [#67](https://github.com/luigifilippozzi-cmyk/Storm-Shield-Enterprise/pull/67) MERGED |
+| T-20260501-1 BUG-01a — Acme personas seed | P0 | COMPLETED | [#68](https://github.com/luigifilippozzi-cmyk/Storm-Shield-Enterprise/pull/68) MERGED |
+| T-20260501-2 BUG-01b — Acme demo data seed | P1 | IN_REVIEW | [#69](https://github.com/luigifilippozzi-cmyk/Storm-Shield-Enterprise/pull/69) OPEN |
+
+### Bugs corrigidos
+
+**BUG-02 (P0):** `/sign-up` era público. Fixado: `register/page.tsx` → `notFound()`, `/register(.*)` removido do publicRoutes middleware, `footerAction__signUp: { display: 'none' }` na Clerk UI. Runbook criado: `docs/runbooks/clerk-signup-restrictions.md`. Nota: controle primário é Clerk Dashboard (Sign-up mode = Restricted — manual).
+
+**BUG-01a (P0):** 7 personas Acme não conseguiam login (Clerk "user not found" + `external_auth_id` nulo no DB). Fixado: novo seed `acme-personas.seed.ts` — cria Clerk users, DB users com `external_auth_id`, role assignments. Idempotente, protegido contra schema injection (SCHEMA_NAME_RE).
+
+**BUG-01b (P1):** Dashboards Acme sem dados. Fixado: `acme-demo-data.seed.ts` — 2 seguradoras, 15 customers, 18 vehicles, 12 estimates, 5 SOs, 30 transactions, 3 fiscal periods, 3 JEs posted (P&L/BS/TB), 1 fixed asset + 4 depreciation schedules. PR #69 em review.
+
+### Verificação Regras CLAUDE.md §10 (regras 1-14)
+- SCHEMA_NAME_RE regex em ambos os seeds: OK ✓
+- `tenant_id` em todos os INSERTs: OK ✓
+- UUIDs via uuidv7(): OK ✓
+- DECIMAL(14,2) via `.toFixed(2)`: OK ✓
+- Sem CASCADE DELETE: OK (seeds apenas) ✓
+- Sem secrets hardcoded (DEMO_PASSWORD via env): OK ✓
+
+### Inconsistências
+1. **RESOLVIDA** — docs de auditoria não-commitados → incluídos neste PR doc-only.
+2. PR #69 aguarda CI verde para merge.
+
+### Prioridades P0/P1 para Dev Manager
+1. **P0 (DM)** — Merge PR #69 quando CI verde
+2. **P1 (DM)** — Comandos de staging para PO: `pnpm --filter api seed:run --tenant=acme --type=personas` → `--type=demo-data`
+3. **P1 (PO)** — Definir RFs para Fase 2 (IA + Plaid + n8n) em `RF_BACKLOG.md`
+4. **P2 (DM)** — Redigir ADR-015 (release cadence)
+5. **P2 (DM)** — T-20260421-1: NS dashboard (standing — aguarda gatilho)
+6. **P2 (DM)** — Bússola v1.3 + ADR-016 (Persona de Plataforma) — task em dm_queue
+
+### Alertas
+- PR #69 (BUG-01b) precisa CI verde + merge antes de rodar staging seed
+- Após merge #69, PO deve rodar seeds em staging para desbloquear UAT tour
+- ADR-015 (release cadence): slot reservado desde ADR-011. Pode ser redigido.
+- Fase 2: depende de PO criar RFs em RF_BACKLOG.md.
+
+### Alinhamento Bússola (regras 15-18)
+Nenhuma violação detectada. Seeds não criam tela nova (regra 16 N/A). BUG-02 alinha §1 ICP = B2B invite-only.
+
+### Handoff DM (dm_queue.md)
+- **T-20260501-2:** IN_REVIEW (PR #69) → merge quando CI verde
+- **T-20260421-1:** PENDING standing (NS dashboard — aguarda gatilho)
+- **Bússola v1.3 + ADR-016:** PENDING P1
+
+### Última sessão PM: 2026-04-28
+### Última sessão DM: 2026-05-01 (BUG-01a + BUG-01b + BUG-02 — 3 UAT bugs corrigidos)
+
+---
 # SSE Project Status — 2026-04-27 (DM Agent — sessão agendada autônoma)
 
 ## Revisão DM — 2026-04-27 (T-20260412-2 COMPLETED + T-20260422-11 COMPLETED)

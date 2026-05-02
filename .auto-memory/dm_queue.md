@@ -2024,3 +2024,164 @@ N/A (governança de processo).
 Colar bloco longo com markdown + backticks + caracteres especiais em here-string PowerShell no terminal interativo é frágil: o `'@` final se perde no buffer quando há múltiplas linhas com caracteres de escape. Próxima tarefa longa do PO para o DM: editar o arquivo direto (Edit tool) em vez de script PowerShell colado — ou salvar o corpo em arquivo `.txt` temporário e usar `Get-Content $tmp -Raw`.
 
 ---
+
+## [2026-05-01] T-20260501-1 — BUG-01a — P0 — COMPLETED
+**Origem:** UAT Bug 01 + sessão PO 2026-05-01 + GitHub Issue #64 (BUG-01a)
+**Branch:** `fix/SSE-068-acme-personas-seed` → PR #68 MERGED (2026-05-02T01:56Z)
+**Artefatos:** `apps/api/src/database/seeds/acme-personas.seed.ts` (novo), `apps/api/src/database/seeds/run.ts` (extendido), `.env.example` (DEMO_SEED_PASSWORD documentado)
+**Resultado:** 7 personas Acme com Clerk users criados, `external_auth_id` populado no DB, role assignments idempotentes. Security-reviewer: PASS após 4 correções (SCHEMA_NAME_RE, env var password, privateMetadata role, skipPasswordChecks condicional).
+---
+
+## [2026-05-01] T-20260501-2 — BUG-01b — P1 — IN_REVIEW
+**Origem:** UAT Bug 01 + sessão PO 2026-05-01 + GitHub Issue #65 (BUG-01b)
+**Branch:** `feat/SSE-069-acme-demo-data-seed` → PR #69 OPEN (CI running)
+**Artefatos:** `apps/api/src/database/seeds/acme-demo-data.seed.ts` (implementado — substituiu stub)
+**Seed:** 2 seguradoras, 15 customers, 18 vehicles, 12 estimates + 24 lines, 5 SOs, 30 transactions, 3 fiscal periods, COA (13 accounts se ausente), 3 JEs posted, 1 fixed asset + 4 depreciation schedules. Idempotente (guard por contagem). db-reviewer: PASS.
+**Próximo passo DM:** merge PR #69 quando CI verde → informar PO para rodar seeds em staging.
+---
+
+## [2026-05-01] T-20260501-3 — BUG-02 — P0 — COMPLETED
+**Origem:** UAT Bug 02 + sessão PO 2026-05-01 + GitHub Issue #66 (BUG-02)
+**Branch:** `fix/SSE-070-disable-public-signup` → PR #67 MERGED (2026-05-02T01:41Z)
+**Artefatos:** `apps/web/src/app/(auth)/register/page.tsx` (notFound()), `apps/web/src/middleware.ts` (removido /register e /sign-up), `apps/web/src/app/(auth)/login/page.tsx` (footerAction__signUp: { display: 'none' }), `docs/runbooks/clerk-signup-restrictions.md` (novo)
+**Nota:** Controle primário = Clerk Dashboard (Sign-up mode = Restricted). Aplicar manualmente em staging/prod.
+---
+
+
+## [2026-05-01] Bússola v1.3 + ADR-016 (Persona de Plataforma) — P1
+## Tarefa DM — ENH doc-only — Prioridade P1
+### Bússola v1.3 + ADR-016 (Persona de Plataforma)
+
+**Branch:** `feature/SSE-bussola-v1-3-persona-plataforma`
+
+**Arquivos a tocar (3, exclusivamente):**
+- `docs/strategy/BUSSOLA_PRODUTO_SSE.md` — adicionar §2.5 + atualizar header + apendar 2 linhas em §9
+- `docs/decisions/016-bussola-persona-plataforma.md` — NOVO
+- `.auto-memory/MEMORY.md` — atualizar entry "SSE — Bússola de Produto" para v1.3 com §2.5
+
+**Subagentes:** nenhum técnico (zero código). Revisar com PO antes de mergear.
+
+**Escopo negativo (NÃO fazer nesta task):**
+- NÃO mexer em §1, §2.1–§2.4 (4 personas atuais), §3, §4, §5, §6, §7, §8 da Bússola
+- NÃO renumerar ADRs existentes
+- NÃO alterar a tabela "Resumo: landing por persona" de §2 (Platform Operator ganha tabela própria em §2.5)
+- NÃO criar §0 (opção 3 descartada via ADR-016)
+- NÃO redigir RF Regra-0 nem ADR-017 nesta task — sequencial após v1.3 mergear
+
+---
+
+### A. Texto da §2.5 — inserir APÓS a tabela "Resumo: landing por persona" de §2, ANTES do separador `---` que abre §3
+
+```markdown
+### §2.5 — Persona de Plataforma (não-cliente)
+
+> **Decisão (v1.3):** Adicionada via ADR-016. As 4 personas primárias da §2 continuam sendo o eixo das decisões de produto e roadmap (§§3, 4, 6, 7, 8). Esta §2.5 documenta uma **persona de plataforma** — interna, operacional, não-cliente — com escopo de governança multi-tenant. Decisões de **produto** não se ancoram nesta persona; decisões de **plataforma** (provisioning, suporte cross-tenant, audit, recovery) sim.
+
+#### Persona 0 — Platform Operator (Operador de Plataforma)
+
+| Dimensão | Detalhe |
+|---|---|
+| **Analogia forte** | Síndico de prédio recém-construído com chave-mestra: não opera o apartamento de ninguém, mas precisa entrar quando vaza e tem que provar que entrou. |
+| **Perfil** | Founder/CEO do SSE (atualmente um único). Tech comfort altíssimo — capaz de resolver via SQL mas prefere ferramenta com audit trail nativo. Encarregado de governança, suporte ad-hoc e provisioning. |
+| **Pergunta central** | "Qual o estado consolidado da plataforma? Quem precisa de mim agora? Consigo intervir sem quebrar isolamento e com trilha auditável?" |
+| **Horizonte dominante** | H0 (incidente em curso) + H1 (provisioning/suporte da semana) + H3 (saúde consolidada, churn risk). |
+| **JTBD top 3** | 1. Provisionar o primeiro admin/owner de um tenant novo via UI, sem tocar SQL nem `sse_user`. 2. Atravessar o tenant boundary para investigar/corrigir incidente com audit trail nativo (todo bypass de RLS registrado em `audit_logs` com flag distintiva). 3. Ver consolidado cross-tenant de saúde da plataforma — activation por tenant, plano, último login, sinais de churn — sem montar query manual. |
+| **Canal primário** | Desktop. Área dedicada `/app/platform-admin`, invisível a todas as outras personas. |
+
+#### Notas de governança
+
+- **Único e imutável por env var:** identificado por `SUPER_USER_EMAIL` no backend; alteração exige deploy. Backup dormente via `SUPER_USER_BACKUP_EMAIL` + `SUPER_USER_BACKUP_ACTIVE=false`. Detalhes em RF Regra-0 e ADR-017 (forthcoming).
+- **Não pluraliza neste estágio:** uma pessoa. Se surgir 2ª persona de plataforma (ex: Platform Support Engineer), reabrir §2.5 e considerar promover para §0 ou expandir.
+- **Não orienta roadmap de produto:** §3 (Diagnóstico), §4 (Gaps), §6 (Princípios), §7 (Navegação) e §8 (Ordem de Ataque) continuam ancorados nas 4 personas primárias do cliente.
+- **Não afeta a métrica de activation:** activation rate é de cliente. Provisionar tenant não é "ativar tenant".
+- **§6.1–6.3 aplicam:** a UI de `/app/platform-admin` segue PV1–PV6 e PUX1–PUX6 normalmente; `frontend-reviewer` audita.
+
+#### Landing — Platform Operator
+
+| Persona | Landing | Primeiro KPI que ela vê | Fricção atual |
+|---|---|---|---|
+| Platform Operator | `/app/platform-admin` | # tenants ativos + alertas de saúde + tenants pendentes de provisioning | **Não existe** — provisioning hoje é via SQL com `sse_user`, sem audit nativo. RF Regra-0 fecha esse gap. |
+```
+
+---
+
+### B. Header da Bússola — SUBSTITUIR as duas linhas atuais de "Criado em…" / "Atualizado em…" / changelog v1.2 por
+
+```markdown
+> Criado em: 2026-04-17 (v1.0 via ADR-009). Atualizado em: 2026-04-21 (v1.1 via ADR-012, v1.2 via ADR-013), 2026-05-01 (v1.3 via ADR-016).
+> **v1.3 (2026-05-01):** §2.5 "Persona de Plataforma" adicionada (Platform Operator). Framing "4 personas primárias do cliente" preservado. Subordina RFs de plataforma (Regra-0, suporte cross-tenant). Zero mudança em §1, §2.1–§2.4, §3–§8.
+```
+
+---
+
+### C. §9 Registro de Decisões — APENDAR ao final da tabela
+
+```markdown
+| 2026-05-01 | **§2.5 adicionada** — "Persona de Plataforma" (Platform Operator) como sub-seção; "4 personas primárias do cliente" preservado; orienta RFs de plataforma (Regra-0) | PO Cowork |
+| 2026-05-01 | Bússola SSE **v1.3** oficializada via ADR-016 | PO Cowork |
+```
+
+---
+
+### D. ADR-016 — arquivo novo `docs/decisions/016-bussola-persona-plataforma.md`
+
+```markdown
+# ADR-016 — Persona de Plataforma na Bússola (§2.5)
+
+Status: Accepted (2026-05-01)
+Slot: 016 (ADR-015 reservado para release cadence; independente)
+
+## Contexto
+Bússola §2 estabelece "4 personas primárias" como eixo das decisões de produto. RF Regra-0 (super user único cross-tenant) é RF de plataforma, não se encaixa em nenhuma das 4 personas. Sem amenda, qualquer RF de plataforma cria precedente de "exceção fora da Bússola" — degrada a Bússola como single source of truth (regra 15 do CLAUDE.md).
+
+## Opções
+| # | Opção | Trade-off |
+|---|---|---|
+| 1 | Adicionar como 5ª persona primária em §2 | Mistura plataforma com cliente; confunde priorização |
+| 2 | **§2.5 "Persona de Plataforma" como sub-seção (escolhida)** | Preserva "4 personas primárias do cliente"; segrega plataforma vs produto; menor diff |
+| 3 | §0 "Persona-Zero" antes de §1 | Reordenamento estrutural; precedente de §0 sem necessidade recorrente |
+
+## Decisão
+Opção 2 — §2.5 como sub-seção dedicada.
+
+## Justificativa
+Mantém §2 como decisão de produto intocada. Segrega operação de plataforma de operação de cliente. Menor diff. Não cria precedente de "persona-zero" sem evidência de necessidade recorrente.
+
+## Condição de reversão
+Reabrir este ADR se:
+- Surgir 2ª persona de plataforma (ex: Platform Support Engineer terceirizado)
+- Compliance regulatório exigir aprovação multi-pessoa em provisioning
+- §2.5 começar a acumular >1 card de persona
+
+→ considerar promover para §0 (opção 3) ou expandir §2.5 com múltiplos cards.
+
+## Consequências
++ Bússola permanece single source of truth
++ RFs de plataforma agora têm âncora formal (§2.5) para satisfazer regras 15/16 do CLAUDE.md
++ ADRs futuros de plataforma podem citar §2.5 sem criar exceção ad-hoc
+- 5 personas no doc, 4 no framing — exige cuidado editorial em revisões futuras
+- Tabela "Landing por persona" passa a ter 2 versões (clientes em §2; plataforma em §2.5)
+
+## Atualizações decorrentes
+- Bússola v1.2 → v1.3
+- §9 Registro de Decisões: 2 linhas novas (2026-05-01)
+- Header da Bússola: linha de versão v1.3
+- RF Regra-0 (forthcoming, ADR-017) citará §2.5 como persona primária servida → satisfaz regra 16
+- `.auto-memory/MEMORY.md`: atualizar entry "SSE — Bússola de Produto" → "v1.3 com §2.5"
+```
+
+---
+
+**Done quando (critérios de aceite):**
+- [ ] §2.5 inserida com texto exato do bloco A
+- [ ] Header v1.2 → v1.3 com changelog do bloco B
+- [ ] §9 com as 2 linhas do bloco C apendadas
+- [ ] `docs/decisions/016-bussola-persona-plataforma.md` criado com texto do bloco D, status `Accepted`
+- [ ] `.auto-memory/MEMORY.md`: entry "SSE — Bússola de Produto" atualizada para v1.3 com §2.5
+- [ ] PR descrição cita §2.5 + ADR-016 + regras 15/16 do CLAUDE.md
+- [ ] Verificação manual: `Select-String -Path docs\strategy\BUSSOLA_PRODUTO_SSE.md -Pattern "v1.3","§2.5"` retorna matches esperados
+
+**Protocolo:** `docs/process/HANDOFF_PROTOCOL.md` §4 (template canônico) + §7 (ciclo de vida)
+
+**Sequência seguinte (NÃO nesta task):** após v1.3 mergear em main, retomar RF Regra-0 → ADR-017.
+---
