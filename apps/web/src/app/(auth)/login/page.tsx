@@ -10,6 +10,7 @@ export default function LoginPage() {
           elements: {
             rootBox: 'mx-auto',
             card: 'shadow-lg',
+            footerAction__signUp: { display: 'none' },
           },
         }}
       />
