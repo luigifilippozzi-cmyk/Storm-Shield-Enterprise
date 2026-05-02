@@ -3,6 +3,74 @@ name: SSE Project Status
 description: Current state of Storm Shield Enterprise project — metrics, health, priorities for Dev Manager
 type: project
 ---
+# SSE Project Status — 2026-05-02 (DM Agent — sessão agendada autônoma — RF Regra-0 + ADR-017)
+
+## Revisão DM — 2026-05-02 (T-20260501-4 COMPLETED — PR #74 merged)
+
+**Saúde: VERDE** — CI VERDE. Deploy API VERDE. Deploy Web VERDE. 0 PRs abertos. 74 total merged.
+
+**Fase 1: 100% COMPLETA** — GoNoGo v2 (🟢 GO). RF Regra-0 entregue.
+
+**Módulos: 15/15** | Testes: **599** | Endpoints: **128** | Migrations: **19** | ADRs: **17** | Controllers: **18** | Pages: **43** | Specs: **29**
+
+### Novidades desta sessão (2026-05-02 — agendada autônoma)
+
+| PR | Tipo | Descrição | Status |
+|---|---|---|---|
+| #72 | chore(memory) | Session close 2026-05-01 (BUG-01a+01b+02 UAT fixes) | MERGED |
+| #73 | feat(docs) | Bússola v1.3 + ADR-016 (Persona de Plataforma §2.5) | MERGED |
+| #74 | feat(platform) | RF Regra-0 + ADR-017 (Super User Único de Plataforma) | MERGED 2026-05-02 |
+
+### Detalhes RF Regra-0 (T-20260501-4 COMPLETED)
+
+**Implementação:**
+- `SuperUserService` + `SuperUserGuard` (env-var auth, Clerk email lookup, break-glass backup)
+- 2 platform-admin endpoints: `GET /platform-admin/tenants` + `POST /platform-admin/tenants/:id/admin`
+- Security fixes: `GET /tenants/:id` → TenantGuard + id-match + `findOneSafe()` (removes schema_name leak)
+- `provisionTenantAdmin`: transaction + `SET LOCAL search_path` (pool-safe) + schema regex validation + superUserEmail in audit log
+- Migration 018: cross-tenant DO block (idempotent, iterates existing schemas)
+- Platform Admin UI: tenant table + ProvisionDialog + skeleton loading (PUX6)
+- ADR-017 Accepted + break-glass runbook
+- 19 new unit tests (599 total, 29 suites)
+
+**Subagentes acionados:**
+- test-runner: PASS 599/599 ✓
+- security-reviewer: HIGH (migration scope) FIXED → DO block; MEDIUM (schema injection) FIXED → regex guard; all PASS ✓
+- db-reviewer: PASS ✓
+- frontend-reviewer: MEDIUM (PUX6 skeleton) FIXED; all PASS ✓
+
+### Verificação Regras CLAUDE.md §10 (regras 1-18)
+- Regra 11 (TenantDatabaseService): provisionTenantAdmin usa KNEX_ADMIN_CONNECTION (correto — cross-tenant op)
+- Regra 12 (KNEX_ADMIN_CONNECTION apenas para admin ops): OK ✓
+- Regra 13 (RLS): audit_logs migration aplica per-tenant via DO block ✓
+- Regra 16 (persona+gap em PRs de UI): PR #74 cita §2.5 + gap fechado ✓
+- Regra 19 (PV/PUX frontend-reviewer): PASS ✓
+- KNEX_CONNECTION direto em services: zero hits ✓
+- Secrets hardcoded: zero ✓
+
+### Prioridades para próxima sessão DM
+1. **P2 (DM)** — ADR-015 (release cadence) — slot disponível, sem bloqueadores
+2. **P2 (PO)** — Definir RFs Fase 2 (IA + Plaid + n8n) em `RF_BACKLOG.md`
+3. **P1 (PO)** — Rodar seeds Acme em staging + UAT tour com personas
+4. **P1 (PO)** — RF "Consolidated platform health dashboard" (pós Regra-0 — §2.5 JTBD #1+#3)
+
+### Alertas
+- Seeds staging prontos mas não executados — PO deve rodar para completar UAT tour
+- ADR-015 slot disponível há meses — sem bloqueadores após ADR-016/017
+- Fase 2: depende de PO criar RFs em RF_BACKLOG.md
+
+### Alinhamento Bússola (regras 15-18)
+- PR #74: Persona §2.5 (Platform Operator) + gap fechado = governança auditável via UI. Regras 16+19 cumpridas.
+- Nenhuma violação detectada.
+
+### Handoff DM (dm_queue.md)
+- **COMPLETED esta sessão:** T-20260501-4 (RF Regra-0, PR #74 merged)
+- **PENDING P2 standing:** T-20260421-1 (NS dashboard — aguarda gatilho)
+- **PENDING P2:** ADR-015 (release cadence — sem bloqueador)
+
+### Última sessão DM: 2026-05-02 (RF Regra-0 + ADR-017 — PR #74 merged)
+
+---
 # SSE Project Status — 2026-05-02 (PM Agent — revisão diária)
 
 ## Revisão PM — 2026-05-02 09:00 UTC

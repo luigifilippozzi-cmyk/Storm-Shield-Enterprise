@@ -11,6 +11,27 @@ type: project
 
 ---
 
+## Sessão 2026-05-02 — DM Agent — RF Regra-0 COMPLETED (PR #74 merged)
+
+**T-20260501-4 COMPLETED** — RF Regra-0 + ADR-017: Super User Único de Plataforma (PR #74 merged 2026-05-02).
+
+**Implementação real vs spec:** Seguiu spec PO fielmente (8 RNs + CAs). Ajustes técnicos durante revisão:
+- Migration 018 convertida de bare `ALTER TABLE` para DO block cross-tenant (db-reviewer HIGH finding — schema-per-tenant awareness)
+- `provisionTenantAdmin` usa `SET LOCAL search_path` em transaction (pool-safe)
+- Schema name validated against regex before interpolation
+- `superUserEmail` captured in `new_values` JSONB of audit log
+- Frontend loading state upgraded to `<Skeleton />` components (PUX6 — frontend-reviewer MEDIUM)
+- `GET /tenants/:id` upgraded with TenantGuard + id-match + `findOneSafe()` (security Critical — pre-existing schema_name leak fixed)
+
+**Métricas pós-merge:** 599 testes (19 novos), 29 suites, 19 migrations, 17 ADRs, 43 pages, build API + web clean.
+
+**Para próxima sessão PO:**
+- Confirmar seeds Acme em staging + UAT tour das personas (pendente desde PR #69)
+- Revisar `/app/platform-admin` — CA1–CA15; foco em CA4 (audit_logs is_super_user_action), CA7 (break-glass runbook staging test), CA8 (RLS bypass per-request)
+- Definir RF "Consolidated platform health dashboard" (§2.5 JTBDs #1+#3)
+- Iniciar planejamento Fase 2 RFs em `RF_BACKLOG.md`
+
+---
 ## Sessão 2026-05-01 (noite) — PO Cowork — Regra-0 + Bússola v1.3
 
 **Decisões:**
