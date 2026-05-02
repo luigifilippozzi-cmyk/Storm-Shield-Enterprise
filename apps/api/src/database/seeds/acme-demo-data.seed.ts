@@ -17,10 +17,10 @@ export async function seedAcmeDemoData(
     );
   }
 
-  const db = knex.withSchema(schemaName);
+  const t = (tableName: string) => knex.withSchema(schemaName).table(tableName);
 
   // ── Guard: skip if demo data already present ──────────────────────────────
-  const existingCustomers = await db('customers').count('id as n').first();
+  const existingCustomers = await t('customers').count('id as n').first();
   if (existingCustomers && Number(existingCustomers.n) > 0) {
     console.log('Demo data already present — skipping seedAcmeDemoData.');
     return;
@@ -31,7 +31,7 @@ export async function seedAcmeDemoData(
   // ── Insurance Companies ───────────────────────────────────────────────────
   const insId1 = generateId();
   const insId2 = generateId();
-  await db('insurance_companies')
+  await t('insurance_companies')
     .insert([
       {
         id: insId1,
@@ -80,7 +80,7 @@ export async function seedAcmeDemoData(
   for (const c of customers) {
     const id = generateId();
     customerIds.push(id);
-    await db('customers')
+    await t('customers')
       .insert({
         id,
         tenant_id: tenantId,
@@ -122,7 +122,7 @@ export async function seedAcmeDemoData(
     const v = vehicleSpecs[i];
     const id = generateId();
     vehicleIds.push(id);
-    await db('vehicles')
+    await t('vehicles')
       .insert({
         id,
         tenant_id: tenantId,
@@ -153,7 +153,7 @@ export async function seedAcmeDemoData(
     const insId = i % 3 === 0 ? null : i % 2 === 0 ? insId1 : insId2;
     const baseAmt = 800 + i * 250;
 
-    await db('estimates')
+    await t('estimates')
       .insert({
         id,
         tenant_id: tenantId,
@@ -174,7 +174,7 @@ export async function seedAcmeDemoData(
 
     // 2 line items per estimate
     for (let j = 0; j < 2; j++) {
-      await db('estimate_lines')
+      await t('estimate_lines')
         .insert({
           id: generateId(),
           tenant_id: tenantId,
@@ -198,7 +198,7 @@ export async function seedAcmeDemoData(
   for (let i = 0; i < 5; i++) {
     const id = generateId();
     soIds.push(id);
-    await db('service_orders')
+    await t('service_orders')
       .insert({
         id,
         tenant_id: tenantId,
@@ -227,7 +227,7 @@ export async function seedAcmeDemoData(
   for (const p of periods) {
     const id = generateId();
     periodIds.push(id);
-    await db('fiscal_periods')
+    await t('fiscal_periods')
       .insert({
         id,
         tenant_id: tenantId,
@@ -252,7 +252,7 @@ export async function seedAcmeDemoData(
     const isIncome = i % 3 !== 2;
     const amount = (500 + i * 80).toFixed(2);
     const daysAgo = 60 - i * 2;
-    await db('financial_transactions')
+    await t('financial_transactions')
       .insert({
         id: generateId(),
         tenant_id: tenantId,
@@ -270,7 +270,7 @@ export async function seedAcmeDemoData(
   }
 
   // ── Chart of Accounts check + seed ───────────────────────────────────────
-  const coaCount = await db('chart_of_accounts').count('id as n').first();
+  const coaCount = await t('chart_of_accounts').count('id as n').first();
   if (!coaCount || Number(coaCount.n) === 0) {
     console.log('  COA empty — seeding minimal chart of accounts for demo JEs…');
     const coaRows = [
@@ -289,7 +289,7 @@ export async function seedAcmeDemoData(
       { code: '3100', name: 'Retained Earnings', type: 'equity', normal_balance: 'credit', is_active: true },
     ];
     for (const row of coaRows) {
-      await db('chart_of_accounts')
+      await t('chart_of_accounts')
         .insert({ id: generateId(), tenant_id: tenantId, ...row, created_at: new Date(), updated_at: new Date() })
         .onConflict('code')
         .ignore();
@@ -297,13 +297,13 @@ export async function seedAcmeDemoData(
   }
 
   // ── Journal Entries (3 posted — required for P&L / BS / TB) ──────────────
-  const [cashAccount] = await db('chart_of_accounts').where({ code: '1010' }).select('id');
-  const [arAccount] = await db('chart_of_accounts').where({ code: '1100' }).select('id');
-  const [revenueAccount] = await db('chart_of_accounts').where({ code: '4010' }).select('id');
-  const [insuranceRevAccount] = await db('chart_of_accounts').where({ code: '4030' }).select('id');
-  const [partsExpAccount] = await db('chart_of_accounts').where({ code: '5010' }).select('id');
-  const [deprExpAccount] = await db('chart_of_accounts').where({ code: '5800' }).select('id');
-  const [accumDeprAccount] = await db('chart_of_accounts').where({ code: '1590' }).select('id');
+  const [cashAccount] = await t('chart_of_accounts').where({ code: '1010' }).select('id');
+  const [arAccount] = await t('chart_of_accounts').where({ code: '1100' }).select('id');
+  const [revenueAccount] = await t('chart_of_accounts').where({ code: '4010' }).select('id');
+  const [insuranceRevAccount] = await t('chart_of_accounts').where({ code: '4030' }).select('id');
+  const [partsExpAccount] = await t('chart_of_accounts').where({ code: '5010' }).select('id');
+  const [deprExpAccount] = await t('chart_of_accounts').where({ code: '5800' }).select('id');
+  const [accumDeprAccount] = await t('chart_of_accounts').where({ code: '1590' }).select('id');
 
   if (cashAccount && revenueAccount) {
     const jeData = [
@@ -343,7 +343,7 @@ export async function seedAcmeDemoData(
     ];
 
     for (const je of jeData) {
-      await db('journal_entries')
+      await t('journal_entries')
         .insert({
           id: je.id,
           tenant_id: tenantId,
@@ -359,7 +359,7 @@ export async function seedAcmeDemoData(
         .ignore();
 
       for (const [idx, line] of je.lines.entries()) {
-        await db('journal_entry_lines')
+        await t('journal_entry_lines')
           .insert({
             id: generateId(),
             tenant_id: tenantId,
@@ -380,12 +380,12 @@ export async function seedAcmeDemoData(
 
   // ── Asset Category + Fixed Asset (FAM) ───────────────────────────────────
   let assetCategoryId: string | null = null;
-  const existingCat = await db('asset_categories').where({ name: 'Machinery & Equipment' }).first();
+  const existingCat = await t('asset_categories').where({ name: 'Machinery & Equipment' }).first();
   if (existingCat) {
     assetCategoryId = existingCat.id;
   } else {
     assetCategoryId = generateId();
-    await db('asset_categories')
+    await t('asset_categories')
       .insert({
         id: assetCategoryId,
         tenant_id: tenantId,
@@ -404,7 +404,7 @@ export async function seedAcmeDemoData(
   }
 
   const assetId = generateId();
-  await db('fixed_assets')
+  await t('fixed_assets')
     .insert({
       id: assetId,
       tenant_id: tenantId,
@@ -429,7 +429,7 @@ export async function seedAcmeDemoData(
   const monthlyDepr = ((3000 - 300) / 7 / 12).toFixed(2);
   const schedMonths = ['2026-01-01', '2026-02-01', '2026-03-01', '2026-04-01'];
   for (const [idx, periodDate] of schedMonths.entries()) {
-    await db('depreciation_schedules')
+    await t('depreciation_schedules')
       .insert({
         id: generateId(),
         tenant_id: tenantId,
