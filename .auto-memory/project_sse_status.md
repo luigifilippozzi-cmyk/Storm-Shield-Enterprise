@@ -3,6 +3,67 @@ name: SSE Project Status
 description: Current state of Storm Shield Enterprise project — metrics, health, priorities for Dev Manager
 type: project
 ---
+# SSE Project Status — 2026-05-02 (PM Agent — revisão diária)
+
+## Revisão PM — 2026-05-02 09:00 UTC
+
+**Saúde: VERDE** — CI VERDE (2026-05-02T02:09Z). Deploy API VERDE (2026-05-02T02:02Z). Deploy Web VERDE (2026-05-02T01:41Z). 0 PRs abertos. 71 total merged.
+
+**Fase 1: 100% COMPLETA** — GoNoGo v2 (🟢 GO). Todos os UAT bugs (BUG-01a/01b/02) resolvidos e merged.
+
+**Módulos: 15/15** | Testes: **580** | Endpoints: **126** | Migrations: **18** | ADRs: **15** | Controllers: **18** | Pages: **42** | Specs: **27**
+
+### Novidades desde última revisão PM (2026-04-28)
+
+| PR | Tipo | Descrição | Status |
+|---|---|---|---|
+| #67 | fix(web) | BUG-02 — disable public signup | MERGED 2026-05-02T01:41Z |
+| #68 | fix(api) | BUG-01a — Acme personas seed | MERGED 2026-05-02T01:56Z |
+| #69 | feat(seeds) | BUG-01b — Acme demo data seed | MERGED 2026-05-02T02:02Z |
+| #70 | chore(memory) | Session close UAT bugs | MERGED 2026-05-02T02:05Z |
+| #71 | chore(scripts) | PO diagnostic helper scripts | MERGED 2026-05-02T02:09Z |
+
+### Verificação Regras CLAUDE.md §10 (regras 1-14)
+- KNEX_CONNECTION direto em services: **OK** (zero hits)
+- FLOAT/REAL em migrations: **OK** (zero hits)
+- CASCADE em tabelas financeiras/contábeis: **OK** (zero hits)
+- Secrets hardcoded: **OK** (zero hits)
+
+### Verificação Regras 15-18 (alinhamento Bússola)
+- PRs #67-71: chore/fix/seeds — nenhum cria tela nova. Regra 16 N/A.
+- dm_queue usa template canônico §4. Stubs deprecated não escritos.
+- **Nenhuma violação detectada.**
+
+### Inconsistências
+1. **T-20260501-2** ainda aparece como IN_REVIEW no `dm_queue.md` — PR #69 merged 2026-05-02T02:02Z. DM deve marcar COMPLETED.
+
+### Prioridades P0/P1 para Dev Manager
+1. **P1 (DM)** — Atualizar T-20260501-2 de IN_REVIEW → COMPLETED em `dm_queue.md`
+2. **P1 (DM)** — Executar Bússola v1.3 + ADR-016 (Persona de Plataforma) — spec completo em `dm_queue.md` (entrada 2026-05-01). Branch: `feature/SSE-bussola-v1-3-persona-plataforma`
+3. **P1 (PO)** — Rodar seeds Acme em staging: `pnpm --filter api seed:run --tenant=acme --type=personas` → `--type=demo-data`
+4. **P1 (PO)** — Definir RFs Fase 2 (IA + Plaid + n8n) em `RF_BACKLOG.md`
+5. **P2 (DM)** — ADR-015 (release cadence) — sem bloqueadores, pode redigir
+6. **P2 (DM)** — T-20260421-1: NS dashboard standing — aguardar próximo gatilho
+
+### Alertas
+- Bússola ainda em v1.2 — ADR-016 não existe. Task DM pendente desde 2026-05-01.
+- Seeds staging prontos mas não executados — PO deve rodar para completar UAT tour.
+- ADR-015 slot disponível há meses — sem bloqueadores.
+- Fase 2: depende de PO criar RFs em RF_BACKLOG.md.
+
+### Alinhamento Bússola (regras 15-18)
+Sem violações. PRs #67-71: chore/fix/seeds sem tela nova.
+
+### Handoff DM (dm_queue.md)
+- **PENDING (atualização):** T-20260501-2 → marcar COMPLETED (PR #69 merged)
+- **PENDING P1:** Bússola v1.3 + ADR-016 (spec em dm_queue 2026-05-01)
+- **PENDING P2 standing:** T-20260421-1 (NS dashboard — aguarda gatilho)
+- **PENDING P2:** ADR-015 (release cadence — sem bloqueador)
+
+### Última sessão PM: 2026-05-02
+### Última sessão DM: 2026-05-01 (BUG-01a + BUG-01b + BUG-02 — 3 UAT bugs corrigidos)
+
+---
 # SSE Project Status — 2026-05-01 (DM Session — UAT Bugs)
 
 ## Revisão DM — 2026-05-01

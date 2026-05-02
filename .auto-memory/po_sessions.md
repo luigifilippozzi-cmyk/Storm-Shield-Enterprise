@@ -11,6 +11,43 @@ type: project
 
 ---
 
+## Sessão 2026-05-01 (noite) — PO Cowork — Regra-0 + Bússola v1.3
+
+**Decisões:**
+- **Bússola §2.5 "Persona de Plataforma"** adicionada via opção 2 (sub-seção, não §0). Preserva framing "4 personas primárias do cliente"; segrega plataforma vs produto. Reversão: surgir 2ª persona de plataforma (Platform Support Engineer) ou compliance multi-pessoa em provisioning → reabrir e considerar promover para §0.
+- **Regra-0 = super user único de plataforma** via env var (`SUPER_USER_EMAIL`) + break-glass dormente (`SUPER_USER_BACKUP_EMAIL`). Full access cross-tenant; único capaz de provisionar admins de novos tenants; audit obrigatório (RN4/RN8). Reversão: co-fundador/COO surgir, compliance SOC2 exigir aprovação multi-pessoa, 100+ tenants ativos virarem gargalo, ou incidente de segurança na conta.
+- **Sequenciamento Bússola v1.3 → RF Regra-0** (T-20260501-4 BLOCKED até v1.3 mergear). Evita criar exceção arquitetural sem âncora formal na Bússola (regras 15/16 do CLAUDE.md).
+
+**Bugs registrados:** 0
+**ENH:** 1 (Bússola v1.3 — doc-only, ADR-016)
+**RF/ADR:**
+- RF Regra-0 (T-20260501-4) — Super User Único de Plataforma, P0, 8 RNs + 15 CAs, 4 subagentes obrigatórios (test/security/db/frontend)
+- ADR-016 — Persona de Plataforma na Bússola §2.5 (companion da Bússola v1.3)
+- ADR-017 — Super User Único de Plataforma Regra-0 (companion da RF, redigido inline na T-20260501-4)
+
+**Issues criadas:** 0 (handoff direto via `.auto-memory/dm_queue.md`, sem GitHub issue por enquanto — PRs vão referenciar entradas T-IDs)
+**PRs revisados:** 0
+**Bloqueios:** T-20260501-4 (RF Regra-0) BLOCKED até entrada "Bússola v1.3 + ADR-016" mergear em main
+**dm_queue:** 2 tasks novas no fim do arquivo (Bússola v1.3 P1 + T-20260501-4 P0 PENDING blocked); fila total 6 entradas pendentes
+
+**Alinhamento Bússola:**
+- Persona tocada: nova **Persona 0 — Platform Operator** (interna, não-cliente; formalizada em §2.5)
+- Gap tocado: governança multi-tenant centralizada (§2.5 — não está em §4 porque §4 é gaps de cliente; segregação intencional)
+- Regra 15 atendida: amenda da Bússola feita ANTES de redigir RF de plataforma (não criou exceção ad-hoc)
+- Regra 16 atendida: RF Regra-0 cita §2.5 como persona primária servida e o gap fechado na descrição
+
+**Aprendizados (registrados em memória persistente):**
+- Chat UI Cowork re-renderiza `.md` references em paste do terminal como autolinks — é display, não corrompe input/arquivo. Ground truth = Read tool, nunca display do chat. Já estava em `feedback_gh_issue_and_cowork_autotyper.md` (regra 2); reforçado como disciplina #9 em `feedback_verification_and_encoding.md` com cross-reference ao sandbox stale.
+- Bash sandbox mount pode ficar stale por minutos depois de write Windows-side — confirmado pela 2ª vez. Cruzar com Read tool é obrigatório antes de declarar "corrupção" ou "não foi gravado".
+- Pattern repetido: PowerShell here-string com markdown + URLs + backticks no terminal interativo gera dúvida mesmo quando funciona. Para handoffs longos: **Edit tool direto no arquivo** > snippet PowerShell colado. Aplicado nesta sessão (entrada T-20260501-4 escrita via Edit, sem PowerShell intermediário).
+
+**Próxima sessão:**
+- Confirmar Bússola v1.3 mergeada → desbloqueia T-20260501-4 automaticamente
+- Quando PR de RF Regra-0 vier do DM: revisar com olho em CA1–CA15; foco extra em **CA4** (audit_logs com flag + target_tenant_id), **CA8** (RLS bypass exclusivo per-request, teste com sessões paralelas), **CA7** (runbook break-glass testado em staging end-to-end)
+- Após RF Regra-0 mergear: abrir RF "Consolidated platform health dashboard" (JTBD top 3 da §2.5: #tenants ativos + alertas + activation por tenant) — próximo número livre em `docs/strategy/RF_BACKLOG.md`
+
+---
+
 ## Sessão 2026-05-01 — PO Cowork
 
 **Decisões:**
@@ -33,11 +70,20 @@ type: project
 - §1 ICP/anti-target: BUG-02 reforça posicionamento "body shop 5–15 func", não auto-serviço
 - Regra 16 atendida na descrição da RF-008
 
-**Resultado DM (2026-05-01):**
+**Resultado DM (2026-05-01 — fechamento mesmo dia, ciclo <24h):**
 - T-20260501-3 BUG-02: COMPLETED — PR #67 MERGED
 - T-20260501-1 BUG-01a: COMPLETED — PR #68 MERGED
-- T-20260501-2 BUG-01b: IN_REVIEW — PR #69 aguarda CI verde
-- Após PR #69 merged: rodar `pnpm --filter api seed:run --tenant=acme --type=personas` + `--type=demo-data` em staging para retomar UAT tour
+- T-20260501-2 BUG-01b: COMPLETED — PR #69 MERGED
+- Session close docs + dashboard: PR #70 MERGED
+- PO diagnostic scripts: PR #71 MERGED
+- **Achado técnico:** TS2349 em `knex.withSchema()` — não é callable como const, retorna QueryBuilder. Resolvido via helper `const t = (n) => knex.withSchema(s).table(n)`. Padrão para futuros seeds multi-schema.
+- **Health:** AMARELA (postura conservadora pós-merge em massa) → próxima revisão PM deve flipar para VERDE.
+
+**Ações operacionais pendentes do PO (Clerk Dashboard + seeds em staging):**
+1. Confirmar Clerk Dashboard staging: Sign-up mode = Restricted (allowlist vazia)
+2. `pnpm --filter api seed:run --tenant=acme --type=personas`
+3. `pnpm --filter api seed:run --tenant=acme --type=demo-data`
+4. Retomar UAT tour com login das 7 personas Acme
 
 **Próxima sessão:**
 - Confirmar UAT tour completo após seeds rodarem em staging
