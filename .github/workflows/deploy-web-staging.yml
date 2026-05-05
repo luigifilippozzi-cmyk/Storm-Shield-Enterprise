@@ -66,3 +66,32 @@ jobs:
           done
           echo "Smoke test failed after 5 attempts"
           exit 1
+
+      - name: Smoke test — API proxy routes (CA5)
+        run: |
+          set -euo pipefail
+          BASE=https://sse-web-staging.vercel.app
+          FAILED=0
+
+          # /api/health must return 200 — unauthenticated liveness probe
+          HEALTH=$(curl --silent --max-time 15 --output /dev/null --write-out "%{http_code}" "$BASE/api/health")
+          if [ "$HEALTH" != "200" ]; then
+            echo "::error::Smoke test FAILED: GET $BASE/api/health → $HEALTH (expected 200 — proxy or backend down)"
+            FAILED=1
+          else
+            echo "PASS: GET $BASE/api/health → $HEALTH"
+          fi
+
+          # Authenticated routes must return 401 (proxy working + auth guard active) — not 404/502/000
+          for path in "api/tenants/me/wizard/status" "api/customers"; do
+            STATUS=$(curl --silent --max-time 15 --output /dev/null --write-out "%{http_code}" "$BASE/$path")
+            if [ "$STATUS" = "404" ] || [ "$STATUS" = "502" ] || [ "$STATUS" = "503" ] || [ "$STATUS" = "000" ]; then
+              echo "::error::Smoke test FAILED: GET $BASE/$path → $STATUS (expected 401 — proxy not working or backend unreachable)"
+              FAILED=1
+            else
+              echo "PASS: GET $BASE/$path → $STATUS"
+            fi
+          done
+
+          [ "$FAILED" = "0" ] || exit 1
+          echo "All API proxy smoke tests passed"

@@ -37,8 +37,15 @@ function usePlatformTenants() {
       const res = await fetch('/api/tenants/platform-admin/tenants', {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error('Access denied or not configured');
-      return res.json();
+      if (res.status === 401 || res.status === 403) {
+        throw new Error('Access denied. This area is restricted to the Platform Operator.');
+      }
+      if (!res.ok) {
+        throw new Error(`Backend unreachable or misconfigured (HTTP ${res.status}). Check API connectivity.`);
+      }
+      return res.json().catch(() => {
+        throw new Error('Server returned an unexpected response format. Check API connectivity.');
+      });
     },
     retry: false,
   });
@@ -153,11 +160,21 @@ export default function PlatformAdminPage() {
   }
 
   if (isError) {
+    const isAuthError = error instanceof Error && error.message.startsWith('Access denied');
     return (
       <div className="p-8">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
-          <strong>Access denied.</strong> This area is restricted to the Platform Operator.
-          {error instanceof Error && <p className="text-sm mt-1">{error.message}</p>}
+        <div
+          className={`border rounded-lg p-4 ${
+            isAuthError
+              ? 'bg-red-50 border-red-200 text-red-700'
+              : 'bg-yellow-50 border-yellow-200 text-yellow-800'
+          }`}
+        >
+          <strong>{isAuthError ? 'Access denied.' : 'Connection error.'}</strong>{' '}
+          {isAuthError
+            ? 'This area is restricted to the Platform Operator.'
+            : 'Platform Admin could not reach the backend. Check API connectivity and try again.'}
+          {error instanceof Error && <p className="text-sm mt-1 opacity-75">{error.message}</p>}
         </div>
       </div>
     );
