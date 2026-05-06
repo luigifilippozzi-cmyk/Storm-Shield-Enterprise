@@ -11,6 +11,52 @@ type: project
 
 ---
 
+## Sessão 2026-05-05 — PO Cowork — Setup operacional do super user (interrompido por BUG-03 P0)
+
+**Pedido inicial:** "me ajude a criar o super user" — resolvido como ambiguidade. Após mini-discovery, confirmado que RF Regra-0 já está mergeada (PR #74 2026-05-02); pedido real é OPERACIONALIZAR o super user em staging.
+
+**Mea culpa registrado:** Pulei o protocolo de abertura no início da sessão — li só `MEMORY.md` (atualizada 2026-04-17), não cruzei com `po_sessions.md` (sessão 2026-05-02 do DM) nem `project_sse_status.md`. Resultado: redigi RF-009/RF-010 + ADR-017 stub + handoff DM como se fosse greenfield. Reverti tudo (Edit reverso em `dm_queue.md`, delete do ADR-017 duplicado, delete de `.po-drafts/`). Lição reforçada na memória persistente.
+
+**Decisões:**
+- Aceitar staging sem MFA (Clerk MFA é Pro, plano atual é Hobby) — errata ADR-017 prevista, mas adiada até BUG-03 fechar
+- Backup super user dormente: luigicassab@gmail.com (`SUPER_USER_BACKUP_ACTIVE=false`)
+- Email primário super user: luigi.filippozzi@gmail.com
+- Não promover errata ADR-017 enquanto staging estiver quebrada — sem sentido errar exceção operacional de algo que não funciona
+
+**Ações operacionais executadas (via Chrome assistido):**
+- ✅ Conta Clerk staging primária criada (Luigi Filippozzi · luigi.filippozzi@gmail.com)
+- ✅ Conta Clerk staging backup criada (Luigi (Backup) · luigicassab@gmail.com)
+- ✅ Fly.io secrets aplicados via `flyctl secrets set` em `sse-api-staging`: `SUPER_USER_EMAIL` + `SUPER_USER_BACKUP_EMAIL` + `SUPER_USER_BACKUP_ACTIVE=false` (versão 39 → 40, redeploy verde, `/health` 200)
+- ✅ Login no SSE staging confirmado (Last signed in May 5, 2026 no Clerk Dashboard)
+- 🔴 Acesso a `/platform-admin` BLOQUEADO — descoberto BUG-03 (todas as rotas `/api/*` retornam 404)
+
+**Bugs descobertos:**
+- **BUG-03 P0** — Frontend chama `/api/*` sem rewrite/proxy. `apps/web/next.config.js` não tem `rewrites()`; nenhum route handler em `apps/web/src/app/api/`. Validado via console: `/api/health`, `/api/customers`, `/api/tenants/me/wizard/status`, `/api/tenants/platform-admin/tenants` todos retornam 404. Afeta 100% das chamadas API em staging — não só platform-admin. Por que nunca foi pego: testes mockam fetch, frontend-reviewer audita só PV/PUX, e2e contra staging real nunca rodou pós-merge do PR #74.
+
+**ENH/RF:** 0 (não escrevi nesta sessão pela mea culpa — toda redação inicial foi revertida)
+
+**Handoffs DM:**
+- T-20260505-1 (BUG-03 P0) — registrado em `dm_queue.md` topo, com 7 CAs, 3 opções de fix, escopo negativo, e nota de processo (squad architecture precisa de cobertura e2e contra staging real)
+
+**Bloqueios:**
+- Setup operacional do super user em standby até BUG-03 fechar
+- `project_sse_status.md` reportou saúde VERDE em 2026-05-02; saúde real em staging é VERMELHA (toda integração frontend↔backend quebrada). Nota de correção redigida em `project_sse_status.md` nesta sessão (Atualização PO 2026-05-05).
+
+**Alinhamento Bússola:**
+- Persona §2.5 (Platform Operator) JTBD #1 (provisioning UI sem SQL) regrediu operacionalmente devido ao BUG-03
+- Gap aberto pelo BUG-03 — provisioning, dashboard, qualquer CRUD inacessíveis em staging para todas as personas
+
+**Sugestão para retrospectiva (não bloqueia):**
+- Squad architecture (ADR-007) precisa de subagente OU expansão do `test-runner` com smoke test e2e contra staging real pós-deploy. PR #74 passou nos 4 subagentes existentes mas o bug é trivial de detectar com qualquer GET real contra Vercel URL. Vira RF/ENH em sessão futura.
+
+**Próxima sessão:**
+- Confirmar BUG-03 mergeado + smoke test e2e verde
+- Retomar acesso a `/platform-admin` (CA1, CA4 originais do RF Regra-0)
+- Redigir errata ADR-017 (MFA Hobby vs Pro) só após BUG-03 fechar
+- Considerar registrar formalmente RF de processo (subagente e2e)
+
+---
+
 ## Sessão 2026-05-02 — DM Agent — RF Regra-0 COMPLETED (PR #74 merged)
 
 **T-20260501-4 COMPLETED** — RF Regra-0 + ADR-017: Super User Único de Plataforma (PR #74 merged 2026-05-02).
@@ -66,6 +112,21 @@ type: project
 - Confirmar Bússola v1.3 mergeada → desbloqueia T-20260501-4 automaticamente
 - Quando PR de RF Regra-0 vier do DM: revisar com olho em CA1–CA15; foco extra em **CA4** (audit_logs com flag + target_tenant_id), **CA8** (RLS bypass exclusivo per-request, teste com sessões paralelas), **CA7** (runbook break-glass testado em staging end-to-end)
 - Após RF Regra-0 mergear: abrir RF "Consolidated platform health dashboard" (JTBD top 3 da §2.5: #tenants ativos + alertas + activation por tenant) — próximo número livre em `docs/strategy/RF_BACKLOG.md`
+
+**Resultado DM (2026-05-01/02 — fechamento <24h, ciclo curto):**
+- Bússola v1.3 + ADR-016: COMPLETED — MERGED em main (PR# não informado pelo DM; verificar via `gh pr list --state merged --search "ADR-016"`)
+- T-20260501-4 RF Regra-0 + ADR-017: COMPLETED — PR #74 MERGED
+- Deltas observados nas métricas globais do projeto:
+  - Tests: ? → 599 (+19 desta task; restante é trabalho paralelo entre sessões)
+  - Migrations: 11 → 19 (delta 8 — incluindo `018_super_user_audit_flag.sql`; numeração diferente de "011" da RF original porque outras migrations entraram entre redação e execução)
+  - ADRs: 14 → 17 (delta 3 — ADR-016, ADR-017, e provavelmente ADR-015 release cadence saindo de BLOCKED; confirmar)
+  - Pages: ? → 43; PRs merged: ? → 74
+- **Security extras pegos pelo `security-reviewer` fora dos 15 CAs originais** (escopo da RF é piso, não teto):
+  - `GET /tenants/:id` patched — não vaza mais `schema_name` na resposta
+  - `SET LOCAL search_path` dentro de transação (substituiu session-level — defesa contra exception skip do reset)
+  - Schema name validado por regex (defesa contra injection)
+  - `superUserEmail` adicionado ao audit_logs (não estava em RN4, mas é a coisa certa para forensics)
+- **Entregáveis técnicos confirmados:** `SuperUserService` + `SuperUserGuard` (env-var auth, Clerk email lookup case-insensitive, break-glass backup), 2 endpoints platform-admin behind guard, Migration 018 (DO block cross-tenant idempotente), Platform Admin UI com `<Skeleton />` (PUX6 ✓), runbook `super-user-break-glass.md`, ADR-017 publicado, 19 testes novos.
 
 ---
 

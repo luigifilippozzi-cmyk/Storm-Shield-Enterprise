@@ -289,15 +289,15 @@
 <script>
 // <!--METRICS_START-->
 const D = {
-  lastUpdated: "2026-05-02 (PM Agent — revisão diária)",
-  updatedBy: "PM Agent",
-  health: "green",
-  healthText: "VERDE. CI VERDE (2026-05-02). Deploy API VERDE. Deploy Web VERDE. 0 PRs abertos. 74 PRs merged. Fase 1 100% completa. RF Regra-0 + ADR-017 merged (PR #74). Bussola v1.3 + ADR-016 merged (PR #73). Pendente PO: rodar seeds staging + UAT tour + RFs Fase 2.",
+  lastUpdated: "2026-05-06 (DM Agent — sessão agendada autônoma BUG-03)",
+  updatedBy: "Dev Manager",
+  health: "red",
+  healthText: "VERMELHA. PR #77 aberto — bloqueado por ação do PO: NEXT_PUBLIC_API_URL não configurado no Vercel (discovery: backend Fly.io UP /health=200 mas proxy Vercel retorna 404). PR #76 MERGED (rewrites implementados). PR #77 OPEN (fail-fast guard). Ação necessária PO: Vercel dashboard → Settings → Env Vars → NEXT_PUBLIC_API_URL=https://sse-api-staging.fly.dev/api/v1 (Production + Preview). CI GitHub Actions VERDE.",
   activeFase: "2",
   kpis: {
     backendModules: 15,
     controllers: 18,
-    endpoints: 126,
+    endpoints: 128,
     frontendPages: 43,
     specFiles: 29,
     tests: 599,
@@ -307,14 +307,19 @@ const D = {
     excelDone: 36
   },
   agents: [
-    { name: "PM Agent", role: "Status Diario + Metricas", color: "var(--blue)", bg: "var(--blue-bg)", icon: "clipboard", status: "active", statusText: "Sessao 2026-05-02 — Saude VERDE. 74 PRs merged. 15/15 modulos, 599 testes, 128 endpoints, 19 migrations, 17 ADRs, 43 pages. Regras 1-18 OK. Sem inconsistencias. Pendente PO: seeds staging + UAT tour + RFs Fase 2.", stats: [["Frequencia","Diario"],["Escopo","Read-only"],["Output","Relatorio + Dashboard"]] },
-    { name: "Dev Manager", role: "Implementacao + Orquestracao", color: "var(--accent2)", bg: "var(--teal-bg)", icon: "gear", status: "active", statusText: "Sessao 2026-05-02 — RF Regra-0 + ADR-017 COMPLETED (PR #74 merged). Bussola v1.3 + ADR-016 (PR #73 merged). SuperUserService+Guard, 2 platform-admin endpoints, migration 018 cross-tenant DO block, platform-admin UI, 19 novos testes. security+db+frontend subagentes todos PASS apos fixes.", stats: [["Autoridade","Execucao tecnica"],["Subagentes","4 configurados"],["PRs merged","#72+#73+#74 (esta sessao)"]] },
+    { name: "PM Agent", role: "Status Diario + Metricas", color: "var(--blue)", bg: "var(--blue-bg)", icon: "clipboard", status: "active", statusText: "Revisão noturna 2026-05-02T23:30Z — Saúde VERDE. 75 PRs merged. 15/15 módulos (cases+notifications+admin/activation), 599 testes, 128 endpoints, 19 migrations, 17 ADRs, 43 pages, 29 suites. Deploy API+Web+CI todos VERDE. Regras 1-18 OK (zero KNEX direto, zero FLOAT, zero CASCADE financeiro, zero secrets). Zero violações Bússola (PRs #73-75: docs+feat+chore). dm_queue: 1 PENDING (T-20260421-1 standing). ADR-015 ausente — slot disponível. Pendente PO: seeds staging + RFs Fase 2.", stats: [["Frequencia","Diario"],["Escopo","Read-only"],["Output","Relatorio + Dashboard"]] },
+    { name: "Dev Manager", role: "Implementacao + Orquestracao", color: "var(--accent2)", bg: "var(--teal-bg)", icon: "gear", status: "active", statusText: "Sessao 2026-05-06 — BUG-03 T-20260505-1 IN_PROGRESS. PR #76 MERGED: rewrites next.config.js, CA4 error differentiation, CA5 smoke test. PR #77 OPEN: fail-fast Vercel guard (bloqueado por NEXT_PUBLIC_API_URL nao set). Root cause: proxy nao configurado no Vercel env. Backend UP (Fly.io /health=200). Subagentes: test[PASS 599], security[PASS], frontend[PASS apos 2 High fixes]. Acao PO necessaria: set env var no Vercel dashboard.", stats: [["Autoridade","Execucao tecnica"],["Subagentes","3 acionados"],["PRs","#76 merged + #77 open"]] },
     { name: "test-runner", role: "Jest + Coverage", color: "var(--green)", bg: "var(--green-bg)", icon: "check", status: "active", statusText: "599 testes, 29 suites — GREEN (2026-05-02). SuperUserService x12 + SuperUserGuard x6 adicionados. Branch coverage todos servicos ≥80%. PR #74 PASS.", stats: [["Framework","Jest + ts-jest"],["Specs","29 test suites"],["Trigger","Sempre pre-PR"]] },
     { name: "security-reviewer", role: "RLS + XSS + Auth", color: "var(--red)", bg: "var(--red-bg)", icon: "shield", status: "active", statusText: "PR #74 — Critical (GET /tenants/:id schema_name leak) FIXED via TenantGuard+findOneSafe. HIGH (migration scope) FIXED via DO block. MEDIUM (schema injection) FIXED via regex guard. Todos findings resolvidos.", stats: [["Foco","tenant_id, RLS, AES"],["Checks","OWASP Top 10 + regras 15-18"],["Trigger","auth/db changes"]] },
     { name: "db-reviewer", role: "Migrations + Schema", color: "var(--purple)", bg: "var(--purple-bg)", icon: "database", status: "active", statusText: "Baseline: 000-018 (19 SQL files). Migration 018: cross-tenant DO block — is_super_user_action + target_tenant_id em audit_logs. SET LOCAL search_path em transaction. Schema regex validation. Todos PASS.", stats: [["Foco","RLS, indexes, FK"],["Migrations","19 SQL files"],["Trigger","Schema changes"]] },
     { name: "frontend-reviewer", role: "Next.js + shadcn/ui", color: "var(--cyan)", bg: "rgba(6,182,212,.12)", icon: "layout", status: "active", statusText: "Checklist expandido: 20 itens (8 base + 6 PV + 6 PUX via ADR-013). PR #44 FAIL→PASS. Regra 19 vigente.", stats: [["Framework","Next.js 15 + React 19"],["Checklist","20 itens (ADR-013)"],["Trigger","UI/component changes — Regra 19"]] }
   ],
   activity: [
+    { time: "Mai 06", color: "var(--red)", msg: "<strong>Dev Manager</strong> sessão 2026-05-06 — BUG-03 T-20260505-1 IN_PROGRESS. Causa raiz: NEXT_PUBLIC_API_URL não configurado no Vercel → proxy usa localhost (inalcançável) → Next.js 404. Backend Fly.io UP (/health=200). PR #76 MERGED: rewrites next.config.js (3 regras: health/ready/wildcard), CA4 error differentiation (auth vs. conectividade em hook + render), CA5 smoke test CI, .env.example documentado. PR #77 OPEN: fail-fast build guard (throw se env var ausente em Vercel), smoke test com pré-check backend direto. Subagentes: test[PASS 599/599 95.22% stmt] security[PASS — 1 HIGH pré-existente secrets CI registrado T-20260506-1] frontend[PASS — 2 High corrigidos: console.error guard + isError UI diferenciada]. ⚠️ Ação PO: Vercel dashboard → Settings → Env Vars → NEXT_PUBLIC_API_URL=https://sse-api-staging.fly.dev/api/v1 (Production+Preview).", tag: "dm" },
+    { time: "Mai 06", color: "var(--accent2)", msg: "<strong>PR #76 merged</strong> fix(web): BUG-03 — Next.js API proxy rewrites. next.config.js rewrites(), platform-admin CA4 error differentiation, .env.example docs, deploy-web-staging CA5 smoke test. 599 testes. Platform Operator §2.5 / BUG-03 regressão JTBD#1.", tag: "merge" },
+    { time: "Mai 06", color: "var(--orange)", msg: "<strong>PR #77 OPEN</strong> fix(web): BUG-03b — fail-fast Vercel build guard + smoke test diagnóstico. Bloqueado: NEXT_PUBLIC_API_URL não configurado no Vercel. Ação necessária: PO configura env var no Vercel dashboard.", tag: "fix" },
+    { time: "Mai 02 23:30Z", color: "var(--blue)", msg: "<strong>PM Agent</strong> revisão noturna autônoma 2026-05-02T23:30Z — Saúde VERDE confirmada. CI+Deploy Staging SUCCESS (23:09Z, PR #75). Deploy API+Web SUCCESS (22:44Z, PR #74). 0 PRs abertos. 75 total merged. Métricas: 15/15 módulos (15 dirs, incluindo cases+notifications+admin), 599 testes, 128 endpoints, 19 migrations, 17 ADRs, 43 pages, 29 suites, 18 controllers. Regras 1-14 OK (zero KNEX direto, zero FLOAT/REAL, zero CASCADE financeiro, zero secrets hardcoded). Regras 15-18 OK — PRs #73 (docs), #74 (feat+UI cita §2.5+gap), #75 (chore) — sem violações. dm_queue: T-20260421-1 PENDING standing (aguarda gatilho). ADR-015 ausente — slot disponível, sem bloqueadores. RF-008 (Fase 2) no backlog.", tag: "pm" },
+    { time: "Mai 02", color: "var(--accent2)", msg: "<strong>PR #75 merged</strong> chore(memory): session close 2026-05-02 — RF Regra-0 + ADR-017 COMPLETED. po_sessions + project_sse_status + dm_queue atualizados. CI SUCCESS (23:09Z).", tag: "merge" },
     { time: "Mai 02", color: "var(--accent2)", msg: "<strong>PR #74 merged</strong> feat(platform): RF Regra-0 + ADR-017 — Super User Unico de Plataforma (SSE-Regra0). SuperUserService+Guard (env-var, Clerk email lookup, break-glass backup), 2 platform-admin endpoints, migration 018 cross-tenant DO block, ProvisionTenantAdminDto @Matches, findOneSafe() sem schema_name leak, SET LOCAL search_path em transaction, audit log new_values com superUserEmail, Platform Admin UI + skeleton PUX6, ADR-017 + runbook break-glass. 19 novos testes (599 total, 29 suites). Platform Operator §2.5 / governanca auditavel.", tag: "merge" },
     { time: "Mai 02", color: "var(--accent2)", msg: "<strong>PR #73 merged</strong> feat(docs): Bussola v1.3 + ADR-016 — Persona de Plataforma §2.5 adicionada. Preserva framing '4 personas primarias do cliente'. ADRs: 16.", tag: "merge" },
     { time: "Mai 02", color: "var(--accent2)", msg: "<strong>PR #72 merged</strong> chore(memory): session close 2026-05-01 — BUG-01a+01b+02 UAT fixes. T-20260501-2 marcado COMPLETED. po_sessions + project_sse_status + dashboard atualizados.", tag: "merge" },
@@ -396,30 +401,35 @@ const D = {
     { name: "fixed-assets", files: 18, spec: true, controller: true, endpoints: 15 },
     { name: "auth", files: 6, spec: true, controller: true, endpoints: 1 },
     { name: "tenants", files: 6, spec: true, controller: true, endpoints: 5 },
-    { name: "admin/activation", files: 5, spec: true, controller: true, endpoints: 3 }
+    { name: "admin/activation", files: 5, spec: true, controller: true, endpoints: 3 },
+    { name: "cases", files: 5, spec: true, controller: true, endpoints: 5 },
+    { name: "notifications", files: 5, spec: true, controller: true, endpoints: 5 }
   ],
   pipeline: [
-    { label: "CI", desc: "Lint + Test + Build (GitHub Actions) — SUCCESS main (2026-05-02T02:09Z). 580/580 testes. 27 suites. Branch coverage ≥80% todos os services.", status: "green", date: "2026-05-02" },
-    { label: "Deploy Staging", desc: "SUCCESS (2026-05-02T02:09Z). Ultimo workflow: Deploy Staging pos-merge PR #71.", status: "green", date: "2026-05-02" },
-    { label: "Deploy API", desc: "Fly.io + GHCR — SUCCESS (2026-05-02T02:02Z). /ready 200 ATIVO. T-20260412-1 superseded e resolvido.", status: "green", date: "2026-05-02" },
-    { label: "Deploy Web", desc: "Vercel — SUCCESS (2026-05-02T01:41Z). sse-web-staging.vercel.app responde.", status: "green", date: "2026-05-02" },
-    { label: "PRs Abertos", desc: "0 PRs abertos. 71 total merged. Ultimos: #71 (scripts diagnostico PO), #70 (session close UAT), #69 (BUG-01b demo data seed), #68 (BUG-01a personas), #67 (BUG-02 signup).", status: "green", date: "2026-05-02" }
+    { label: "CI", desc: "Lint + Test + Build (GitHub Actions) — SUCCESS main (2026-05-02T23:09Z). 599/599 testes. 29 suites. Branch coverage ≥80% todos os services. PR #75 merged.", status: "green", date: "2026-05-02" },
+    { label: "Deploy Staging", desc: "SUCCESS (2026-05-02T23:09Z). Último workflow: Deploy Staging pós-merge PR #75 (session close RF Regra-0).", status: "green", date: "2026-05-02" },
+    { label: "Deploy API", desc: "Fly.io + GHCR — SUCCESS (2026-05-02T22:44Z). /ready 200 ATIVO. T-20260412-1 resolvido (ADR-011). Migration 018 cross-tenant DO block aplicada.", status: "green", date: "2026-05-02" },
+    { label: "Deploy Web", desc: "Vercel — SUCCESS (2026-05-02T22:44Z). sse-web-staging.vercel.app responde. Platform Admin UI (RF Regra-0) disponível.", status: "green", date: "2026-05-02" },
+    { label: "PRs Abertos", desc: "0 PRs abertos. 75 total merged. Últimos: #75 (session close RF Regra-0), #74 (RF Regra-0 + ADR-017), #73 (Bússola v1.3 + ADR-016), #72 (session close UAT), #71 (scripts PO).", status: "green", date: "2026-05-02" }
   ],
   alertas: {
     bloqueantes: [],
     overdue: [],
-    emRisco: [],
+    emRisco: [
+      { titulo: "ADR-015 ausente — release cadence (DM — P2)", desc: "ADR-015 nunca foi redigido. Slot disponível há meses, sem bloqueadores desde T-20260421-10 COMPLETED (2026-04-22). DM pode redigir docs/decisions/015-release-cadence.md a qualquer momento. Numeração 015 disponível (016+017 já usados; inserção retroativa OK por ser doc-only)." },
+      { titulo: "ADR-012 stub duplicado — remoção pendente maio/2026", desc: "Dois arquivos: docs/decisions/012-netsuite-incorporacao-parcial.md (stub redirect ADR-014) + 012-ns-incorporacao-parcial.md (ativo). Stub programado para remoção em maio/2026 conforme T-20260422-1. DM deve remover o stub NETSUITE em próxima sessão de housekeeping." }
+    ],
     proximos7: [
-      { titulo: "Bússola v1.3 + ADR-016 (DM — P1)", desc: "Task criada em 2026-05-01. ADR-016 nao existe ainda. Bussola esta em v1.2. DM deve executar branch feature/SSE-bussola-v1-3-persona-plataforma: adicionar §2.5 (Platform Operator) + header v1.3 + ADR-016." },
-      { titulo: "Seeds staging — PO acao manual", desc: "PR #69 merged. Seeds prontos. PO deve rodar: pnpm --filter api seed:run --tenant=acme --type=personas → --type=demo-data. Desbloqueia UAT tour completo." },
-      { titulo: "ADR-015 (release cadence — DM — P2)", desc: "Slot reservado ha meses. Sem bloqueadores. DM pode redigir docs/decisions/015-release-cadence.md a qualquer momento." },
-      { titulo: "T-20260421-1: NS dashboard (standing — P2)", desc: "Aguarda gatilho explicito (RF status change, Bussola ajuste, nova anti-rec). Nenhum gatilho ativo. Ultima execucao: PR #58 (2026-04-23, Trigger #1 RF-007 DONE)." },
-      { titulo: "Iniciar planejamento Fase 2 (PO)", desc: "Fase 1 100% concluida. Fase 2 = IA + integracoes bancarias (Plaid) + automacoes n8n. PO deve definir escopo e RFs em RF_BACKLOG.md." }
+      { titulo: "Seeds staging — PO ação manual (P1)", desc: "Seeds prontos (PR #68+#69 merged). PO deve rodar: pnpm --filter api seed:run --tenant=acme --type=personas → --type=demo-data. Desbloqueia UAT tour completo com 7 personas Acme + demo data (15 customers, 18 vehicles, 12 estimates, 5 SOs, 30 transactions)." },
+      { titulo: "Iniciar planejamento Fase 2 (PO — P1)", desc: "Fase 1 100% concluída. GoNoGo v2 GO. Fase 2 = IA + integrações bancárias (Plaid) + automações n8n + RF-008 (Sistema de Convites). PO deve definir escopo e RFs em RF_BACKLOG.md. RF-008 já definido (P1, Fase 2)." },
+      { titulo: "RF-008: Sistema de Convites (DM — P1, Fase 2)", desc: "RF-008 definido em 2026-05-01. Owner/admin convida usuários por email com role selection. Link assinado 72h single-use, token SHA-256, integração Clerk, plan gate (free=3, starter=10, pro=50). Aguarda PO confirmar start." },
+      { titulo: "ADR-015 (DM — P2)", desc: "Release cadence — sem bloqueadores. DM pode redigir docs/decisions/015-release-cadence.md." },
+      { titulo: "T-20260421-1: NS dashboard (standing — P2)", desc: "Aguarda gatilho explícito (RF status change, Bússola ajuste, nova anti-rec). Nenhum gatilho ativo. Última execução: PR #58 (2026-04-23, Trigger #1 RF-007 DONE)." }
     ],
     alinhamentoBussola: []
   },
   inconsistencias: [
-    { tipo: "T-20260501-2 — status desatualizado no dm_queue", desc: "dm_queue.md ainda mostra IN_REVIEW para T-20260501-2 (BUG-01b). PR #69 foi merged em 2026-05-02T02:02Z. DM deve atualizar status para COMPLETED no dm_queue." },
+    { tipo: "T-20260501-2 — RESOLVIDO 2026-05-02 (DM)", desc: "DM marcou COMPLETED em sessão 2026-05-02 pós PR #74. dm_queue reflete estado correto." },
     { tipo: "Docs auditoria — RESOLVIDO 2026-05-01", desc: "SSE_GoNoGo_Fase1_MVP_20260420.md e SSE_Plano_Testes_UI_Fase1_20260420.md — marcados como resolvidos na sessao DM 2026-05-01 (incluidos em PR doc-only)." },
     { tipo: "T-20260417-4 — RESOLVIDO", desc: "Marcada COMPLETED 2026-04-26 por obsolescencia — Gaps 1+3+8 todos implementados via RF-001/002/003." },
     { tipo: "T-20260412-2 — RESOLVIDO 2026-04-27", desc: "Auditoria DM confirmou: T-020/T-021/T-022 todos implementados. Task COMPLETED. PR #63." },
@@ -429,12 +439,11 @@ const D = {
     { tipo: "/ready 503 — RESOLVIDO", desc: "Confirmado 2026-04-24: /ready retorna 200. Fly secrets configurados por Luigi." }
   ],
   recomendacoes: [
-    { prioridade: "P1 (DM)", texto: "Bussola v1.3 + ADR-016 — executar branch feature/SSE-bussola-v1-3-persona-plataforma. Spec completo em dm_queue.md (entrada 2026-05-01). Sem dependencias tecnicas." },
-    { prioridade: "P1 (PO)", texto: "Rodar seeds Acme em staging para desbloquear UAT tour: pnpm --filter api seed:run --tenant=acme --type=personas → --type=demo-data. Seeds prontos pos PR #69 merged." },
-    { prioridade: "P1 (DM)", texto: "Atualizar T-20260501-2 de IN_REVIEW para COMPLETED em dm_queue.md — PR #69 merged 2026-05-02T02:02Z." },
-    { prioridade: "P1 (PO)", texto: "Iniciar planejamento Fase 2 (IA + integracoes bancarias Plaid + automacoes n8n). Fase 1 100% concluida — GoNoGo v2 GO. Definir RFs proximos em RF_BACKLOG.md." },
-    { prioridade: "P2 (DM)", texto: "Redigir ADR-015 (release cadence) — sem bloqueadores desde T-20260421-10 COMPLETED. Pode ser redigido agora." },
-    { prioridade: "P2 (DM)", texto: "T-20260421-1 NS dashboard — aguardar proximo gatilho. Nenhum ativo agora." }
+    { prioridade: "P1 (PO)", texto: "Rodar seeds Acme em staging para completar UAT tour: pnpm --filter api seed:run --tenant=acme --type=personas → --type=demo-data. Seeds prontos pós PRs #68+#69 merged. Valida 15 customers, 18 vehicles, 12 estimates, 5 SOs." },
+    { prioridade: "P1 (PO)", texto: "Iniciar planejamento Fase 2 (IA + integrações bancárias Plaid + automações n8n + RF-008 convites). Fase 1 100% concluída — GoNoGo v2 GO. Definir RFs em RF_BACKLOG.md. RF-008 já rascunhado (Sistema de Convites por Email)." },
+    { prioridade: "P2 (DM)", texto: "Redigir ADR-015 (release cadence) — sem bloqueadores. Numeração 015 disponível. Arquivo: docs/decisions/015-release-cadence.md." },
+    { prioridade: "P2 (DM)", texto: "Remover stub NETSUITE — docs/decisions/012-netsuite-incorporacao-parcial.md programado para remoção em maio/2026 (60 dias pós ADR-014, 2026-04-22). Pode ser deletado agora." },
+    { prioridade: "P2 (DM)", texto: "T-20260421-1 NS dashboard standing — aguardar próximo gatilho explícito (RF status change, Bússola ajuste). Nenhum gatilho ativo." }
   ],
   backlog: [
     { id: "RF-004", task: "Customer 360 View (7 abas)", fase: "2", prio: "P1", status: "Concluido", nota: "PR #44 merged 2026-04-22. 368 testes. 2 endpoints novos (/summary + /activity-timeline). 7 abas + ARIA + Suspense. Critical+High+3 Medium corrigidos via subagentes." },
@@ -450,7 +459,9 @@ const D = {
     { id: "T-036", task: "Accounting frontend pages (COA + JE)", fase: "3", prio: "P2", status: "Concluido", nota: "PR #57 merged 2026-04-23. /accounting/chart-of-accounts + /accounting/journal-entries + hooks + sidebar books. Fase 3 COMPLETA." },
     { id: "SSE-064", task: "Gaps B1-3/B2-2/B3-4 — vehicle estimates, wizard, financial breakdown", fase: "1", prio: "P2", status: "Concluido", nota: "PR #60 merged 2026-04-24. B1-3: Linked Estimates no vehicle detail. B2-2: Estimate form wizard 3 passos. B3-4: CategoryBreakdown panels na pagina financial. 0 gaps P2 remanescentes Fase 1. Estimator+Owner-Operator / Gap 5+7." },
     { id: "SSE-063", task: "Branch coverage ≥80% — contractors, customers, financial", fase: "1", prio: "P2", status: "Concluido", nota: "PR #59 merged 2026-04-24. 18 novos testes. contractors 88.88%, customers 84.61%, financial 83.33%. Standing issue RESOLVIDO." },
-    { id: "T-019", task: "Smoke test staging deploy end-to-end", fase: "1B", prio: "P1", status: "Concluido", nota: "DONE 2026-04-22 — /health {status:ok} staging live." }
+    { id: "T-019", task: "Smoke test staging deploy end-to-end", fase: "1B", prio: "P1", status: "Concluido", nota: "DONE 2026-04-22 — /health {status:ok} staging live." },
+    { id: "RF-Regra-0", task: "Super User Único de Plataforma (ADR-017)", fase: "1.5", prio: "P1", status: "Concluido", nota: "PR #74 merged 2026-05-02T22:44Z. SuperUserService+Guard (env-var + Clerk email + break-glass), 2 platform-admin endpoints, migration 018 cross-tenant DO block, Platform Admin UI + skeleton PUX6. 19 novos testes (599 total). Platform Operator §2.5 / governança auditável." },
+    { id: "RF-008", task: "Sistema de Convites por Email com Seleção de Persona", fase: "2", prio: "P1", status: "Backlog", nota: "Definida 2026-05-01 (sessão PO UAT BUG-02). Owner/admin convida por email com role selection. Link 72h SHA-256 single-use, Clerk integration, plan gate users. Aguarda início planejamento Fase 2." }
   ]
 };
 // <!--METRICS_END-->

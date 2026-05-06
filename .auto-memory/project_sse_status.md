@@ -3,6 +3,168 @@ name: SSE Project Status
 description: Current state of Storm Shield Enterprise project — metrics, health, priorities for Dev Manager
 type: project
 ---
+# SSE Project Status — 2026-05-06 (DM Agent — sessão agendada autônoma — BUG-03)
+
+## Revisão DM — 2026-05-06 (T-20260505-1 IN_PROGRESS)
+
+**Saúde: VERMELHA** — PR #77 aberto, Vercel falhando (NEXT_PUBLIC_API_URL não configurado no Vercel). Ação do PO necessária. Backend UP (Fly.io /health = 200). CI GitHub Actions VERDE.
+
+**Módulos: 15/15** | Testes: **599** | Endpoints: **128** | Migrations: **19** | ADRs: **17** | Controllers: **18** | Pages: **43** | Specs: **29**
+
+### Novidades desta sessão (2026-05-06)
+
+| PR | Tipo | Descrição | Status |
+|---|---|---|---|
+| #76 | fix(web) | BUG-03 — Next.js API proxy rewrites (CA1-CA4+CA6) | MERGED |
+| #77 | fix(web) | BUG-03b — Fail-fast build guard + smoke test diagnóstico | OPEN (bloqueado por Vercel env var) |
+
+### Detalhes BUG-03 (T-20260505-1 IN_PROGRESS)
+
+- **Root cause**: `NEXT_PUBLIC_API_URL` não configurado no Vercel → rewrites usam `localhost:3001` (inalcançável de Vercel) → Next.js retorna 404 puro
+- **PR #76**: rewrites implementados, CA4 distinção auth/conectividade, smoke test CA5 adicionado — MERGED
+- **PR #77**: fail-fast guard no build (throw se NEXT_PUBLIC_API_URL ausente em VERCEL env), smoke test com pré-check backend direto — OPEN
+- **Próximo passo**: PO configura `NEXT_PUBLIC_API_URL=https://sse-api-staging.fly.dev/api/v1` no Vercel dashboard → PR #77 pode mergear → CA5+CA7 são satisfeitos
+
+### Verificação Regras CLAUDE.md §10 (regras 1-14)
+- KNEX_CONNECTION direto em services: **OK** (sem mudança)
+- FLOAT/REAL em migrations: **OK** (sem mudança)
+- CASCADE em tabelas financeiras/contábeis: **OK** (sem mudança)
+- Secrets hardcoded: **OK** (sem mudança)
+
+### Verificação Regras 15-18 (alinhamento Bússola)
+- PR #76: cria fix de conectividade — cita §2.5 Platform Operator + gap BUG-03 (JTBD#1 provisioning UI). Regras 16+19 cumpridas. ✓
+- PR #77: fix de infra/config. Regra 16 N/A.
+
+### Inconsistências
+1. **ADR-015 ausente** — release cadence nunca redigido (pré-existente — sem bloqueadores)
+2. **ADR-012 stub duplicado** — programado para remoção em maio/2026 (pré-existente)
+3. **PV4 violation** — STATUS_COLORS em platform-admin/page.tsx usa Tailwind direto — P2 pendente (medium de frontend-reviewer, registrado mas fora do escopo BUG-03)
+4. **Secrets CI** — deploy-web-staging.yml linhas 29-54 interpolam secrets via ${{ }} — HIGH security-reviewer, registrado como T-20260506-1 P1
+
+### Prioridades para PO (Luigi)
+1. **URGENTE (PO)** — Configurar `NEXT_PUBLIC_API_URL=https://sse-api-staging.fly.dev/api/v1` no Vercel dashboard → desbloqueia PR #77 e CA5+CA7
+2. **P1 (PO)** — Após PR #77 mergear: rodar seeds Acme em staging e executar UAT tour com super user
+
+### Última sessão DM: 2026-05-06 (BUG-03 — PRs #76 merged, #77 open aguardando PO)
+
+---
+
+# SSE Project Status — Atualização PO 2026-05-05 (correção de saúde reportada)
+
+> Esta seção foi inserida pelo PO Assistant em sessão Cowork. PM Agent: revisar e ratificar/contestar na próxima sessão noturna.
+
+## ⚠️ Correção de saúde — VERMELHO em staging, não VERDE
+
+**Saúde reportada (2026-05-02 23:30 UTC pelo PM Agent):** VERDE — CI verde, deploys verdes, 0 PRs abertos.
+
+**Saúde real descoberta em sessão PO 2026-05-05:** VERMELHA em staging.
+
+### Causa
+
+`apps/web/next.config.js` não tem `rewrites()` configurado e não existe route handler em `apps/web/src/app/api/`. Frontend faz `fetch('/api/...')` em todas as chamadas tanstack-query. **100% das rotas `/api/*` em staging retornam 404.**
+
+Validado via console em https://sse-web-staging.vercel.app:
+- `/api/health` → 404
+- `/api/customers` → 404
+- `/api/tenants/me/wizard/status` → 404
+- `/api/tenants/platform-admin/tenants` → 404
+
+### Por que CI/Deploys verdes não detectaram
+
+- Testes unit + integration mockam fetch (não testam routing real Vercel→Fly)
+- `frontend-reviewer` audita PV/PUX (visual), não conectividade
+- e2e contra URL staging real nunca rodou pós-merge do PR #74
+- KPIs vazios no dashboard parecem "tenant novo sem dados", não "API quebrada"
+- Mensagem "Access denied or not configured" do platform-admin (page.tsx linha 40) é genérica e mascara 404 como problema de auth
+
+### Impacto
+
+Toda integração frontend↔backend em staging não funciona. Dashboard, customers, vehicles, estimates, service-orders, financial, accounting, FAM, platform-admin, wizard, activation tracking — tudo silenciosamente broken.
+
+### Tarefa de fix
+
+**T-20260505-1 BUG-03 P0** registrada no topo de `dm_queue.md` com 7 critérios de aceite (incluindo CA5 = smoke test e2e em CI pós-deploy contra Vercel URL).
+
+### Aprendizado de processo
+
+Squad architecture (ADR-007) precisa de subagente novo OU expansão do `test-runner` para cobrir e2e contra staging real. Os 4 subagentes do PR #74 passaram, mas o bug é trivial detectar com qualquer GET real. Sugestão de RF/ENH para retrospectiva.
+
+### Saúde ainda VERDE em outros eixos
+
+- ✅ CI passa
+- ✅ Deploy API Fly.io: machine starta, `/health` 200 OK, secrets aplicados (`SUPER_USER_EMAIL` setado em 2026-05-05)
+- ✅ Deploy Web Vercel: build verde
+- ✅ Backend isolado (via curl direto pra Fly.io): provavelmente OK — não testado nesta sessão (CORS bloqueou fetch direto do browser)
+- ✅ Clerk staging: login funciona, 2 contas criadas (super user + backup)
+
+A camada **frontend↔backend em staging** é a única quebrada. Backend e frontend, isolados, parecem OK.
+
+### Próxima atualização do status
+
+Esperar BUG-03 mergear + CA1–CA7 satisfeitos antes de declarar VERDE de novo.
+
+---
+
+# SSE Project Status — 2026-05-02 (PM Agent — revisão noturna autônoma)
+
+## Revisão PM — 2026-05-02 23:30 UTC
+
+**Saúde: VERDE** — CI VERDE (2026-05-02T23:09Z). Deploy API VERDE (2026-05-02T22:44Z). Deploy Web VERDE (2026-05-02T22:44Z). 0 PRs abertos. 75 total merged.
+
+**Fase 1: 100% COMPLETA** — GoNoGo v2 (🟢 GO). RF Regra-0 + ADR-017 entregues (PR #74). Bússola v1.3 + ADR-016 entregues (PR #73).
+
+**Módulos: 15/15** | Testes: **599** | Endpoints: **128** | Migrations: **19** | ADRs: **17** | Controllers: **18** | Pages: **43** | Specs: **29**
+
+### Novidades desde última revisão PM (2026-05-02 09:00 UTC)
+
+| PR | Tipo | Descrição | Status |
+|---|---|---|---|
+| #73 | docs(strategy) | Bússola v1.3 + ADR-016 — §2.5 Persona de Plataforma | MERGED 2026-05-02T08:36Z |
+| #74 | feat(platform) | RF Regra-0 + ADR-017 — Super User Único de Plataforma | MERGED 2026-05-02T22:44Z |
+| #75 | chore(memory) | Session close RF Regra-0 + ADR-017 COMPLETED | MERGED 2026-05-02T23:09Z |
+
+### Verificação Regras CLAUDE.md §10 (regras 1-14)
+- KNEX_CONNECTION direto em services: **OK** (zero hits)
+- FLOAT/REAL em migrations: **OK** (zero hits)
+- CASCADE em tabelas financeiras/contábeis: **OK** (zero hits)
+- Secrets hardcoded: **OK** (zero hits)
+
+### Verificação Regras 15-18 (alinhamento Bússola)
+- PR #73: docs-only. Regra 16 N/A.
+- PR #74: cria Platform Admin UI — cita §2.5 (Platform Operator) + gap fechado (governança auditável). Regras 16+19 cumpridas. ✓
+- PR #75: chore/memory. Regras 15-18 N/A.
+- dm_queue: T-20260421-1 PENDING standing (template canônico §4 OK). Sem stubs deprecated escritos.
+- **Nenhuma violação detectada.**
+
+### Inconsistências
+1. **ADR-015 ausente** — release cadence nunca redigido. Slot disponível, sem bloqueadores. DM deve criar `docs/decisions/015-release-cadence.md`.
+2. **ADR-012 stub duplicado** — `012-netsuite-incorporacao-parcial.md` (stub) programado para remoção em maio/2026 conforme T-20260422-1. DM deve remover em próxima sessão housekeeping.
+
+### Prioridades P0/P1 para Dev Manager
+1. **P2 (DM)** — Redigir ADR-015 (release cadence) — sem bloqueadores
+2. **P2 (DM)** — Remover stub `012-netsuite-incorporacao-parcial.md` (maio/2026)
+3. **P2 (DM)** — T-20260421-1 NS dashboard standing — aguardar próximo gatilho
+
+### Prioridades para PO (Luigi)
+1. **P1 (PO)** — Rodar seeds Acme em staging: `pnpm --filter api seed:run --tenant=acme --type=personas` → `--type=demo-data`
+2. **P1 (PO)** — Definir escopo e RFs Fase 2 (IA + Plaid + n8n + RF-008 convites) em `RF_BACKLOG.md`
+
+### Alertas
+- ADR-015 slot disponível há meses — sem bloqueadores
+- Seeds staging prontos mas não executados — PO deve rodar para completar UAT tour
+- RF-008 (Sistema de Convites) no backlog Fase 2 — awaits PO confirmation to start
+
+### Alinhamento Bússola (regras 15-18)
+PR #74 cita §2.5 + gap fechado. Nenhuma violação detectada.
+
+### Handoff DM (dm_queue.md)
+- **PENDING P2 standing:** T-20260421-1 (NS dashboard — aguarda gatilho)
+- **Standing P2:** ADR-015 (release cadence — sem bloqueador, nunca redigido)
+
+### Última sessão PM: 2026-05-02 23:30 UTC (esta sessão — PM Agent noturna autônoma)
+### Última sessão DM: 2026-05-02 22:44 UTC (RF Regra-0 + ADR-017 — PR #74 merged)
+
+---
 # SSE Project Status — 2026-05-02 (DM Agent — sessão agendada autônoma — RF Regra-0 + ADR-017)
 
 ## Revisão DM — 2026-05-02 (T-20260501-4 COMPLETED — PR #74 merged)
