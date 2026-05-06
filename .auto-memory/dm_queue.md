@@ -15,6 +15,148 @@ type: project
 
 ---
 
+## T-20260506-1 — P1 — Secrets interpolados via ${{ }} em deploy-web-staging.yml (pré-existente)
+
+**Origin:** DM (security-reviewer HIGH — sessão 2026-05-06)
+**Priority:** P1
+**Status:** PENDING
+**Created:** 2026-05-06
+
+### Problema
+Linhas 29-54 de `.github/workflows/deploy-web-staging.yml` interpolam `${{ secrets.VERCEL_TOKEN }}` diretamente no shell `run:`. Se o valor do secret contiver metacaracteres shell, isso é um vetor de injeção. O padrão correto é passar via `env:` no step e referenciar como variável de ambiente.
+
+OWASP: A02:2021 / CWE-78.
+
+### Fix
+Mover `secrets.VERCEL_TOKEN` para `env:` nos steps afetados (validate, pull, build, deploy).
+
+### Protocolo
+Não era parte do escopo do BUG-03 (pré-existente). Registrado como P1 separado.
+
+---
+
+## T-20260505-1 — BUG-03 P0 — Frontend chama /api/* sem rewrite/proxy → 100% das rotas API retornam 404 em staging
+
+**Origin:** PO (sessão Cowork 2026-05-05 — UAT do super user)
+**Priority:** P0 (saúde real do staging é VERMELHA, não VERDE como `project_sse_status.md` reportou)
+**Status:** IN_PROGRESS
+**Created:** 2026-05-05
+**Branch usada:** `fix/SSE-bug03-frontend-api-rewrites` (PR #76 MERGED) + `fix/SSE-bug03b-vercel-env-guard` (PR #77 OPEN)
+
+### Progresso (DM — sessão 2026-05-06)
+
+**PR #76 MERGED** — Implementação das rewrites:
+- `next.config.js`: `async rewrites()` com 3 regras (health, ready, wildcard /api/:path*)
+- `platform-admin/page.tsx`: CA4 — distingue 401/403 de conectividade em hook + render (isAuthError → UI diferenciada)
+- `.env.example`: comentário explicativo de NEXT_PUBLIC_API_URL
+- `deploy-web-staging.yml`: CA5 smoke test (pre-check backend + proxy check)
+- Subagentes: test-runner PASS 599/599 | security-reviewer PASS (2 High pré-existentes registrados) | frontend-reviewer PASS (2 High corrigidos)
+
+**PR #77 OPEN** — Fail-fast guard:
+- `next.config.js`: `throw Error` no build quando `NEXT_PUBLIC_API_URL` ausente em ambiente Vercel
+- `deploy-web-staging.yml`: smoke test com pré-check backend direto + mensagem diagnóstica clara
+- Status CI: GitHub Actions PASS | Vercel CHECK FAIL (esperado — falha com mensagem explícita)
+
+### ⚠️ Bloqueio — Ação do PO necessária
+
+**PR #77 não pode mergear** enquanto Vercel falha. Vercel falha porque `NEXT_PUBLIC_API_URL` não está configurado no ambiente Vercel (discovery: `curl https://sse-web-staging.vercel.app/api/health` retorna Next.js 404 puro, `curl https://sse-api-staging.fly.dev/health` retorna 200 — backend UP, proxy não configurado).
+
+**PO deve fazer:**
+```
+Vercel dashboard → sse-web-staging → Settings → Environment Variables → Add
+  NEXT_PUBLIC_API_URL = https://sse-api-staging.fly.dev/api/v1
+  Environment: Production + Preview
+```
+
+Após isso: PR #77 poderá mergear automaticamente (build Vercel vai passar) → smoke test CA5 vai passar (backend UP) → CA7 (validação cross-tenant com super user) pode ser executado pelo PO.
+
+### Critérios de aceite restantes
+
+- [ ] CA5 — smoke test e2e em CI pós-deploy (dependente de PR #77 merge)
+- [ ] CA7 — validação cross-tenant com super user em staging (dependente de CA5)
+
+### CAs satisfeitos por PR #76
+
+- [x] CA1 — código de rewrite implementado (verifica pós-deploy)
+- [x] CA2 — dashboard com KPIs (depende de backend funcional em staging)
+- [x] CA3 — platform-admin sem "Access denied" genérico (erro diferenciado por tipo)
+- [x] CA4 — usePlatformTenants distingue 401/403 de 404/5xx
+- [x] CA6 — .env.example documentado
+
+### Comportamento atual (verificado via console em https://sse-web-staging.vercel.app)
+- `/api/tenants/platform-admin/tenants` → 404
+- `/api/tenants/me/wizard/status` → 404
+- `/api/customers` → 404
+- `/api/health` → 404
+
+Frontend (Next.js no Vercel) faz `fetch('/api/...')` em todas as chamadas tanstack-query. Exemplo: `apps/web/src/app/(dashboard)/platform-admin/page.tsx` linha 37.
+
+### Comportamento esperado
+Chamadas `/api/*` deveriam ser roteadas para o backend Fly.io (`https://sse-api-staging.fly.dev/*`).
+
+### Causa raiz
+1. `apps/web/next.config.js` NÃO tem `rewrites()` configurado
+2. Não existe route handler em `apps/web/src/app/api/**` (Glob retornou 0 arquivos)
+3. Backend tem `@Controller('tenants')` + rota `'platform-admin/tenants'` em `apps/api/src/modules/tenants/tenants.controller.ts` linhas 14+77 → endpoint real é `https://sse-api-staging.fly.dev/tenants/platform-admin/tenants`
+4. Logo `fetch('/api/tenants/...')` bate na própria origem Vercel sem handler → 404
+
+### Por que nunca foi pego antes do merge do PR #74
+- Testes unit + integration mockam fetch (não testam rota real Vercel→Fly)
+- `frontend-reviewer` audita PV/PUX (visual), não conectividade
+- e2e contra staging real nunca foi rodado pós-merge — T-20260501-4 (RF Regra-0) fechou confiando só em testes locais
+- KPIs vazios no dashboard parecem "tenant novo sem dados", não "API quebrada"
+- Mensagem do platform-admin "Access denied or not configured" (page.tsx linha 40) é genérica e não distingue 401/403 de 404 → mascarou o bug
+
+### Impacto
+**100% das chamadas API em staging falham silenciosamente.** Afeta: dashboard, customers, vehicles, estimates, service-orders, financial, accounting, FAM, platform-admin, wizard, activation tracking, tudo. Saúde reportada VERDE no `project_sse_status.md` está incorreta.
+
+### 3 opções de fix (DM decide)
+
+| Opção | Mudança | Pro | Contra |
+|---|---|---|---|
+| **A (PO recomenda)** | `next.config.js` adicionar `async rewrites() { return [{ source: '/api/:path*', destination: `${process.env.NEXT_PUBLIC_API_URL}/:path*` }] }` | 5 linhas, fix universal, padrão Next.js | Precisa NEXT_PUBLIC_API_URL apontando direto pra `https://sse-api-staging.fly.dev` (sem prefixo `/api/v1` que está em `.env.example`) — exige errata no `.env.example` |
+| B | Frontend trocar para URL absoluta em todos os hooks | Explícito | N hooks pra refatorar; expõe backend URL em headers (CORS) |
+| C | Route handler proxy: `apps/web/src/app/api/[...path]/route.ts` | Server-side, custom headers possíveis | Mais código, latência extra |
+
+### Critérios de aceite
+- [ ] **CA1** — `fetch('/api/health')` em staging retorna 200 (verificar via console no `sse-web-staging.vercel.app`)
+- [ ] **CA2** — `/dashboard` carrega com KPIs reais (não "—" ou skeleton infinito)
+- [ ] **CA3** — `/platform-admin` carrega tabela de tenants (vazia ou populada — mas SEM "Access denied")
+- [ ] **CA4** — Mensagem de erro do `usePlatformTenants` (page.tsx linha 40) distingue 401/403 (auth) de 404/5xx (route/server) — texto diferente para cada caso
+- [ ] **CA5** — Adicionar smoke test e2e em CI pós-deploy: GET de 3 rotas críticas via Vercel URL (`/api/health`, `/api/tenants/me/wizard/status`, `/api/customers`) — todas devem retornar status code != 404. Falha bloqueia merge.
+- [ ] **CA6** — Errata em `.env.example`: `NEXT_PUBLIC_API_URL` documentado como URL absoluta do backend SEM prefixo (era `http://localhost:3001/api/v1`, deve ser `http://localhost:3001` ou similar — DM ajusta consistente com Opção A escolhida)
+- [ ] **CA7** — Validação cross-tenant: super user (luigi.filippozzi@gmail.com já configurado em Fly.io secrets) consegue logar e ver tabela de tenants em `/platform-admin`
+
+### Escopo negativo
+- ❌ NÃO fazer rollout pra produção até CA1–CA7 satisfeitos em staging
+- ❌ NÃO refatorar todas as N hooks pra Opção B se Opção A escolhida
+- ❌ NÃO mexer em CORS no backend além do necessário (já configurado para web origin)
+- ❌ NÃO inflar escopo redirecionando para "fix de mensagens de erro em todas as features" — CA4 cobre só `usePlatformTenants` neste PR; outras mensagens viram ENH P2
+
+### Subagentes obrigatórios
+- `test-runner` — CA5 é coverage de e2e novo
+- `frontend-reviewer` — alteração estrutural em `next.config.js` justifica audit (proxy ↔ PV/PUX)
+- `security-reviewer` — rewrites expõem rotas; auditar se backend já tem CORS/auth correto para origens Vercel; auditar se proxy não vaza headers indevidos
+
+### Pré-requisitos / dependências
+- **Nenhum bloqueio externo.** Pode iniciar imediatamente.
+- **Setup operacional do super user (Fly.io secrets já aplicados em 2026-05-05) fica em standby** até este fix mergear — sem ele o `/platform-admin` nunca vai abrir.
+
+### Done quando
+- 7 critérios de aceite satisfeitos em staging
+- PR descreve persona §2.5 + gap reaberto (regra 16): "regressão operacional do JTBD #1 da Platform Operator — provisioning UI inacessível em staging"
+- 3 subagentes acima rodaram e aprovaram
+- `project_sse_status.md` corrigido após merge para refletir saúde real
+- Smoke test e2e (CA5) merged em CI
+
+### Aprendizado de processo (não bloqueia fix; registrar separadamente)
+- Squad architecture (ADR-007) precisa de subagente novo OU expansão do `test-runner` para cobrir **e2e contra staging real** (não só mocks). Hoje há gap estrutural: nenhum subagente roda smoke test pós-deploy contra URL real. PO sugere ENH/RF futuro para discutir em sessão de retrospectiva.
+
+### Protocolo
+`docs/process/HANDOFF_PROTOCOL.md` §4 (template canônico) + §7 (ciclo de vida).
+
+---
+
 ## T-20260424-1 — Fechar gaps B1-3, B2-2, B3-4 (Fase 1 frontend polish)
 
 **Origin:** DM (standing gaps identificados em grupo-b-gaps.md)
