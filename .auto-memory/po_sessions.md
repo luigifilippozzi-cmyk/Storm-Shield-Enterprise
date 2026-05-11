@@ -11,6 +11,52 @@ type: project
 
 ---
 
+## Sessão 2026-05-10 — PO Cowork — Destrava-UAT (continuação sequência 2026-05-09)
+
+**Pedido inicial:** "sim" (executar commits + playbook destrava-UAT conforme handoff 2026-05-09).
+
+**Contexto:** Sessão anterior (2026-05-09) preparou 3 commits + playbook, mas working tree estava sujo e timeout impediu execução. Nova sessão: limpar bloqueios, executar sequência, destravar UAT para seed Acme.
+
+**Etapas executadas:**
+
+1. ✅ **Commit 1** — Memory + governance `chore(memory): session 2026-05-09 — destrava-UAT (handoff T-20260509-2 + playbook + 3 sessoes)` [2c99f70]
+2. ✅ **Commit 2** — Roteiros UAT v1.1 `docs(audits): roteiros UAT v1.1 PT-BR — amigavel (4 personas, ~3h) + tour completo (15 modulos, ~6-8h)` [ab293fa]
+3. ✅ **Commit 3** — Guia MVP `docs: SSE Guia de Testes MVP v1.2` [a57c39d]
+4. ✅ **Merge commit** — Sync com origin/main (PR #77 já estava mergeada) `merge: origin/main into local (pre-destrava-UAT)` [7875679]
+5. ✅ **Playbook destrava-UAT** — Validação completa:
+   - PR #77 mergeado ✓ (BUG-03b fail-fast guard)
+   - Handoff DM T-20260509-2 confirmado em dm_queue (PENDING)
+   - Smoke backend Fly.io: /health=200, /ready=200 (db:up, redis:up) ✓
+   - Smoke web root: verde ✓
+   - BUG-03 validado end-to-end via Chrome com login em 2026-05-09 ✓
+
+**Decisões:** Nenhuma necessária — tudo conforme script.
+
+**Bugs:** 0 novos (BUG-03 já fechado, todos os smokes verdes).
+
+**Handoffs DM:**
+- T-20260509-2 (seed Acme + demo-data) — registrado em `dm_queue.md`, **aguardando consumo DM** → quando COMPLETED, UAT manual desbloqueada
+
+**Bloqueios:**
+- None — sequência destrava-UAT **CONCLUÍDA COM SUCESSO**
+- Próximo gargalo: DM executar T-20260509-2 (éta estimada 30–45 min conforme dm_queue.md)
+
+**Alinhamento Bússola:**
+- Personas tocadas: não há mudança de specs/RF nesta sessão (operacional pura)
+- Gap tocado: não há mudança de specs/RF nesta sessão
+- Regras 15–18: não aplicáveis (sessão sem decisões estratégicas)
+
+**Aprendizados:**
+- Git merge em modo Vim: quando interrompido, `git merge --abort` ou completar com `git commit` conforme estado
+- Bash sandbox em mount Windows pode ter lock files em permissão restrita — Computer Use timeout + sandbox restrição = preferir executar direto no PowerShell Windows
+
+**Próxima sessão:**
+- Aguardar notificação DM: T-20260509-2 COMPLETED
+- Iniciar UAT manual com roteiros v1.1 (`SSE_Roteiro_Testes_Amigavel_v1_1.docx` e `SSE_Tour_Completo_Testes_PO_v1_1.docx`)
+- Consolidar GoNoGo Fase 1 v3 após UAT verde
+
+---
+
 ## Sessão 2026-05-05 — PO Cowork — Setup operacional do super user (interrompido por BUG-03 P0)
 
 **Pedido inicial:** "me ajude a criar o super user" — resolvido como ambiguidade. Após mini-discovery, confirmado que RF Regra-0 já está mergeada (PR #74 2026-05-02); pedido real é OPERACIONALIZAR o super user em staging.
