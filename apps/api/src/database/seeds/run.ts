@@ -1,10 +1,12 @@
 import knex from 'knex';
 import * as dotenv from 'dotenv';
+import * as path from 'path';
 import { seedRolesAndPermissions } from './roles_permissions.seed';
 import { seedAcmePersonas } from './acme-personas.seed';
 import { seedAcmeDemoData } from './acme-demo-data.seed';
 
-dotenv.config({ path: '../../../../.env' });
+const envPath = path.resolve(__dirname, '../../../../../.env');
+dotenv.config({ path: envPath });
 
 function parseArgs(): { tenantSlug?: string; tenantId?: string; type: string } {
   const args = process.argv.slice(2);
