@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDate } from '@/lib/utils';
+import { PlusCircle } from 'lucide-react';
 
 interface Tenant {
   id: string;
@@ -80,6 +81,91 @@ function useProvisionAdmin(tenantId: string) {
   });
 }
 
+interface CreateTenantForm {
+  name: string;
+  slug: string;
+  owner_email: string;
+}
+
+function useCreateTenant() {
+  const { getToken } = useAuth();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: CreateTenantForm) => {
+      const token = await getToken();
+      const res = await fetch('/api/tenants', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message ?? 'Failed to create tenant');
+      }
+      return res.json();
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['platform-admin', 'tenants'] }),
+  });
+}
+
+function CreateTenantDialog({ onClose }: { onClose: () => void }) {
+  const [form, setForm] = useState<CreateTenantForm>({ name: '', slug: '', owner_email: '' });
+  const create = useCreateTenant();
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    create.mutate(form, { onSuccess: onClose });
+  };
+
+  const autoSlug = (name: string) =>
+    name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+  const handleNameChange = (name: string) => {
+    setForm(f => ({ ...f, name, slug: f.slug || autoSlug(name) }));
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" role="dialog" aria-modal="true" aria-label="Create new tenant">
+      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+        <h2 className="text-lg font-semibold mb-4">Create New Tenant</h2>
+        {create.isError && (
+          <div className="text-red-600 text-sm mb-3">{(create.error as Error).message}</div>
+        )}
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <Input
+            required
+            placeholder="Company name"
+            value={form.name}
+            onChange={e => handleNameChange(e.target.value)}
+            aria-label="Company name"
+          />
+          <Input
+            required
+            placeholder="Slug (e.g. acme-auto-body)"
+            value={form.slug}
+            onChange={e => setForm(f => ({ ...f, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))}
+            aria-label="Slug"
+          />
+          <Input
+            required
+            type="email"
+            placeholder="Owner email"
+            value={form.owner_email}
+            onChange={e => setForm(f => ({ ...f, owner_email: e.target.value }))}
+            aria-label="Owner email"
+          />
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+            <Button type="submit" disabled={create.isPending}>
+              {create.isPending ? 'Creating…' : 'Create Tenant'}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 function ProvisionDialog({ tenantId, tenantName, onClose }: { tenantId: string; tenantName: string; onClose: () => void }) {
   const [form, setForm] = useState<ProvisionForm>({ email: '', firstName: '', lastName: '', role: 'owner', externalAuthId: '' });
   const provision = useProvisionAdmin(tenantId);
@@ -127,6 +213,7 @@ export default function PlatformAdminPage() {
   const { data: tenants, isLoading, isError, error } = usePlatformTenants();
   const [search, setSearch] = useState('');
   const [provisioningTenant, setProvisioningTenant] = useState<Tenant | null>(null);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   const filtered = (tenants ?? []).filter(t =>
     t.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -182,11 +269,17 @@ export default function PlatformAdminPage() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Platform Admin</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          {tenants?.length ?? 0} tenants · Super User access · All actions are audited
-        </p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Platform Admin</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            {tenants?.length ?? 0} tenants · Super User access · All actions are audited
+          </p>
+        </div>
+        <Button onClick={() => setShowCreateDialog(true)} className="shrink-0">
+          <PlusCircle className="mr-2 h-4 w-4" aria-hidden="true" />
+          Create Tenant
+        </Button>
       </div>
 
       <div className="mb-4">
@@ -260,6 +353,10 @@ export default function PlatformAdminPage() {
           tenantName={provisioningTenant.name}
           onClose={() => setProvisioningTenant(null)}
         />
+      )}
+
+      {showCreateDialog && (
+        <CreateTenantDialog onClose={() => setShowCreateDialog(false)} />
       )}
     </div>
   );
