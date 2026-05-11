@@ -628,6 +628,154 @@ Durante a sessão, Luigi enviou duas instruções de aprovação:
 
 ---
 
+## Sessão 2026-05-09 (parte 3) — PO Cowork (Execução do Passo 1 via Claude in Chrome)
+
+**Contexto:** Luigi pediu para executar o Passo 1 da sequência destrava-UAT (configurar `NEXT_PUBLIC_API_URL` no Vercel) usando a extensão Claude in Chrome. Sessão acompanhada via browser automation.
+
+### Achados críticos
+
+1. **Env var já existia desde 2026-05-06**, mas estava marcada como **Sensitive** — incompatível com o prefixo `NEXT_PUBLIC_*` do Next.js (que precisa ser inline-able no client bundle). Esse era o root cause real do BUG-03 build failure no PR #77.
+2. **Vercel não permite desmarcar Sensitive em var existente** — o checkbox vem com atributo `disabled=""` no DOM. Single-direction flag.
+3. **Clerk middleware protege `/api/(.*)`** — o middleware roda antes dos rewrites do `next.config.js`. Public routes são apenas `/`, `/login(.*)`, `/api/webhooks(.*)`. Validação end-to-end de `/api/health` ou `/api/ready` retorna 404 (`x-clerk-auth-status: signed-out`) sem autenticação. Comportamento intencional, não bug.
+4. **Vercel cache cacheia 404** — `x-vercel-cache: HIT` mesmo com `Cache-Control: no-cache` no client. Cache é invalidado naturalmente após login (cookies Clerk variam).
+
+### Decisões e ações executadas
+
+1. **Delete da env var Sensitive** confirmada com Luigi (consentimento explícito).
+2. **Recriação sem Sensitive** — Key=`NEXT_PUBLIC_API_URL`, Value=`https://sse-api-staging.fly.dev/api/v1`, Environments=Production+Preview, Sensitive=OFF, Note documentando o motivo da recriação (data + referência a build error PR #77).
+3. **Redeploy production sem cache** — checkbox "Use existing Build Cache" desmarcado. Build E5arkhdfD concluído em 1m 28s, Status: Ready, Latest.
+4. **Validação parcial** — fetch direto a `/api/health` e `/api/v1/health` retornam 404 por causa do Clerk middleware (esperado sem login). Validação completa requer login humano.
+
+### Artefatos
+
+| Artefato | Localização |
+|---|---|
+| Env var nova | Vercel project sse-web-staging (não Sensitive, valor correto) |
+| Deploy E5arkhdfD | Vercel — production atual |
+
+### Validação end-to-end (executada após login do Luigi)
+
+Após Luigi fazer login (Clerk SSO ou email+senha — PO Assistant não preencheu senha), PO Assistant rodou via Console:
+
+```
+/api/health → 200 {"status":"ok","timestamp":"2026-05-10T04:43:23.145Z"}
+/api/ready  → 200 {"status":"ok","checks":{"db":"up","redis":"up"},"timestamp":"2026-05-10T04:43:25.088Z"}
+```
+
+Headers confirmam: `x-vercel-cache: MISS`, `x-matched-path: null`, `x-clerk-auth-status: null`. Cadeia completa funciona: client → rewrite Next.js → middleware Clerk → proxy Vercel → Fly.io API → DB + Redis. **BUG-03 efetivamente fechado.**
+
+### Próximos passos (na ordem)
+
+1. ✅ ~~Luigi (manual): logar e rodar `fetch('/api/health')`~~ — concluído nesta sessão; ambos retornam 200.
+2. **Luigi via PowerShell:** rodar `.auto-memory/scripts/destrava_uat_20260509.ps1` — agora PR #77 deve buildar com sucesso (fail-fast guard não dispara mais).
+3. **DM via sessão Cowork:** consumir T-20260509-2 do dm_queue — executar `pnpm --filter api seed:run -- --tenant=acme --type=personas` então `--type=demo-data`.
+4. **Luigi:** UAT manual com Doc B (tour completo) ou entregar Doc A para amigo/familiar.
+
+### Bloqueios identificados nesta sessão
+
+- Nenhum P0/P1 novo. Apenas a janela de validação dependente de login (intencional do Clerk).
+
+### Próxima sessão PO
+
+**Foco:** receber feedback do teste manual do `/api/health` e, se OK, prosseguir com seed Acme + UAT.
+
+---
+
+## Sessão 2026-05-09 (parte 2) — PO Cowork (Playbook destrava-UAT)
+
+**Contexto:** Luigi pediu para "executar a sequência sugerida para destravar UAT". PO Assistant declarou os limites operacionais (sem `gh` no sandbox, sem acesso aos domínios `*.fly.dev`/`*.vercel.app` na allowlist, sem credenciais Vercel/Clerk/Neon) e empacotou a sequência num playbook PowerShell para Luigi rodar localmente.
+
+### Decisões de produto
+
+1. **Reconhecimento explícito de limite operacional** — papel PO Assistant não inclui execução de PR merge via CLI a partir do sandbox. Sandbox bloqueia `gh`, GitHub API, e domínios de staging. Solução: empacotar comandos prontos para execução local pelo Luigi (que tem `gh` autenticado e acesso ao Vercel dashboard).
+2. **Vercel env var permanece manual** — não há CLI Vercel no protocolo deste projeto. Passo 1 da sequência (configurar `NEXT_PUBLIC_API_URL`) é via dashboard, com instruções abaixo.
+3. **Seed Acme permanece DM** — regra "PO não executa código" mantida. Handoff T-20260509-2 já está no `dm_queue.md` desde sessão anterior (parte 1, mais cedo neste mesmo dia).
+4. **Smoke check incluído no playbook** — testa `/health`, `/ready`, web root, e crucialmente `/api/v1/health` via proxy Vercel — esse último é o canário de BUG-03 (se 200, env var + rewrite OK).
+
+### Artefatos produzidos
+
+| Artefato | Localização | Tamanho | Função |
+|---|---|---|---|
+| Playbook PowerShell destrava-UAT | `.auto-memory/scripts/destrava_uat_20260509.ps1` | ~5 KB | Script único cobrindo Passo 2 (revisar+mergear PR #77 com guards) + confirmar handoff DM + smoke check 4 endpoints |
+
+### Sequência operacional consolidada (4 passos)
+
+| Passo | Quem executa | Como | Estimativa |
+|---|---|---|---|
+| 1 — Vercel env var | Luigi (manual) | Dashboard Vercel → Project sse-web-staging → Settings → Environment Variables → Add `NEXT_PUBLIC_API_URL=https://sse-api-staging.fly.dev/api/v1` (Preview + Production) → Redeploy último build | 1 min |
+| 2 — Aprovar+mergear PR #77 | Luigi via PowerShell local | `pwsh .auto-memory/scripts/destrava_uat_20260509.ps1` (script com guards: gh auth, working tree limpo, checks SUCCESS, scan de regras invioláveis no diff, confirmação interativa antes de merge) | ~2 min |
+| 3 — Executar seed Acme | DM (sessão Cowork DM) | Consumir T-20260509-2 do `dm_queue.md`. Comandos: `pnpm --filter api seed:run -- --tenant=acme --type=personas` então `--type=demo-data`. Pré-cond: `DATABASE_URL_UNPOOLED`, `CLERK_SECRET_KEY` no env. | ~5 min |
+| 4 — UAT manual | Luigi + leigo | Via roteiros `SSE_Roteiro_Testes_Amigavel_v1_1.docx` e `SSE_Tour_Completo_Testes_PO_v1_1.docx` em `docs/audits/` | ~3h amigo / ~6-8h tour completo |
+
+### Issues criadas / PRs revisados / Bloqueios
+
+- Issues criadas: 0
+- PRs revisados: 0 (não posso, sandbox bloqueia gh + API GitHub)
+- Bloqueios identificados: nenhum novo. Mesmos da parte 1 desta data.
+
+### Próxima sessão PO
+
+**Foco:** após Luigi rodar o playbook + DM consumir T-20260509-2, conduzir UAT pessoal via Doc B (tour completo). Registrar bugs encontrados via template BUG.
+
+**Possível pivot:** se smoke check do playbook indicar BUG-03 ainda não resolvido (proxy retorna 404/502), abrir nova investigação operacional antes de UAT.
+
+---
+
+## Sessão 2026-05-09 — PO Cowork (Validação de credenciais Doc B + handoff seed Acme)
+
+**Contexto:** Luigi pediu para validar se as personas/logins/senhas descritos no Doc B (tour completo) são válidos para testes e, se inválidos, abrir bug e fazer carga de dados fictícios para Acme. PO Assistant detectou drift de calendário (sessão anterior datada 28/abr; data real é 09/mai).
+
+### Achados
+
+1. **Credenciais NÃO são inválidas em código.** Os 7 e-mails (`owner@acme.sse-demo.test`, etc.) e a senha default `DemoPass!2026` correspondem 1:1 ao código em `apps/api/src/database/seeds/acme-personas.seed.ts` (PR #68 merged 2026-05-02, COMPLETED). Os dados demo (15 customers, 18 vehicles, 12 estimates, 5 SOs, 30 transactions, COA, 3 JEs, 1 fixed asset) correspondem ao `acme-demo-data.seed.ts` (PR #69 merged 2026-05-02, COMPLETED).
+2. **Credenciais SÃO inválidas operacionalmente em staging** porque os seeds nunca foram executados contra Neon staging. Sem essa execução, login dos 7 personas falha (Clerk users não existem).
+3. **Bloqueio adicional:** BUG-03 (T-20260505-1, IN_PROGRESS) — frontend Next.js não tem rewrite/proxy correto, retorna 404 nas chamadas `/api/*`. PR #76 merged, PR #77 OPEN aguardando configuração `NEXT_PUBLIC_API_URL` no Vercel pelo PO. Sem isso, mesmo com seed rodado, login funciona até a primeira chamada API e quebra.
+4. **Decisão:** não abrir BUG novo (BUG-03 já cobre o sintoma do frontend; código do seed já está OK). Em vez disso, registrar handoff DM operacional para executar o seed.
+
+### Decisões de produto
+
+1. **Não escrever BUG novo** — o código do seed está validado (security-reviewer + db-reviewer PASS). A pendência é operação, não correção.
+2. **Handoff DM canônico T-20260509-2** redigido no topo de `dm_queue.md`:
+   - Comandos exatos: `pnpm --filter api seed:run -- --tenant=acme --type=personas` e depois `--type=demo-data`
+   - Pré-condições: tenant slug=acme existir, env vars `DATABASE_URL_UNPOOLED` + `CLERK_SECRET_KEY` + `DEMO_SEED_PASSWORD` no contexto
+   - 6 critérios de aceite objetivos (counts em customers/vehicles/estimates/SOs + Clerk users + login + idempotência)
+   - Escopo negativo explícito: não rodar em prod, não modificar seeds, não criar tenants adicionais nesta task
+   - *Condição de reversão:* se seed falhar em rerun por divergência de schema, escalar como BUG separado
+3. **Documentos atualizados para v1.1** com 2 caveats explícitos:
+   - Status real do staging (BUG-03 PR #77 pendente, T-20260509-2 PENDING)
+   - Pré-checagem rápida em 5 passos antes de iniciar UAT
+   - Versão e data corrigidas (v1.0 28/abr → v1.1 09/mai)
+
+### Artefatos produzidos / atualizados
+
+| Artefato | Localização | Tamanho | Mudança |
+|---|---|---|---|
+| Handoff DM T-20260509-2 (novo) | `.auto-memory/dm_queue.md` (topo) | +~140 linhas | PENDING — handoff canônico para executar seed Acme |
+| Roteiro Amigável v1.1 (atualizado) | `docs/audits/SSE_Roteiro_Testes_Amigavel_v1_1.docx` | 24.6 KB / 478 parágrafos | Versão + data + callout expandido sobre 2 pré-condições (BUG-03 + T-20260509-2) |
+| Tour Completo PO v1.1 (atualizado) | `docs/audits/SSE_Tour_Completo_Testes_PO_v1_1.docx` | 37.6 KB / 1349 parágrafos | Versão + data + callout "Status do staging" com 4 itens + pré-checagem em 5 passos |
+| Roteiro Amigável v1.0 (legado) | `docs/audits/SSE_Roteiro_Testes_Amigavel_v1.docx` | 24.6 KB | Sobrescrito durante atualização — passou a ter o mesmo conteúdo da v1.1 (não pôde ser preservado como histórico por restrição de escrita do FS) |
+| Tour Completo PO v1.0 (legado) | `docs/audits/SSE_Tour_Completo_Testes_PO_v1.docx` | 37 KB | Permaneceu como histórico (timestamp 02/mai, FS bloqueou overwrite) — distribuir apenas a v1.1 |
+
+### Issues criadas / PRs revisados / Bloqueios
+
+- Issues criadas: 0
+- PRs revisados: 0
+- Bloqueios identificados:
+  - BUG-03 PR #77 OPEN aguardando PO configurar `NEXT_PUBLIC_API_URL` no Vercel
+  - T-20260509-2 PENDING (seed Acme) — entregue como handoff DM nesta sessão
+  - T-20260509-1 PENDING (Tenants module CRUD ausente) — não bloqueia UAT do Acme
+
+### Alinhamento Bússola
+
+- **Personas tocadas:** todas as 4 — handoff T-20260509-2 destrava UAT por persona
+- **Gaps:** nenhum gap novo identificado; foco operacional, não estratégico
+
+### Próxima sessão PO
+
+**Foco:** após DM executar T-20260509-2 e PR #77 mergear, conduzir UAT manual do Acme via Doc B (tour completo). Registrar bugs encontrados via template BUG no PO Assistant.
+
+---
+
 ## Sessão 2026-04-28 — PO Cowork (Atualização + Roteiros de Teste para leigos)
 
 **Contexto:** Sessão dupla. Primeiro Luigi pediu para atualizar o relatório de prontidão e revisar passo a passo. Detectado drift massivo: Fase 1 100% fechada, deploy API VERDE, 15/15 módulos, 580 testes, 15 ADRs (snapshot anterior era 12 mód, 343 testes, 10 ADRs, deploy API vermelho). Veredicto v1 CONDITIONAL-GO → v2 GO. Em seguida, Luigi pediu documento para um leigo executar testes. AskUserQuestion identificou 2 públicos distintos: amigo/familiar (happy path 4 personas) e Luigi mesmo (tour completo 15 módulos). Ambos em PT-BR formato .docx.

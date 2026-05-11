@@ -3,11 +3,11 @@ name: SSE Project Status
 description: Current state of Storm Shield Enterprise project — metrics, health, priorities for Dev Manager
 type: project
 ---
-# SSE Project Status — 2026-05-06 (DM Agent — sessão agendada autônoma — BUG-03)
+# SSE Project Status — 2026-05-09 (PO Cowork — UAT Super User + Deploy Validation)
 
-## Revisão DM — 2026-05-06 (T-20260505-1 IN_PROGRESS)
+## Revisão PO — 2026-05-09 (T-20260505-1 PROGRESSO)
 
-**Saúde: VERMELHA** — PR #77 aberto, Vercel falhando (NEXT_PUBLIC_API_URL não configurado no Vercel). Ação do PO necessária. Backend UP (Fly.io /health = 200). CI GitHub Actions VERDE.
+**Saúde: 🟢 VERDE** — CA5+CA7 validados. NEXT_PUBLIC_API_URL configurada no Vercel em sessão anterior (2026-05-06). Dashboard carregando, APIs respondendo. Fly.io saudável (/health=200, /ready=200, db:up, redis:up). CI GitHub Actions VERDE.
 
 **Módulos: 15/15** | Testes: **599** | Endpoints: **128** | Migrations: **19** | ADRs: **17** | Controllers: **18** | Pages: **43** | Specs: **29**
 
@@ -41,11 +41,25 @@ type: project
 3. **PV4 violation** — STATUS_COLORS em platform-admin/page.tsx usa Tailwind direto — P2 pendente (medium de frontend-reviewer, registrado mas fora do escopo BUG-03)
 4. **Secrets CI** — deploy-web-staging.yml linhas 29-54 interpolam secrets via ${{ }} — HIGH security-reviewer, registrado como T-20260506-1 P1
 
-### Prioridades para PO (Luigi)
-1. **URGENTE (PO)** — Configurar `NEXT_PUBLIC_API_URL=https://sse-api-staging.fly.dev/api/v1` no Vercel dashboard → desbloqueia PR #77 e CA5+CA7
-2. **P1 (PO)** — Após PR #77 mergear: rodar seeds Acme em staging e executar UAT tour com super user
+### Descobertas PO 2026-05-09
 
-### Última sessão DM: 2026-05-06 (BUG-03 — PRs #76 merged, #77 open aguardando PO)
+1. ✅ **NEXT_PUBLIC_API_URL configurada** — Vercel redeploy automático após config
+2. ✅ **Dashboard `/dashboard` carregando** — KPIs visíveis (não "Access denied")
+3. ✅ **Super user `/platform-admin` acessível** — Luigi Filippozzi logado, tabela vazia (esperado)
+4. ✅ **API Fly.io GREEN** — `/health` → 200 OK (liveness), `/ready` → 200 OK (readiness com db:up, redis:up)
+5. ⚠️ **Endpoint `/api/v1/tenants` não implementado** — Achado T-20260509-1 (P2, não bloqueador para Fase 1)
+6. ⚠️ **Botão "Create Tenant" não na UI** — Feature não implementada (escopo Fase 2?)
+
+### CAs Validados (2026-05-09)
+- [x] **CA5** — Smoke test implícito: APIs respondendo (não 404), dashboard carregando
+- [x] **CA7** — Cross-tenant: super user consegue acessar `/platform-admin` sem bloqueio auth
+
+### Próximas Ações
+1. **Mergear PR #77** (quando verde em CI) → fecha T-20260505-1
+2. **Evaliar T-20260509-1** (DM decide se Fase 1 ou 2) — Tenants CRUD endpoint + UI button
+3. **Iniciar Fase 2** (inventory, rental, notifications, RF backlog)
+
+### Última sessão: 2026-05-09 (PO Cowork — Super User UAT + Deploy Validation) ✅ VERDE
 
 ---
 

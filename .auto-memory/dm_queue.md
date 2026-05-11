@@ -15,6 +15,133 @@ type: project
 
 ---
 
+## T-20260509-2 — P1 — Executar seed Acme em staging para destravar UAT manual
+
+**Origin:** PO (sessão Cowork 2026-05-09 — entrega de roteiros de teste para leigos)
+**Priority:** P1
+**Status:** PENDING
+**Created:** 2026-05-09
+**Branch:** N/A — operação de runtime; sem código novo (PRs #68 e #69 já merged em 2026-05-02)
+**Subagentes PR:** N/A — operação ops/staging
+
+### Contexto
+
+PO entregou nesta sessão dois documentos de teste manual em `docs/audits/`:
+- `SSE_Roteiro_Testes_Amigavel_v1.docx` — happy path para amigo/familiar leigo, ~3h
+- `SSE_Tour_Completo_Testes_PO_v1.docx` — tour completo dos 15 módulos para o PO, ~6-8h
+
+Ambos assumem o tenant Acme Auto Body provisionado em staging com 7 usuários personas (`owner@acme.sse-demo.test`, `admin@…`, `manager@…`, `estimator@…`, `tech@…`, `accountant@…`, `viewer@…`) e dados demo.
+
+Os seeds existem em código desde 2026-05-02 (PR #68 acme-personas + PR #69 acme-demo-data, COMPLETED no archive), mas **não há registro de execução contra staging**. Sem essa carga, os roteiros de teste não rodam — login dos 7 users falha porque os Clerk users não existem.
+
+### Objetivo
+
+Provisionar (se necessário) o tenant Acme em staging e executar os 2 seeds para destravar UAT manual via os roteiros recém-publicados.
+
+### Pré-condições
+
+1. Tenant com `slug=acme` existe na tabela `public.tenants` em staging (Neon). Se não existe, provisionar antes via script de tenant-provisioning (DM confirma o nome real do comando).
+2. Variáveis de ambiente disponíveis no contexto de execução:
+   - `DATABASE_URL_UNPOOLED` — Neon pooled endpoint do staging
+   - `CLERK_SECRET_KEY` — chave do Clerk staging (NÃO commitar)
+   - `DEMO_SEED_PASSWORD` — default `DemoPass!2026`; pode override; documentar valor em vault
+   - `NODE_ENV=staging` — não `production`
+
+### Passos
+
+```bash
+# 1. Verificar tenant Acme existe
+psql $DATABASE_URL_UNPOOLED -c "SELECT id, slug, schema_name, status FROM public.tenants WHERE slug='acme';"
+
+# 1.a. Se não existir: provisionar antes (confirmar comando exato com tenant-provisioning.ts)
+# pnpm --filter api tenant:create acme "Acme Auto Body, LLC"
+
+# 2. Rodar seed personas (cria/atualiza 7 Clerk users + role assignments)
+pnpm --filter api seed:run -- --tenant=acme --type=personas
+
+# 3. Rodar seed demo-data (popula customers, vehicles, estimates, SOs, transactions, JEs, asset)
+pnpm --filter api seed:run -- --tenant=acme --type=demo-data
+
+# 4. Validar (substituir <acme-uuid-com-underscores> pelo schema real)
+psql $DATABASE_URL_UNPOOLED <<EOF
+SELECT COUNT(*) AS customers FROM tenant_<acme>.customers;
+SELECT COUNT(*) AS vehicles FROM tenant_<acme>.vehicles;
+SELECT COUNT(*) AS estimates FROM tenant_<acme>.estimates;
+SELECT COUNT(*) AS service_orders FROM tenant_<acme>.service_orders;
+EOF
+```
+
+### Critérios de aceite
+
+- [ ] `SELECT COUNT(*) FROM tenant_<acme>.customers` retorna **15**
+- [ ] `SELECT COUNT(*) FROM tenant_<acme>.vehicles` retorna **18**
+- [ ] `SELECT COUNT(*) FROM tenant_<acme>.estimates` retorna **12**
+- [ ] `SELECT COUNT(*) FROM tenant_<acme>.service_orders` retorna **5**
+- [ ] Os 7 Clerk users visíveis no Clerk Dashboard staging com `publicMetadata.tenantId` e `privateMetadata.role` corretos
+- [ ] Login bem-sucedido em `https://sse-web-staging.vercel.app` com `owner@acme.sse-demo.test` (após BUG-03 PR #77 mergear + Vercel env var configurada)
+- [ ] Idempotência: rerun não duplica dados (guards já implementados em ambos os seeds)
+
+### Dependências
+
+- **Bloqueia:** UAT manual via os 2 roteiros recém-publicados
+- **Bloqueado por:** BUG-03 PR #77 merge + `NEXT_PUBLIC_API_URL` configurada no Vercel — sem isso, mesmo com seed rodado, o frontend retorna 404 nas chamadas API. PO já está providenciando a env var. **Confirmar antes de iniciar UAT**, mas o seed em si pode rodar antes (independente).
+- **Independente de:** T-20260509-1 (Tenants module CRUD), T-20260506-1 (workflow secrets)
+
+### Escopo negativo (o que NÃO fazer)
+
+- **NÃO** rodar seed em produção. Apenas staging.
+- **NÃO** commitar `DEMO_SEED_PASSWORD` real ou `CLERK_SECRET_KEY` no repo.
+- **NÃO** modificar `acme-personas.seed.ts` ou `acme-demo-data.seed.ts` — seeds validados (security-reviewer + db-reviewer PASS em PRs #68/#69).
+- **NÃO** criar tenants adicionais nesta task — escopo é exclusivamente Acme.
+- **NÃO** alterar dados após o seed para "ajustar para demo" — quebra idempotência.
+
+### Done quando
+
+- 6 critérios de aceite acima satisfeitos
+- DM move esta task de PENDING → COMPLETED neste arquivo
+- DM acrescenta linha em `project_sse_status.md` registrando seed executado + data
+- PO consegue logar com `owner@acme.sse-demo.test` e ver cockpit com dados (após PR #77 + Vercel env var)
+
+### Protocolo
+
+`docs/process/HANDOFF_PROTOCOL.md` §4 (template) + §7 (ciclo de vida).
+
+---
+
+## T-20260509-1 — P2 — Tenants module incomplete: controller/service missing, UI has no "Create Tenant" button
+
+**Origin:** PO (sessão Cowork 2026-05-09 — UAT super user features)
+**Priority:** P2 (achado durante UAT, não bloqueador para CA7)
+**Status:** PENDING
+**Created:** 2026-05-09
+
+### Descoberta
+Durante testes de super user em `/platform-admin`:
+- ✅ Super user (Luigi Filippozzi) autenticado e acesso a `/platform-admin` verificado
+- ✅ API Fly.io saudável (`/health` → 200, `/ready` → 200 com db:up, redis:up)
+- ❌ Endpoint `/api/v1/tenants` não existe (404) — arquivo `tenants.controller.ts` faltando
+- ❌ UI `/platform-admin` não tem botão visível para criar novo tenant
+
+### Root Cause
+1. Módulo `apps/api/src/modules/tenants/tenants.module.ts` existe mas tenta importar `TenantsController` que não foi implementado
+2. UI não tem formulário ou botão de ação para criar tenant — possivelmente adiado para após Fase 1
+
+### Features Pendentes
+- [ ] Implementar `apps/api/src/modules/tenants/tenants.controller.ts` com rotas: GET `/api/v1/tenants` (list), POST (create), PUT/:id, GET/:id
+- [ ] Implementar `apps/api/src/modules/tenants/tenants.service.ts` com lógica de CRUD
+- [ ] Adicionar botão "Create Tenant" em `/dashboard/platform-admin/page.tsx` (ou modal form)
+- [ ] Testes unitários para TenantsController/Service (80%+ coverage)
+
+### Impacto
+Fase 1 UAT pode continuar sem esse endpoint (super user pode ser criado via Clerk + backend manual config). **Não bloqueia CA7** (validação cross-tenant).
+
+### Próximos Passos (DM)
+1. Confirmar se Tenants CRUD via UI é escopo Fase 1 ou adiado
+2. Se Fase 1: priorizar como P1 feature antes de fechar fase
+3. Se adiado: registrar em RF backlog Fase 2+ com subtarefas
+
+---
+
 ## T-20260506-1 — P1 — Secrets interpolados via ${{ }} em deploy-web-staging.yml (pré-existente)
 
 **Origin:** DM (security-reviewer HIGH — sessão 2026-05-06)
