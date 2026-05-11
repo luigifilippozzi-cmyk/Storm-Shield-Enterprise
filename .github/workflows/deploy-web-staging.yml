@@ -71,25 +71,36 @@ jobs:
         run: |
           set -euo pipefail
           BASE=https://sse-web-staging.vercel.app
+          BACKEND=https://sse-api-staging.fly.dev
           FAILED=0
 
-          # /api/health must return 200 — unauthenticated liveness probe
+          # Step 1: verify backend is reachable directly (independent of proxy)
+          BACKEND_HEALTH=$(curl --silent --max-time 20 --output /dev/null --write-out "%{http_code}" "$BACKEND/health")
+          if [ "$BACKEND_HEALTH" != "200" ]; then
+            echo "::warning::Backend direct health check: GET $BACKEND/health → $BACKEND_HEALTH"
+            echo "::error::Backend unreachable — proxy smoke test cannot proceed. Check Fly.io (T-20260412-1)."
+            exit 1
+          fi
+          echo "Backend direct: GET $BACKEND/health → $BACKEND_HEALTH ✓"
+
+          # Step 2: /api/health via Vercel proxy must return 200
           HEALTH=$(curl --silent --max-time 15 --output /dev/null --write-out "%{http_code}" "$BASE/api/health")
           if [ "$HEALTH" != "200" ]; then
-            echo "::error::Smoke test FAILED: GET $BASE/api/health → $HEALTH (expected 200 — proxy or backend down)"
+            echo "::error::Proxy FAILED: GET $BASE/api/health → $HEALTH (backend is UP but proxy returns $HEALTH)"
+            echo "::error::Likely cause: NEXT_PUBLIC_API_URL not set in Vercel environment. Add it in Vercel dashboard → Settings → Environment Variables."
             FAILED=1
           else
-            echo "PASS: GET $BASE/api/health → $HEALTH"
+            echo "PASS: GET $BASE/api/health → $HEALTH (proxy working)"
           fi
 
-          # Authenticated routes must return 401 (proxy working + auth guard active) — not 404/502/000
+          # Step 3: authenticated routes must return 401 via proxy (not 404/502/503/000)
           for path in "api/tenants/me/wizard/status" "api/customers"; do
             STATUS=$(curl --silent --max-time 15 --output /dev/null --write-out "%{http_code}" "$BASE/$path")
             if [ "$STATUS" = "404" ] || [ "$STATUS" = "502" ] || [ "$STATUS" = "503" ] || [ "$STATUS" = "000" ]; then
-              echo "::error::Smoke test FAILED: GET $BASE/$path → $STATUS (expected 401 — proxy not working or backend unreachable)"
+              echo "::error::Proxy FAILED: GET $BASE/$path → $STATUS (expected 401 — proxy not forwarding to backend)"
               FAILED=1
             else
-              echo "PASS: GET $BASE/$path → $STATUS"
+              echo "PASS: GET $BASE/$path → $STATUS (proxy working)"
             fi
           done
 
