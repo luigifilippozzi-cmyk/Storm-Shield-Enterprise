@@ -131,34 +131,21 @@ EOF
 ## T-20260509-1 — P2 — Tenants module incomplete: controller/service missing, UI has no "Create Tenant" button
 
 **Origin:** PO (sessão Cowork 2026-05-09 — UAT super user features)
-**Priority:** P2 (achado durante UAT, não bloqueador para CA7)
-**Status:** PENDING
+**Priority:** P2
+**Status:** COMPLETED
 **Created:** 2026-05-09
+**Completed:** 2026-05-11
+**Branch:** `feature/SSE-069-create-tenant-ui` (PR #82 MERGED)
 
-### Descoberta
-Durante testes de super user em `/platform-admin`:
-- ✅ Super user (Luigi Filippozzi) autenticado e acesso a `/platform-admin` verificado
-- ✅ API Fly.io saudável (`/health` → 200, `/ready` → 200 com db:up, redis:up)
-- ❌ Endpoint `/api/v1/tenants` não existe (404) — arquivo `tenants.controller.ts` faltando
-- ❌ UI `/platform-admin` não tem botão visível para criar novo tenant
+### Resultado (DM — sessão 2026-05-11)
 
-### Root Cause
-1. Módulo `apps/api/src/modules/tenants/tenants.module.ts` existe mas tenta importar `TenantsController` que não foi implementado
-2. UI não tem formulário ou botão de ação para criar tenant — possivelmente adiado para após Fase 1
+Verificação revelou que `TenantsController` e `TenantsService` já estavam implementados (foram criados em sessões anteriores — `fix/SSE-052-tenants-create-auth`). O gap real era apenas o botão "Create Tenant" na UI.
 
-### Features Pendentes
-- [ ] Implementar `apps/api/src/modules/tenants/tenants.controller.ts` com rotas: GET `/api/v1/tenants` (list), POST (create), PUT/:id, GET/:id
-- [ ] Implementar `apps/api/src/modules/tenants/tenants.service.ts` com lógica de CRUD
-- [ ] Adicionar botão "Create Tenant" em `/dashboard/platform-admin/page.tsx` (ou modal form)
-- [ ] Testes unitários para TenantsController/Service (80%+ coverage)
-
-### Impacto
-Fase 1 UAT pode continuar sem esse endpoint (super user pode ser criado via Clerk + backend manual config). **Não bloqueia CA7** (validação cross-tenant).
-
-### Próximos Passos (DM)
-1. Confirmar se Tenants CRUD via UI é escopo Fase 1 ou adiado
-2. Se Fase 1: priorizar como P1 feature antes de fechar fase
-3. Se adiado: registrar em RF backlog Fase 2+ com subtarefas
+- ✅ `TenantsController` — existia com `POST /tenants`, `GET /tenants/:id`, `GET /tenants/platform-admin/tenants`, wizard routes
+- ✅ `TenantsService` — existia com `create()`, `findOne()`, `findOneSafe()`, `listAllForSuperUser()`, `provisionTenantAdmin()`
+- ✅ `CreateTenantDialog` modal adicionado em PR #82 — name, slug (auto-derivado), owner_email
+- ✅ `useCreateTenant` hook adicionado — `POST /api/tenants`
+- ✅ Botão "Create Tenant" com PlusCircle icon no header da página
 
 ---
 

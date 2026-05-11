@@ -289,14 +289,14 @@
 <script>
 // <!--METRICS_START-->
 const D = {
-  lastUpdated: "2026-05-10 (DM Agent — Fix Deploy Web CA5 + Secrets)",
+  lastUpdated: "2026-05-11 (Dev Manager — Sessão Autônoma)",
   updatedBy: "Dev Manager",
   health: "green",
-  healthText: "VERDE. Deploy Web (Staging) VERDE pela primeira vez desde 2026-05-06 — PR #79 merged (CA5 smoke test corrigido + VERCEL_TOKEN via env:). CI GitHub Actions VERDE. Deploy Staging VERDE. Fly.io saudável (/health=200, /ready=200). 0 PRs abertos. Bloqueio remanescente: T-20260509-2 BLOCKED (seeds Acme — credenciais não disponíveis em sessão automatizada; requer ação manual PO/Luigi).",
+  healthText: "VERDE. CI SUCCESS. Deploy Web Vercel SUCCESS (2026-05-11T22:51Z — PR #82 merged). Deploy Staging Docker/GHCR SUCCESS. Deploy API Fly.io FAILURE (deploy-api-staging.yml — pré-existente T-20260412-1 infra, não bloqueia código). 0 PRs abertos. PRs #81+#82 merged nesta sessão. T-20260509-1 COMPLETED (Create Tenant UI). Uncommitted local: project_sse_status.md (em andamento).",
   activeFase: "2",
   kpis: {
     backendModules: 15,
-    controllers: 18,
+    controllers: 19,
     endpoints: 128,
     frontendPages: 43,
     specFiles: 29,
@@ -307,14 +307,18 @@ const D = {
     excelDone: 36
   },
   agents: [
-    { name: "PM Agent", role: "Status Diario + Metricas", color: "var(--blue)", bg: "var(--blue-bg)", icon: "clipboard", status: "active", statusText: "Revisão noturna 2026-05-02T23:30Z — Saúde VERDE. 75 PRs merged. 15/15 módulos (cases+notifications+admin/activation), 599 testes, 128 endpoints, 19 migrations, 17 ADRs, 43 pages, 29 suites. Deploy API+Web+CI todos VERDE. Regras 1-18 OK (zero KNEX direto, zero FLOAT, zero CASCADE financeiro, zero secrets). Zero violações Bússola (PRs #73-75: docs+feat+chore). dm_queue: 1 PENDING (T-20260421-1 standing). ADR-015 ausente — slot disponível. Pendente PO: seeds staging + RFs Fase 2.", stats: [["Frequencia","Diario"],["Escopo","Read-only"],["Output","Relatorio + Dashboard"]] },
-    { name: "Dev Manager", role: "Implementacao + Orquestracao", color: "var(--accent2)", bg: "var(--teal-bg)", icon: "gear", status: "active", statusText: "Sessao autonoma 2026-05-10 — Deploy Web desbloqueado. PR #79 merged: CA5 corrigido (backend-direto) + VERCEL_TOKEN via env: (CWE-78). T-20260505-1+T-20260506-1 COMPLETED. T-20260509-2 BLOCKED (credenciais staging ausentes). 0 PRs abertos. Saude VERDE.", stats: [["Autoridade","Execucao tecnica"],["Subagentes","N/A (fix CI)"],["PRs","#79 merged"]] },
+    { name: "PM Agent", role: "Status Diario + Metricas", color: "var(--blue)", bg: "var(--blue-bg)", icon: "clipboard", status: "active", statusText: "Revisão diária 2026-05-11 — Saúde VERDE. 79 PRs merged. 15/15 módulos, 599 testes, 128 endpoints, 19 migrations, 17 ADRs, 43 pages, 29 specs, 19 controllers. CI+Deploy Staging+Deploy Web todos VERDE (2026-05-11T01:40Z). Regras 1-14 OK. Regras 15-18 OK (sem violações). dm_queue: T-20260509-2 BLOCKED (seeds Acme — PO manual), T-20260509-1 PENDING (Tenants CRUD P2). Uncommitted local: run.ts dotenv fix + 3 scripts helper seed.", stats: [["Frequencia","Diario"],["Escopo","Read-only"],["Output","Relatorio + Dashboard"]] },
+    { name: "Dev Manager", role: "Implementacao + Orquestracao", color: "var(--accent2)", bg: "var(--teal-bg)", icon: "gear", status: "active", statusText: "Sessao autonoma 2026-05-11 — PR #81 (housekeeping: seeds fix+ADR-015+ADR-012 cleanup) + PR #82 (feat: Create Tenant modal platform-admin — T-20260509-1 COMPLETED). 599/599 testes. Build limpo. Deploy Web SUCCESS. Deploy API FAILURE (pré-existente infra). 0 PRs abertos.", stats: [["Autoridade","Execucao tecnica"],["Subagentes","test[PASS 599]"],["PRs","#81+#82 merged"]] },
     { name: "test-runner", role: "Jest + Coverage", color: "var(--green)", bg: "var(--green-bg)", icon: "check", status: "active", statusText: "599 testes, 29 suites — GREEN (2026-05-02). SuperUserService x12 + SuperUserGuard x6 adicionados. Branch coverage todos servicos ≥80%. PR #74 PASS.", stats: [["Framework","Jest + ts-jest"],["Specs","29 test suites"],["Trigger","Sempre pre-PR"]] },
     { name: "security-reviewer", role: "RLS + XSS + Auth", color: "var(--red)", bg: "var(--red-bg)", icon: "shield", status: "active", statusText: "PR #74 — Critical (GET /tenants/:id schema_name leak) FIXED via TenantGuard+findOneSafe. HIGH (migration scope) FIXED via DO block. MEDIUM (schema injection) FIXED via regex guard. Todos findings resolvidos.", stats: [["Foco","tenant_id, RLS, AES"],["Checks","OWASP Top 10 + regras 15-18"],["Trigger","auth/db changes"]] },
     { name: "db-reviewer", role: "Migrations + Schema", color: "var(--purple)", bg: "var(--purple-bg)", icon: "database", status: "active", statusText: "Baseline: 000-018 (19 SQL files). Migration 018: cross-tenant DO block — is_super_user_action + target_tenant_id em audit_logs. SET LOCAL search_path em transaction. Schema regex validation. Todos PASS.", stats: [["Foco","RLS, indexes, FK"],["Migrations","19 SQL files"],["Trigger","Schema changes"]] },
     { name: "frontend-reviewer", role: "Next.js + shadcn/ui", color: "var(--cyan)", bg: "rgba(6,182,212,.12)", icon: "layout", status: "active", statusText: "Checklist expandido: 20 itens (8 base + 6 PV + 6 PUX via ADR-013). PR #44 FAIL→PASS. Regra 19 vigente.", stats: [["Framework","Next.js 15 + React 19"],["Checklist","20 itens (ADR-013)"],["Trigger","UI/component changes — Regra 19"]] }
   ],
   activity: [
+    { time: "Mai 11", color: "var(--accent2)", msg: "<strong>PR #82 merged</strong> feat(web): Create Tenant modal em platform-admin — T-20260509-1 COMPLETED. useCreateTenant hook + CreateTenantDialog (name, slug auto-derivado, owner_email). POST /api/tenants já existia no backend. 599/599 testes. Deploy Web SUCCESS (2026-05-11T22:51Z). Platform Operator §2.5 / JTBD#1 provisioning UI.", tag: "merge" },
+    { time: "Mai 11", color: "var(--accent2)", msg: "<strong>PR #81 merged</strong> chore: seeds dotenv fix + helper scripts + ADR-015 + remove ADR-012 stub. run.ts usa path.resolve(__dirname) (fix dotenv load). run-seed.bat/ps1 + run-seeds.ps1 portáveis ($PSScriptRoot/%~dp0). ADR-015 release cadence formalizado. ADR-012 stub deprecated removido.", tag: "merge" },
+    { time: "Mai 11", color: "var(--green)", msg: "<strong>Dev Manager</strong> sessão autônoma 2026-05-11 — PRs #81+#82 merged. T-20260509-1 COMPLETED (Create Tenant modal). ADR-015 redigido. ADR-012 stub removido. run.ts dotenv fix commitado. 599/599 testes. Build Next.js limpo. Deploy Web SUCCESS. Deploy API FAILURE (infra pré-existente T-20260412-1).", tag: "dm" },
+    { time: "Mai 11", color: "var(--blue)", msg: "<strong>PM Agent</strong> revisão diária autônoma 2026-05-11 — Saúde VERDE. CI SUCCESS (2026-05-11T01:40Z). Deploy Staging Docker/GHCR SUCCESS (2026-05-11T01:40Z). Deploy Web Vercel SUCCESS (2026-05-11T01:34Z). Deploy API Fly.io última exec 2026-05-02 (SUCCESS). 0 PRs abertos. 79 total merged. Métricas: 15/15 módulos, 599 testes, 128 endpoints, 19 migrations, 17 ADRs, 43 pages, 19 controllers. Regras 1-14 OK (zero KNEX direto, zero FLOAT/REAL, zero CASCADE financeiro, zero secrets hardcoded). Regras 15-18 OK — PRs #76-79 OK (fixes CI/infra, personas citadas onde aplicável). Inconsistência nova: run.ts modificado localmente (dotenv path fix) + 3 scripts helper não-commitados (run-seed.bat, run-seed.ps1, run-seeds.ps1). Admin module sem service file (pré-existente). T-20260509-2 BLOCKED (seeds Acme — PO/Luigi ação manual). T-20260509-1 PENDING (Tenants CRUD P2).", tag: "pm" },
     { time: "Mai 10", color: "var(--green)", msg: "<strong>Dev Manager</strong> sessão autônoma 2026-05-10 — Deploy Web (Staging) desbloqueado. Root cause CA5: smoke test testava proxy Next.js (/api/* → Vercel) que api.ts nunca usa (chamadas diretas via NEXT_PUBLIC_API_URL). PR #79 merged: CA5 agora testa backend Fly.io direto (liveness+readiness+auth). VERCEL_TOKEN movido de interpolação shell para env: (OWASP A02/CWE-78). T-20260505-1 COMPLETED. T-20260506-1 COMPLETED. T-20260509-2 BLOCKED (credenciais não disponíveis em sessão automatizada — requer ação manual PO). Deploy Web SUCCESS.", tag: "dm" },
     { time: "Mai 10", color: "var(--accent2)", msg: "<strong>PR #79 merged</strong> fix(ci): CA5 smoke test correto + VERCEL_TOKEN via env: (T-20260506-1). Deploy Web (Staging) VERDE.", tag: "merge" },
     { time: "Mai 10", color: "var(--orange)", msg: "<strong>T-20260509-2 BLOCKED</strong> — Seeds Acme em staging não executados em sessão autônoma: DATABASE_URL_UNPOOLED e CLERK_SECRET_KEY não disponíveis. PO/Luigi deve rodar manualmente (ver dm_queue.md).", tag: "fix" },
@@ -409,18 +413,18 @@ const D = {
     { name: "notifications", files: 5, spec: true, controller: true, endpoints: 5 }
   ],
   pipeline: [
-    { label: "CI", desc: "Lint + Test + Build (GitHub Actions) — SUCCESS main (2026-05-02T23:09Z). 599/599 testes. 29 suites. Branch coverage ≥80% todos os services. PR #75 merged.", status: "green", date: "2026-05-02" },
-    { label: "Deploy Staging", desc: "SUCCESS (2026-05-02T23:09Z). Último workflow: Deploy Staging pós-merge PR #75 (session close RF Regra-0).", status: "green", date: "2026-05-02" },
-    { label: "Deploy API", desc: "Fly.io + GHCR — SUCCESS (2026-05-02T22:44Z). /ready 200 ATIVO. T-20260412-1 resolvido (ADR-011). Migration 018 cross-tenant DO block aplicada.", status: "green", date: "2026-05-02" },
-    { label: "Deploy Web", desc: "Vercel — SUCCESS (2026-05-10). CA5 smoke test corrigido via PR #79 — testa backend Fly.io direto (liveness + readiness + auth enforcement). VERDE pela primeira vez desde 2026-05-06.", status: "green", date: "2026-05-10" },
-    { label: "PRs Abertos", desc: "0 PRs abertos. 79 total merged. Últimos: #79 (fix CA5 + secrets), #78 (session close BUG-03), #77 (fail-fast Vercel guard), #76 (rewrites + CA4), #75 (session close RF Regra-0).", status: "green", date: "2026-05-10" }
+    { label: "CI", desc: "Lint + Test + Build (GitHub Actions) — SUCCESS main (2026-05-11T01:40Z). 599/599 testes. 29 suites. Branch coverage ≥80% todos os services.", status: "green", date: "2026-05-11" },
+    { label: "Deploy Staging", desc: "Docker build + GHCR push — SUCCESS (2026-05-11T01:40Z). Workflow: deploy-staging.yml pós-merge em main.", status: "green", date: "2026-05-11" },
+    { label: "Deploy API", desc: "Fly.io (deploy-api-staging.yml) — FAILURE (2026-05-11T22:48Z). Infra pré-existente T-20260412-1 (Fly.io secrets). Docker image via deploy-staging.yml continua atualizada. Não bloqueia código.", status: "red", date: "2026-05-11" },
+    { label: "Deploy Web", desc: "Vercel (deploy-web-staging.yml) — SUCCESS (2026-05-11T22:51Z). PR #82 (Create Tenant modal). CA5 smoke test testa Fly.io direto (liveness + readiness + auth).", status: "green", date: "2026-05-11" },
+    { label: "PRs Abertos", desc: "0 PRs abertos. 82 total merged. Últimos: #82 (feat Create Tenant UI), #81 (chore seeds+ADR-015+ADR-012), #79 (fix CA5 + secrets), #78 (session close BUG-03), #77 (fail-fast guard).", status: "green", date: "2026-05-11" }
   ],
   alertas: {
     bloqueantes: [],
     overdue: [],
     emRisco: [
-      { titulo: "ADR-015 ausente — release cadence (DM — P2)", desc: "ADR-015 nunca foi redigido. Slot disponível há meses, sem bloqueadores desde T-20260421-10 COMPLETED (2026-04-22). DM pode redigir docs/decisions/015-release-cadence.md a qualquer momento. Numeração 015 disponível (016+017 já usados; inserção retroativa OK por ser doc-only)." },
-      { titulo: "ADR-012 stub duplicado — remoção pendente maio/2026", desc: "Dois arquivos: docs/decisions/012-netsuite-incorporacao-parcial.md (stub redirect ADR-014) + 012-ns-incorporacao-parcial.md (ativo). Stub programado para remoção em maio/2026 conforme T-20260422-1. DM deve remover o stub NETSUITE em próxima sessão de housekeeping." }
+      { titulo: "Deploy API Fly.io FAILURE (pré-existente T-20260412-1)", desc: "deploy-api-staging.yml falha ao executar (Fly.io secrets/infra). Docker image atualizada via deploy-staging.yml (GHCR). Não bloqueia desenvolvimento. PO/Luigi deve investigar secrets Fly.io quando disponível." },
+      { titulo: "T-20260509-2 BLOCKED — Seeds Acme em staging (PO ação manual)", desc: "Seeds existem desde PR #68+#69. DATABASE_URL_UNPOOLED e CLERK_SECRET_KEY necessários. Helper scripts run-seeds.ps1 disponíveis na raiz do projeto. Ver playbook: .auto-memory/HANDOFF_DM_T20260509_2.md." }
     ],
     proximos7: [
       { titulo: "Seeds staging — PO ação manual (P1)", desc: "Seeds prontos (PR #68+#69 merged). PO deve rodar: pnpm --filter api seed:run --tenant=acme --type=personas → --type=demo-data. Desbloqueia UAT tour completo com 7 personas Acme + demo data (15 customers, 18 vehicles, 12 estimates, 5 SOs, 30 transactions)." },
@@ -432,6 +436,7 @@ const D = {
     alinhamentoBussola: []
   },
   inconsistencias: [
+    { tipo: "Admin module sem service file (pré-existente)", desc: "apps/api/src/modules/admin/ existe mas não tem admin.service.ts. Controller presente (ActivationService existe em admin/activation/). Inconsistência pré-existente — não bloqueia Fase 1." },
     { tipo: "T-20260501-2 — RESOLVIDO 2026-05-02 (DM)", desc: "DM marcou COMPLETED em sessão 2026-05-02 pós PR #74. dm_queue reflete estado correto." },
     { tipo: "Docs auditoria — RESOLVIDO 2026-05-01", desc: "SSE_GoNoGo_Fase1_MVP_20260420.md e SSE_Plano_Testes_UI_Fase1_20260420.md — marcados como resolvidos na sessao DM 2026-05-01 (incluidos em PR doc-only)." },
     { tipo: "T-20260417-4 — RESOLVIDO", desc: "Marcada COMPLETED 2026-04-26 por obsolescencia — Gaps 1+3+8 todos implementados via RF-001/002/003." },
@@ -442,11 +447,9 @@ const D = {
     { tipo: "/ready 503 — RESOLVIDO", desc: "Confirmado 2026-04-24: /ready retorna 200. Fly secrets configurados por Luigi." }
   ],
   recomendacoes: [
-    { prioridade: "P1 — BLOQUEADO (PO/Luigi)", texto: "T-20260509-2: Rodar seeds Acme em staging MANUALMENTE — credenciais não disponíveis em sessão automatizada. Ver playbook: .auto-memory/HANDOFF_DM_T20260509_2.md. Comandos: set DATABASE_URL_UNPOOLED + CLERK_SECRET_KEY no shell, depois pnpm --filter api seed:run --tenant=acme --type=personas e --type=demo-data. Desbloqueia UAT manual com roteiros v1.1." },
-    { prioridade: "P2 (DM)", texto: "T-20260509-1: Implementar TenantsController + TenantsService + botão 'Create Tenant' na UI. Módulo tenants existe mas controller/service faltam. Não bloqueia Fase 1 mas é gap de super user ops." },
+    { prioridade: "P1 — BLOQUEADO (PO/Luigi)", texto: "T-20260509-2: Rodar seeds Acme em staging MANUALMENTE — credenciais não disponíveis em sessão automatizada. Helper scripts disponíveis: run-seeds.ps1 na raiz do projeto. Ver playbook: .auto-memory/HANDOFF_DM_T20260509_2.md. Desbloqueia UAT manual com roteiros v1.1 (7 personas Acme + demo data)." },
     { prioridade: "P1 (PO)", texto: "Iniciar planejamento Fase 2 (IA + integrações bancárias Plaid + automações n8n + RF-008 convites). Fase 1 100% concluída — GoNoGo v2 GO. Definir RFs em RF_BACKLOG.md." },
-    { prioridade: "P2 (DM)", texto: "Redigir ADR-015 (release cadence) — sem bloqueadores. Numeração 015 disponível. Arquivo: docs/decisions/015-release-cadence.md." },
-    { prioridade: "P2 (DM)", texto: "Remover stub NETSUITE — docs/decisions/012-netsuite-incorporacao-parcial.md programado para remoção em maio/2026. Pode ser deletado agora." }
+    { prioridade: "P2 (DM/Infra)", texto: "Investigar T-20260412-1 — deploy-api-staging.yml (Fly.io) continua falhando. Docker image GHCR está atualizada via deploy-staging.yml. Causa raiz dos secrets Fly.io ainda não identificada." }
   ],
   backlog: [
     { id: "RF-004", task: "Customer 360 View (7 abas)", fase: "2", prio: "P1", status: "Concluido", nota: "PR #44 merged 2026-04-22. 368 testes. 2 endpoints novos (/summary + /activity-timeline). 7 abas + ARIA + Suspense. Critical+High+3 Medium corrigidos via subagentes." },

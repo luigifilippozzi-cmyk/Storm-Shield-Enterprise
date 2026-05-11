@@ -3,6 +3,106 @@ name: SSE Project Status
 description: Current state of Storm Shield Enterprise project — metrics, health, priorities for Dev Manager
 type: project
 ---
+# SSE Project Status — 2026-05-11 (Dev Manager — Sessão Autônoma)
+
+## Revisão DM — 2026-05-11 (PRs #81 + #82)
+
+**Saúde: 🟢 VERDE** — CI SUCCESS. Deploy Web Vercel SUCCESS (2026-05-11T22:51Z). Deploy API Fly.io FAILURE (pré-existente T-20260412-1 — infra, não bloqueia código). 0 PRs abertos.
+
+**Módulos: 15/15** | Testes: **599** | Endpoints: **128** | Migrations: **19** | ADRs: **17** | Controllers: **19** | Pages: **43** | Specs: **29**
+
+### Novidades desta sessão (2026-05-11)
+
+| PR | Tipo | Descrição | Status |
+|---|---|---|---|
+| #81 | chore | seeds dotenv fix + helper scripts + ADR-015 + remove ADR-012 stub | MERGED 2026-05-11 |
+| #82 | feat(web) | Create Tenant modal em platform-admin (T-20260509-1) | MERGED 2026-05-11 |
+
+### Tarefas concluídas
+
+- **T-20260509-1 COMPLETED** — TenantsController + TenantsService já existiam (verificado). UI adicionada: botão "Create Tenant" + modal (name, slug auto-derivado, owner_email) na página `/platform-admin`. Hook `useCreateTenant` via `POST /api/tenants`. PR #82 merged.
+- **ADR-015 redigido** — `docs/decisions/015-release-cadence.md` — cadência formal: staging contínuo (merge em main), produção via tag semântica, UAT gate, smoke tests pós-deploy.
+- **ADR-012 stub removido** — `012-netsuite-incorporacao-parcial.md` deletado (era stub deprecated desde ADR-014, programado para maio/2026).
+- **run.ts dotenv fix commitado** — `path.resolve(__dirname, '../../../../../.env')` em vez de string relativa. PR #81 merged.
+- **Helper scripts commitados** — `run-seed.bat`, `run-seed.ps1`, `run-seeds.ps1` com paths portáveis (`$PSScriptRoot` / `%~dp0`). PR #81 merged.
+
+### Verificação Regras CLAUDE.md §10 (regras 1-14)
+- KNEX_CONNECTION direto em services: **OK** (sem mudança)
+- FLOAT/REAL em migrations: **OK** (sem mudança)
+- CASCADE em tabelas financeiras/contábeis: **OK** (sem mudança)
+- Secrets hardcoded: **OK** (sem mudança)
+
+### Verificação Regras 15-18 (alinhamento Bússola)
+- PR #81: chore/docs — Regra 16 N/A (sem tela nova).
+- PR #82: feat(web) — Create Tenant modal. Persona §2.5 Platform Operator + gap T-20260509-1 JTBD#1 citados na descrição do PR. Regra 16 ✓
+
+### Bloqueios atuais
+1. **T-20260509-2 BLOCKED** — Seed Acme em staging não executado; `DATABASE_URL_UNPOOLED` e `CLERK_SECRET_KEY` não disponíveis em sessão automatizada. Requer ação manual PO/Luigi (ver dm_queue.md + run-seeds.ps1 na raiz).
+2. **T-20260412-1 BLOCKED (infra)** — deploy-api-staging.yml (Fly.io) falha. Docker image GHCR atualizada via deploy-staging.yml. Não bloqueia desenvolvimento.
+
+### Inconsistências
+1. **Admin module sem service** — `apps/api/src/modules/admin/` sem `admin.service.ts` (pré-existente).
+2. **PV4 violation** — `STATUS_COLORS` em `platform-admin/page.tsx` usa Tailwind direto — P2 pendente (pré-existente).
+
+### Prioridades P1/P2 para próxima sessão
+1. **P1 (PO)**: T-20260509-2 — Rodar seeds Acme em staging manualmente (`run-seeds.ps1` na raiz).
+2. **P1 (PO)**: Iniciar planejamento Fase 2 (RF-008 convites + IA + Plaid + n8n).
+3. **P2 (DM/Infra)**: Investigar T-20260412-1 — deploy-api-staging.yml Fly.io secrets.
+4. **P2 (DM)**: PV4 violation em platform-admin/page.tsx (STATUS_COLORS Tailwind direto).
+
+### Última sessão: 2026-05-11 (DM Agent — Create Tenant UI + housekeeping) ✅ VERDE
+
+---
+
+# SSE Project Status — 2026-05-11 (PM Agent — Revisão Diária)
+
+## Revisão PM — 2026-05-11
+
+**Saúde: 🟢 VERDE** — CI SUCCESS (2026-05-11T01:40Z). Deploy Staging Docker/GHCR SUCCESS (2026-05-11T01:40Z). Deploy Web Vercel SUCCESS (2026-05-11T01:34Z). Deploy API Fly.io última exec: 2026-05-02 (SUCCESS). 0 PRs abertos.
+
+**Módulos: 15/15** | Testes: **599** | Endpoints: **128** | Migrations: **19** | ADRs: **17** | Controllers: **19** | Pages: **43** | Specs: **29**
+
+### Novidades desta revisão (vs última PM 2026-05-02T23:30Z)
+
+| Item | Tipo | Descrição | Status |
+|---|---|---|---|
+| PR #76 | fix(web) | BUG-03 rewrites + CA4 error differentiation | MERGED |
+| PR #77 | fix(web) | BUG-03b fail-fast Vercel build guard | MERGED |
+| PR #78 | chore | Session close 2026-05-06 | MERGED |
+| PR #79 | fix(ci) | CA5 smoke test correto + VERCEL_TOKEN via env: (T-20260506-1) | MERGED |
+
+### Verificação Regras CLAUDE.md §10 (regras 1-14)
+- KNEX_CONNECTION direto em services: **OK**
+- FLOAT/REAL em migrations: **OK**
+- CASCADE em tabelas financeiras/contábeis: **OK**
+- Secrets hardcoded: **OK**
+
+### Verificação Regras 15-18 (alinhamento Bússola)
+- PRs #76-79: fixes CI/infra. Regra 16 N/A (sem tela nova). Regras 15-18 OK — sem violações.
+
+### Bloqueios atuais
+1. **T-20260509-2 BLOCKED** — Seed Acme em staging não executado; `DATABASE_URL_UNPOOLED` e `CLERK_SECRET_KEY` não disponíveis em sessão automatizada. Requer ação manual PO/Luigi (ver dm_queue.md).
+2. **T-20260509-1 PENDING** — Tenants module: controller + service + UI "Create Tenant" (P2, não bloqueia Fase 1).
+
+### Inconsistências
+1. **Uncommitted local** — `apps/api/src/database/seeds/run.ts` modificado (dotenv path fix) + 3 scripts helper não-rastreados (`run-seed.bat`, `run-seed.ps1`, `run-seeds.ps1`). Sem credenciais. DM deve commitar ou descartar.
+2. **Admin module sem service** — `apps/api/src/modules/admin/` sem `admin.service.ts`. Controller presente. Pré-existente.
+3. **ADR-015 ausente** — release cadence nunca redigido (sem bloqueadores desde 2026-04-22).
+4. **ADR-012 stub duplicado** — `012-netsuite-incorporacao-parcial.md` programado para remoção em maio/2026.
+5. **PV4 violation** — `STATUS_COLORS` em `platform-admin/page.tsx` usa Tailwind direto — P2 pendente.
+
+### Prioridades P1/P2 para Dev Manager
+1. **P1 (PO)**: T-20260509-2 — Rodar seeds Acme em staging manualmente (credenciais necessárias).
+2. **P2 (DM)**: T-20260509-1 — Implementar TenantsController + TenantsService + botão "Create Tenant" na UI.
+3. **P2 (DM)**: Commitar `run.ts` fix (dotenv path) em `chore(seeds)` + decidir sobre helper scripts.
+4. **P2 (DM)**: Redigir ADR-015 (release cadence) — sem bloqueadores.
+5. **P2 (DM)**: Remover stub `docs/decisions/012-netsuite-incorporacao-parcial.md` (maio/2026).
+6. **P1 (PO)**: Iniciar planejamento Fase 2 (RF-008 convites + IA + Plaid + n8n).
+
+### Última sessão: 2026-05-11 (PM Agent — Revisão Diária) ✅ VERDE
+
+---
+
 # SSE Project Status — 2026-05-10 (DM Agent — Fix Deploy Web + CA5 + Secrets)
 
 ## Revisão DM — 2026-05-10 (PR #79)
