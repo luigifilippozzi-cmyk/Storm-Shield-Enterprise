@@ -3,6 +3,46 @@ name: SSE Project Status
 description: Current state of Storm Shield Enterprise project — metrics, health, priorities for Dev Manager
 type: project
 ---
+# SSE Project Status — 2026-05-10 (DM Agent — Fix Deploy Web + CA5 + Secrets)
+
+## Revisão DM — 2026-05-10 (PR #79)
+
+**Saúde: 🟢 VERDE** — CI VERDE. Deploy Web (Staging) **VERDE pela primeira vez desde 2026-05-06** (PR #79 merged, CA5 corrigido). Deploy Staging VERDE. 0 PRs abertos.
+
+**Módulos: 15/15** | Testes: **599** | Endpoints: **128** | Migrations: **19** | ADRs: **17** | Controllers: **18** | Pages: **43** | Specs: **29**
+
+### Novidades desta sessão (2026-05-10)
+
+| PR | Tipo | Descrição | Status |
+|---|---|---|---|
+| #79 | fix(ci) | CA5 smoke test correto (backend-direto) + VERCEL_TOKEN via env: (T-20260506-1) | MERGED 2026-05-10 |
+
+### Root cause CA5 (post-mortem)
+
+O smoke test CA5 em `deploy-web-staging.yml` testava proxy Next.js (`/api/*` → Vercel) que o frontend nunca usa. `api.ts` faz chamadas diretas via `NEXT_PUBLIC_API_URL` para Fly.io (não passa pelo proxy). O proxy em `next.config.js` é infraestrutura não usada. CA5 correto agora testa: liveness + readiness Fly.io + auth enforcement (401/403).
+
+### Verificação Regras CLAUDE.md §10 (regras 1-14)
+- KNEX_CONNECTION direto em services: **OK** (sem mudança)
+- FLOAT/REAL em migrations: **OK** (sem mudança)
+- CASCADE em tabelas financeiras/contábeis: **OK** (sem mudança)
+- Secrets hardcoded: **OK** (fix justamente move secrets de interpolação para env:)
+
+### Verificação Regras 15-18 (alinhamento Bússola)
+- PR #79: fix de CI/infra. Regra 16 N/A (sem tela nova).
+
+### Bloqueios atuais
+1. **T-20260509-2 BLOCKED** — Seed Acme em staging não executado; `DATABASE_URL_UNPOOLED` e `CLERK_SECRET_KEY` não disponíveis na sessão automatizada. Requer ação manual do PO/Luigi (ver dm_queue.md).
+2. **T-20260509-1 PENDING** — Tenants module: controller + service + UI "Create Tenant" (P2, não bloqueia Fase 1).
+
+### Inconsistências
+1. **ADR-015 ausente** — release cadence nunca redigido (pré-existente — aguarda T-20260412-1 sair de BLOCKED)
+2. **ADR-012 stub duplicado** — programado para remoção em maio/2026 (pré-existente)
+3. **PV4 violation** — STATUS_COLORS em platform-admin/page.tsx usa Tailwind direto — P2 pendente
+
+### Última sessão: 2026-05-10 (DM Agent — Fix Deploy Web + CA5 + Secrets) ✅ VERDE
+
+---
+
 # SSE Project Status — 2026-05-09 (PO Cowork — UAT Super User + Deploy Validation)
 
 ## Revisão PO — 2026-05-09 (T-20260505-1 PROGRESSO)

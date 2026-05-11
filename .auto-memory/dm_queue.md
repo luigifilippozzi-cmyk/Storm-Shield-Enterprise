@@ -19,10 +19,30 @@ type: project
 
 **Origin:** PO (sessão Cowork 2026-05-09 — entrega de roteiros de teste para leigos)
 **Priority:** P1
-**Status:** PENDING
+**Status:** BLOCKED
 **Created:** 2026-05-09
 **Branch:** N/A — operação de runtime; sem código novo (PRs #68 e #69 já merged em 2026-05-02)
 **Subagentes PR:** N/A — operação ops/staging
+
+### ⚠️ Bloqueio — DM autônomo sem credenciais de staging (sessão 2026-05-10)
+
+Sessão automatizada tentou executar o seed mas `DATABASE_URL_UNPOOLED` e `CLERK_SECRET_KEY` não estão disponíveis no ambiente de execução local (sem `.env` no projeto e sem secrets de staging injetados).
+
+**PO/Luigi deve fazer uma das opções:**
+1. **Rodar manualmente** (com as credenciais locais disponíveis no vault):
+   ```bash
+   cd C:\Dev\storm-shield-enterprise
+   # Definir env vars (NÃO commitar)
+   $env:DATABASE_URL_UNPOOLED = "<neon-staging-url>"
+   $env:CLERK_SECRET_KEY = "<clerk-staging-key>"
+   $env:DEMO_SEED_PASSWORD = "DemoPass!2026"
+   pnpm --filter api seed:run -- --tenant=acme --type=personas
+   pnpm --filter api seed:run -- --tenant=acme --type=demo-data
+   ```
+2. **Criar .env.staging** local (nunca commitar) com as credenciais e notificar DM Agent para retentar
+3. **Abrir sessão Cowork** com Luigi presente para executar interativamente
+
+Ver playbook completo em: `.auto-memory/HANDOFF_DM_T20260509_2.md`
 
 ### Contexto
 
@@ -146,8 +166,10 @@ Fase 1 UAT pode continuar sem esse endpoint (super user pode ser criado via Cler
 
 **Origin:** DM (security-reviewer HIGH — sessão 2026-05-06)
 **Priority:** P1
-**Status:** PENDING
+**Status:** COMPLETED
 **Created:** 2026-05-06
+**Completed:** 2026-05-10
+**Branch:** `fix/SSE-bug04-ca5-smoke-test-and-secrets` (PR #79 MERGED)
 
 ### Problema
 Linhas 29-54 de `.github/workflows/deploy-web-staging.yml` interpolam `${{ secrets.VERCEL_TOKEN }}` diretamente no shell `run:`. Se o valor do secret contiver metacaracteres shell, isso é um vetor de injeção. O padrão correto é passar via `env:` no step e referenciar como variável de ambiente.
@@ -155,7 +177,7 @@ Linhas 29-54 de `.github/workflows/deploy-web-staging.yml` interpolam `${{ secre
 OWASP: A02:2021 / CWE-78.
 
 ### Fix
-Mover `secrets.VERCEL_TOKEN` para `env:` nos steps afetados (validate, pull, build, deploy).
+Mover `secrets.VERCEL_TOKEN` para `env:` nos steps afetados (validate, pull, build, deploy). Implementado em PR #79 (sessão DM 2026-05-10).
 
 ### Protocolo
 Não era parte do escopo do BUG-03 (pré-existente). Registrado como P1 separado.
@@ -166,9 +188,14 @@ Não era parte do escopo do BUG-03 (pré-existente). Registrado como P1 separado
 
 **Origin:** PO (sessão Cowork 2026-05-05 — UAT do super user)
 **Priority:** P0 (saúde real do staging é VERMELHA, não VERDE como `project_sse_status.md` reportou)
-**Status:** IN_PROGRESS
+**Status:** COMPLETED
 **Created:** 2026-05-05
-**Branch usada:** `fix/SSE-bug03-frontend-api-rewrites` (PR #76 MERGED) + `fix/SSE-bug03b-vercel-env-guard` (PR #77 OPEN)
+**Completed:** 2026-05-10
+**Branch usada:** `fix/SSE-bug03-frontend-api-rewrites` (PR #76 MERGED) + `fix/SSE-bug03b-vercel-env-guard` (PR #77 MERGED 2026-05-10) + `fix/SSE-bug04-ca5-smoke-test-and-secrets` (PR #79 MERGED 2026-05-10)
+
+### Post-mortem CA5 (DM — sessão 2026-05-10)
+
+Root cause do CA5 persistente identificado: o smoke test testava proxy Next.js (`/api/*` → Vercel) que o frontend **nunca usa**. `api.ts` faz chamadas diretas via `NEXT_PUBLIC_API_URL` para Fly.io. O proxy em `next.config.js` é infraestrutura não usada. PR #79 corrige CA5 para testar o que realmente importa: backend health + auth enforcement direto no Fly.io.
 
 ### Progresso (DM — sessão 2026-05-06)
 
