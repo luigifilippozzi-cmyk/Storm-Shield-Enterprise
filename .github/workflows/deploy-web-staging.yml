@@ -24,11 +24,15 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Validate secrets
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          _VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          _VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
           missing=""
-          [ -z "${{ secrets.VERCEL_TOKEN }}" ] && missing="$missing VERCEL_TOKEN"
-          [ -z "${{ secrets.VERCEL_ORG_ID }}" ] && missing="$missing VERCEL_ORG_ID"
-          [ -z "${{ secrets.VERCEL_PROJECT_ID }}" ] && missing="$missing VERCEL_PROJECT_ID"
+          [ -z "$VERCEL_TOKEN" ] && missing="$missing VERCEL_TOKEN"
+          [ -z "$_VERCEL_ORG_ID" ] && missing="$missing VERCEL_ORG_ID"
+          [ -z "$_VERCEL_PROJECT_ID" ] && missing="$missing VERCEL_PROJECT_ID"
           if [ -n "$missing" ]; then
             echo "::error::Missing secrets:$missing. Configure them in Settings → Secrets."
             exit 1
@@ -45,13 +49,23 @@ jobs:
         run: npm install --global vercel@latest
 
       - name: Pull Vercel environment
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
 
       - name: Build project artifacts
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: vercel build --prod --token="$VERCEL_TOKEN"
 
       - name: Deploy to Vercel
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        id: deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          DEPLOYMENT_URL=$(vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN")
+          echo "deployment_url=$DEPLOYMENT_URL" >> $GITHUB_OUTPUT
+          echo "Deployed to: $DEPLOYMENT_URL"
 
       - name: Smoke test — frontend loads
         run: |
@@ -67,42 +81,41 @@ jobs:
           echo "Smoke test failed after 5 attempts"
           exit 1
 
-      - name: Smoke test — API proxy routes (CA5)
+      - name: Smoke test — backend reachable and API auth (CA5)
         run: |
           set -euo pipefail
-          BASE=https://sse-web-staging.vercel.app
+          # Architecture note: api.ts calls NEXT_PUBLIC_API_URL directly (not via Next.js rewrites).
+          # CA5 validates: backend up + auth enforced. next.config.js fail-fast guard ensures
+          # NEXT_PUBLIC_API_URL is set at build time (build fails if missing on Vercel).
           BACKEND=https://sse-api-staging.fly.dev
           FAILED=0
 
-          # Step 1: verify backend is reachable directly (independent of proxy)
+          # Step 1: backend health (liveness)
           BACKEND_HEALTH=$(curl --silent --max-time 20 --output /dev/null --write-out "%{http_code}" "$BACKEND/health")
           if [ "$BACKEND_HEALTH" != "200" ]; then
-            echo "::warning::Backend direct health check: GET $BACKEND/health → $BACKEND_HEALTH"
-            echo "::error::Backend unreachable — proxy smoke test cannot proceed. Check Fly.io (T-20260412-1)."
+            echo "::error::Backend unreachable: GET $BACKEND/health → $BACKEND_HEALTH. Check Fly.io (T-20260412-1)."
             exit 1
           fi
-          echo "Backend direct: GET $BACKEND/health → $BACKEND_HEALTH ✓"
+          echo "PASS: GET $BACKEND/health → $BACKEND_HEALTH ✓"
 
-          # Step 2: /api/health via Vercel proxy must return 200
-          HEALTH=$(curl --silent --max-time 15 --output /dev/null --write-out "%{http_code}" "$BASE/api/health")
-          if [ "$HEALTH" != "200" ]; then
-            echo "::error::Proxy FAILED: GET $BASE/api/health → $HEALTH (backend is UP but proxy returns $HEALTH)"
-            echo "::error::Likely cause: NEXT_PUBLIC_API_URL not set in Vercel environment. Add it in Vercel dashboard → Settings → Environment Variables."
-            FAILED=1
+          # Step 2: backend readiness (db + redis up)
+          BACKEND_READY=$(curl --silent --max-time 20 --output /dev/null --write-out "%{http_code}" "$BACKEND/ready")
+          if [ "$BACKEND_READY" != "200" ]; then
+            echo "::warning::Backend readiness: GET $BACKEND/ready → $BACKEND_READY (db/redis may be slow)"
           else
-            echo "PASS: GET $BASE/api/health → $HEALTH (proxy working)"
+            echo "PASS: GET $BACKEND/ready → $BACKEND_READY ✓"
           fi
 
-          # Step 3: authenticated routes must return 401 via proxy (not 404/502/503/000)
-          for path in "api/tenants/me/wizard/status" "api/customers"; do
-            STATUS=$(curl --silent --max-time 15 --output /dev/null --write-out "%{http_code}" "$BASE/$path")
-            if [ "$STATUS" = "404" ] || [ "$STATUS" = "502" ] || [ "$STATUS" = "503" ] || [ "$STATUS" = "000" ]; then
-              echo "::error::Proxy FAILED: GET $BASE/$path → $STATUS (expected 401 — proxy not forwarding to backend)"
-              FAILED=1
+          # Step 3: auth is enforced on backend API routes (must return 401, not 404/502/503)
+          for path in "api/v1/tenants/me/wizard/status" "api/v1/customers"; do
+            STATUS=$(curl --silent --max-time 15 --output /dev/null --write-out "%{http_code}" "$BACKEND/$path")
+            if [ "$STATUS" = "401" ] || [ "$STATUS" = "403" ]; then
+              echo "PASS: GET $BACKEND/$path → $STATUS (auth enforced) ✓"
             else
-              echo "PASS: GET $BASE/$path → $STATUS (proxy working)"
+              echo "::error::Auth check FAILED: GET $BACKEND/$path → $STATUS (expected 401/403)"
+              FAILED=1
             fi
           done
 
           [ "$FAILED" = "0" ] || exit 1
-          echo "All API proxy smoke tests passed"
+          echo "All CA5 smoke tests passed"
