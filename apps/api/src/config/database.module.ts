@@ -32,13 +32,12 @@ function buildKnexConfig(
 
   if (url) {
     const ssl = needsSsl(url) ? { rejectUnauthorized: false } : undefined;
-    return {
-      client: 'pg',
-      connection: ssl
-        ? { connectionString: url, ssl }
-        : { connectionString: url },
-      pool,
-    };
+    // Force IPv4 for Neon: pg dual-stack DNS causes stale IPv6 connections to
+    // fail 28P01 because the connection pool caches auth state per IP address.
+    const connection: Record<string, unknown> = { connectionString: url };
+    if (ssl) connection.ssl = ssl;
+    if (url.includes('neon.tech')) connection.family = 4;
+    return { client: 'pg', connection, pool };
   }
 
   return {

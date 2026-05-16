@@ -5,13 +5,16 @@ import { Client } from 'pg';
 async function main() {
   const url = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL;
 
+  const isNeon = url ? url.includes('neon.tech') : false;
   const client = url
     ? new Client({
         connectionString: url,
         ssl:
-          url.includes('sslmode=require') || url.includes('neon.tech') || url.includes('amazonaws.com')
+          url.includes('sslmode=require') || isNeon || url.includes('amazonaws.com')
             ? { rejectUnauthorized: false }
             : undefined,
+        // Force IPv4 for Neon: dual-stack DNS causes stale IPv6 auth cache (28P01)
+        ...(isNeon ? { family: 4 } : {}),
       })
     : new Client({
         host: process.env.POSTGRES_HOST || 'localhost',

@@ -24,7 +24,11 @@ function parseArgs(): { tenantSlug?: string; tenantId?: string; type: string } {
 function buildKnex() {
   const connectionString = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL;
   if (connectionString) {
-    return knex({ client: 'pg', connection: { connectionString, ssl: { rejectUnauthorized: false } } });
+    const connection: Record<string, unknown> = { connectionString, ssl: { rejectUnauthorized: false } };
+    // Force IPv4 for Neon: pg dual-stack DNS causes stale IPv6 connections to
+    // fail 28P01 (credential caching per IPv6 address in connection pool).
+    if (connectionString.includes('neon.tech')) connection.family = 4;
+    return knex({ client: 'pg', connection });
   }
   return knex({
     client: 'pg',
