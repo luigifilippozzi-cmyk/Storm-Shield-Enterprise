@@ -5,7 +5,7 @@ import * as path from 'path';
 import { v7 as uuidv7 } from 'uuid';
 import { seedRolesAndPermissions } from './seeds/roles_permissions.seed';
 
-dotenv.config({ path: '../../../.env' });
+dotenv.config({ path: path.resolve(__dirname, '../../../../.env') });
 
 async function provisionTenant(name: string, slug: string, ownerEmail: string) {
   const db = knex({
