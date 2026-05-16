@@ -3,7 +3,51 @@ name: SSE Project Status
 description: Current state of Storm Shield Enterprise project — metrics, health, priorities for Dev Manager
 type: project
 ---
-# SSE Project Status — 2026-05-11 (Dev Manager — Sessão Autônoma)
+# SSE Project Status — 2026-05-15 (Dev Manager — Sessão Autônoma)
+
+## Revisão DM — 2026-05-15 (PR #83)
+
+**Saúde: 🟢 VERDE** — CI SUCCESS (2026-05-16T00:15Z). Deploy Staging in_progress. Deploy Web Vercel SUCCESS (2026-05-11T22:51Z). Deploy API Fly.io FAILURE (pré-existente T-20260412-1 — infra, não bloqueia código). 0 PRs abertos.
+
+**Módulos: 15/15** | Testes: **599** | Endpoints: **128** | Migrations: **19** | ADRs: **17** | Controllers: **19** | Pages: **43** | Specs: **29**
+
+### Novidades desta sessão (2026-05-15)
+
+| PR | Tipo | Descrição | Status |
+|---|---|---|---|
+| #83 | fix(db) | BUG-05: family:4 IPv4 para Neon — unblocks T-20260509-2 | MERGED 2026-05-15 |
+
+### Tarefas concluídas
+
+- **BUG-05 COMPLETED** — Root cause: pg dual-stack DNS cria conexões IPv6 stale no pool com credenciais antigas → 28P01. Fix: `family: 4` em `database.module.ts`, `seeds/run.ts`, `run-migrations.ts`. Bonus: dotenv path fix em `tenant-provisioning.ts`. PR #83 merged.
+- Commitados arquivos untracked desde sessão 2026-05-12: `BUG-04_Neon_Support_Escalation.md`, `BUG-05_credential_caching.md`, `GitHub_Discussion_Template.md`, `Neon_Support_Email_Template.txt`, `BUG_CREDENTIAL_CACHING_IPV6.md`, `create-bug-04-issue.ps1`, `scripts/register-bug-05.ps1`.
+
+### Verificação Regras CLAUDE.md §10 (regras 1-14)
+- KNEX_CONNECTION direto em services: **OK** (sem mudança)
+- FLOAT/REAL em migrations: **OK** (sem mudança)
+- CASCADE em tabelas financeiras/contábeis: **OK** (sem mudança)
+- Secrets hardcoded: **OK** — sem credenciais commitadas
+
+### Verificação Regras 15-18 (alinhamento Bússola)
+- PR #83: fix(db) — sem tela nova. Regra 16 N/A. Regras 15-18 ✓
+
+### Bloqueios atuais
+1. **T-20260509-2 BLOCKED → PENDENTE VERIFICAÇÃO** — BUG-05 fix merged. Após Luigi atualizar `.env` com `DATABASE_URL_UNPOOLED` apontando para Neon staging (com credenciais corretas), o seed script deve funcionar sem 28P01.
+2. **T-20260412-1 BLOCKED (infra)** — deploy-api-staging.yml (Fly.io) falha. Não bloqueia desenvolvimento.
+
+### Inconsistências
+1. **Admin module sem service** — `apps/api/src/modules/admin/` sem `admin.service.ts` (pré-existente).
+2. **PV4 violation** — `STATUS_COLORS` em `platform-admin/page.tsx` usa Tailwind direto — P2 pendente (pré-existente).
+
+### Prioridades P1/P2 para próxima sessão
+1. **P1 (PO/Luigi)**: Testar T-20260509-2 com BUG-05 fix deployado — rodar `run-seeds.ps1` e verificar se 28P01 desapareceu.
+2. **P1 (PO)**: Iniciar planejamento Fase 2 (RF-008 convites + IA + Plaid + n8n).
+3. **P2 (DM/Infra)**: Investigar T-20260412-1 — deploy-api-staging.yml Fly.io secrets.
+4. **P2 (DM)**: PV4 violation em platform-admin/page.tsx (STATUS_COLORS Tailwind direto).
+
+### Última sessão: 2026-05-15 (DM Agent — BUG-05 IPv4 fix) ✅ VERDE
+
+---
 
 ## Revisão DM — 2026-05-11 (PRs #81 + #82)
 

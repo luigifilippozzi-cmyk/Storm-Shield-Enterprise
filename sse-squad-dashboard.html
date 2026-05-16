@@ -289,10 +289,10 @@
 <script>
 // <!--METRICS_START-->
 const D = {
-  lastUpdated: "2026-05-11 (Dev Manager — Sessão Autônoma)",
+  lastUpdated: "2026-05-15 (Dev Manager — Sessão Autônoma)",
   updatedBy: "Dev Manager",
   health: "green",
-  healthText: "VERDE. CI SUCCESS. Deploy Web Vercel SUCCESS (2026-05-11T22:51Z — PR #82 merged). Deploy Staging Docker/GHCR SUCCESS. Deploy API Fly.io FAILURE (deploy-api-staging.yml — pré-existente T-20260412-1 infra, não bloqueia código). 0 PRs abertos. PRs #81+#82 merged nesta sessão. T-20260509-1 COMPLETED (Create Tenant UI). Uncommitted local: project_sse_status.md (em andamento).",
+  healthText: "VERDE. CI SUCCESS (2026-05-16T00:15Z — PR #83 merged). Deploy Staging Docker/GHCR in_progress. Deploy Web Vercel SUCCESS (2026-05-11T22:51Z). Deploy API Fly.io FAILURE (pré-existente T-20260412-1 — não bloqueia código). 0 PRs abertos. PR #83 merged: BUG-05 fix (family:4 IPv4 para Neon — unblocks T-20260509-2).",
   activeFase: "2",
   kpis: {
     backendModules: 15,
@@ -315,6 +315,8 @@ const D = {
     { name: "frontend-reviewer", role: "Next.js + shadcn/ui", color: "var(--cyan)", bg: "rgba(6,182,212,.12)", icon: "layout", status: "active", statusText: "Checklist expandido: 20 itens (8 base + 6 PV + 6 PUX via ADR-013). PR #44 FAIL→PASS. Regra 19 vigente.", stats: [["Framework","Next.js 15 + React 19"],["Checklist","20 itens (ADR-013)"],["Trigger","UI/component changes — Regra 19"]] }
   ],
   activity: [
+    { time: "Mai 15", color: "var(--accent2)", msg: "<strong>PR #83 merged</strong> fix(db): BUG-05 — force IPv4 (family:4) para conexões Neon em database.module.ts, seeds/run.ts, run-migrations.ts. Root cause: pg dual-stack DNS cria conexões IPv6 com credenciais stale no pool → 28P01. Fix cirúrgico: family:4 força IPv4-only. Bonus: dotenv path fix em tenant-provisioning.ts. 599/599 testes. Unblocks T-20260509-2 (seed Acme staging).", tag: "merge" },
+    { time: "Mai 15", color: "var(--green)", msg: "<strong>Dev Manager</strong> sessão autônoma 2026-05-15 — BUG-05 investigado e corrigido. Root cause confirmado: pg dual-stack DNS / IPv6 credential caching. family:4 adicionado em 4 arquivos de conexão. PR #83 merged. CI SUCCESS (599/599). Commitados: BUG-04/05 docs + scripts auxiliares (untracked desde 2026-05-12).", tag: "dm" },
     { time: "Mai 11", color: "var(--accent2)", msg: "<strong>PR #82 merged</strong> feat(web): Create Tenant modal em platform-admin — T-20260509-1 COMPLETED. useCreateTenant hook + CreateTenantDialog (name, slug auto-derivado, owner_email). POST /api/tenants já existia no backend. 599/599 testes. Deploy Web SUCCESS (2026-05-11T22:51Z). Platform Operator §2.5 / JTBD#1 provisioning UI.", tag: "merge" },
     { time: "Mai 11", color: "var(--accent2)", msg: "<strong>PR #81 merged</strong> chore: seeds dotenv fix + helper scripts + ADR-015 + remove ADR-012 stub. run.ts usa path.resolve(__dirname) (fix dotenv load). run-seed.bat/ps1 + run-seeds.ps1 portáveis ($PSScriptRoot/%~dp0). ADR-015 release cadence formalizado. ADR-012 stub deprecated removido.", tag: "merge" },
     { time: "Mai 11", color: "var(--green)", msg: "<strong>Dev Manager</strong> sessão autônoma 2026-05-11 — PRs #81+#82 merged. T-20260509-1 COMPLETED (Create Tenant modal). ADR-015 redigido. ADR-012 stub removido. run.ts dotenv fix commitado. 599/599 testes. Build Next.js limpo. Deploy Web SUCCESS. Deploy API FAILURE (infra pré-existente T-20260412-1).", tag: "dm" },
