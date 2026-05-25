@@ -31,14 +31,13 @@ export class AccountingService {
   constructor(private readonly tenantDb: TenantDatabaseService) {}
 
   async findAll(tenantId: string, query: AccountQueryDto): Promise<PaginatedResult<any>> {
-    const knex = await this.tenantDb.getConnection();
     const {
       search, account_type, is_active,
       page = 1, limit = 50,
       sort_by = 'account_number', sort_order = 'asc',
     } = query;
 
-    const baseQuery = knex('chart_of_accounts').where({ tenant_id: tenantId, deleted_at: null });
+    const baseQuery = this.tenantDb.table('chart_of_accounts').where({ tenant_id: tenantId, deleted_at: null });
 
     if (search) {
       baseQuery.where(function () {
@@ -74,8 +73,7 @@ export class AccountingService {
   }
 
   async findOne(tenantId: string, id: string) {
-    const knex = await this.tenantDb.getConnection();
-    const record = await knex('chart_of_accounts')
+    const record = await this.tenantDb.table('chart_of_accounts')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .first();
     if (!record) throw new NotFoundException('Account not found');
@@ -83,10 +81,8 @@ export class AccountingService {
   }
 
   async create(tenantId: string, dto: CreateAccountDto) {
-    const knex = await this.tenantDb.getConnection();
-
     // Check for duplicate account number
-    const existing = await knex('chart_of_accounts')
+    const existing = await this.tenantDb.table('chart_of_accounts')
       .where({ tenant_id: tenantId, account_number: dto.account_number, deleted_at: null })
       .first();
     if (existing) {
@@ -95,7 +91,7 @@ export class AccountingService {
 
     // Validate parent exists if provided
     if (dto.parent_id) {
-      const parent = await knex('chart_of_accounts')
+      const parent = await this.tenantDb.table('chart_of_accounts')
         .where({ id: dto.parent_id, tenant_id: tenantId, deleted_at: null })
         .first();
       if (!parent) {
@@ -103,7 +99,7 @@ export class AccountingService {
       }
     }
 
-    const [record] = await knex('chart_of_accounts')
+    const [record] = await this.tenantDb.table('chart_of_accounts')
       .insert({
         id: generateId(),
         tenant_id: tenantId,
@@ -115,9 +111,7 @@ export class AccountingService {
   }
 
   async update(tenantId: string, id: string, dto: UpdateAccountDto) {
-    const knex = await this.tenantDb.getConnection();
-
-    const existing = await knex('chart_of_accounts')
+    const existing = await this.tenantDb.table('chart_of_accounts')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .first();
     if (!existing) throw new NotFoundException('Account not found');
@@ -131,7 +125,7 @@ export class AccountingService {
       if (dto.parent_id === id) {
         throw new BadRequestException('Account cannot be its own parent');
       }
-      const parent = await knex('chart_of_accounts')
+      const parent = await this.tenantDb.table('chart_of_accounts')
         .where({ id: dto.parent_id, tenant_id: tenantId, deleted_at: null })
         .first();
       if (!parent) {
@@ -139,7 +133,7 @@ export class AccountingService {
       }
     }
 
-    const [record] = await knex('chart_of_accounts')
+    const [record] = await this.tenantDb.table('chart_of_accounts')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .update({ ...dto, updated_at: new Date() })
       .returning('*');
@@ -147,9 +141,7 @@ export class AccountingService {
   }
 
   async remove(tenantId: string, id: string) {
-    const knex = await this.tenantDb.getConnection();
-
-    const existing = await knex('chart_of_accounts')
+    const existing = await this.tenantDb.table('chart_of_accounts')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .first();
     if (!existing) throw new NotFoundException('Account not found');
@@ -159,14 +151,14 @@ export class AccountingService {
     }
 
     // Check for child accounts
-    const children = await knex('chart_of_accounts')
+    const children = await this.tenantDb.table('chart_of_accounts')
       .where({ parent_id: id, tenant_id: tenantId, deleted_at: null })
       .first();
     if (children) {
       throw new BadRequestException('Cannot delete account with child accounts');
     }
 
-    await knex('chart_of_accounts')
+    await this.tenantDb.table('chart_of_accounts')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .update({ deleted_at: new Date() });
 
@@ -174,9 +166,7 @@ export class AccountingService {
   }
 
   async getTree(tenantId: string): Promise<AccountTreeNode[]> {
-    const knex = await this.tenantDb.getConnection();
-
-    const accounts = await knex('chart_of_accounts')
+    const accounts = await this.tenantDb.table('chart_of_accounts')
       .where({ tenant_id: tenantId, deleted_at: null })
       .orderBy('account_number', 'asc');
 

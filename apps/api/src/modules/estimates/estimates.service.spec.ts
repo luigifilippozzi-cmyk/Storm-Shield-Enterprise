@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { EstimatesService } from './estimates.service';
 import { EstimateStateMachineService } from './estimate-state-machine.service';
@@ -49,7 +49,7 @@ describe('EstimatesService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         EstimatesService,
-        { provide: TenantDatabaseService, useValue: { getConnection: jest.fn().mockResolvedValue(knex) } },
+        { provide: TenantDatabaseService, useValue: { getConnection: jest.fn().mockResolvedValue(knex), table: jest.fn().mockReturnValue(knex._chain), getPublicConnection: jest.fn().mockReturnValue(knex), tenantSchema: 'test_schema' } },
         { provide: StorageService, useValue: { upload: jest.fn(), delete: jest.fn(), generateKey: jest.fn().mockReturnValue('key') } },
         { provide: ActivationEventsService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
         { provide: EstimateStateMachineService, useValue: stateMachineMock },
@@ -141,9 +141,9 @@ describe('EstimatesService', () => {
       } as any);
 
       expect(result).toEqual(mockEstimate);
-      // First insert for estimate, second for lines
-      expect(knex._trx).toHaveBeenCalledWith('estimates');
-      expect(knex._trx).toHaveBeenCalledWith('estimate_lines');
+      // First insert for estimate, second for lines (schema-prefixed after BUG-C fix)
+      expect(knex._trx).toHaveBeenCalledWith('test_schema.estimates');
+      expect(knex._trx).toHaveBeenCalledWith('test_schema.estimate_lines');
     });
 
     it('should create estimate without lines', async () => {
@@ -317,7 +317,7 @@ describe('EstimatesService', () => {
     });
   });
 
-  describe('findAll — filters', () => {
+  describe('findAll â€” filters', () => {
     const setupPaginated = (data: any[] = []) => {
       knex._chain.count.mockReturnValueOnce([{ count: String(data.length) }]);
       knex._chain.offset.mockReturnValueOnce(data);
@@ -356,7 +356,7 @@ describe('EstimatesService', () => {
     });
   });
 
-  describe('update — with lines', () => {
+  describe('update â€” with lines', () => {
     it('should replace lines when provided', async () => {
       const mockEstimate = { id: ESTIMATE_ID, status: 'draft' };
       knex._chain.first.mockReturnValueOnce(mockEstimate);
@@ -369,7 +369,7 @@ describe('EstimatesService', () => {
       } as any);
 
       expect(result.subtotal).toBe(200);
-      expect(knex._trx).toHaveBeenCalledWith('estimate_lines');
+      expect(knex._trx).toHaveBeenCalledWith('test_schema.estimate_lines');
     });
   });
 
@@ -494,7 +494,7 @@ describe('EstimatesService', () => {
     });
   });
 
-  // ── RF-006: Dispute workflow tests ──
+  // â”€â”€ RF-006: Dispute workflow tests â”€â”€
 
   describe('openDispute', () => {
     const USER_ID = '00000000-0000-0000-0000-000000000042';
@@ -505,7 +505,7 @@ describe('EstimatesService', () => {
       const mockUpdated = { ...mockEstimate, status: 'disputed', dispute_reason: 'adjuster_underpayment' };
       const ownerUsers = [{ user_id: '00000000-0000-0000-0000-000000000010' }];
 
-      // first() → estimate; returning() → updated estimate; join select → owner users; insert notifications
+      // first() â†’ estimate; returning() â†’ updated estimate; join select â†’ owner users; insert notifications
       knex._chain.first.mockReturnValueOnce(mockEstimate);
       knex._chain.returning.mockReturnValueOnce([mockUpdated]);
       knex._chain.select.mockReturnValueOnce(ownerUsers);
@@ -538,7 +538,7 @@ describe('EstimatesService', () => {
       const mockEstimate = { id: ESTIMATE_ID, status: 'draft', tenant_id: TENANT_ID };
       knex._chain.first.mockReturnValueOnce(mockEstimate);
 
-      // Simulate state machine rejecting transition from draft → disputed
+      // Simulate state machine rejecting transition from draft â†’ disputed
       const stateMachine = service['stateMachine'] as jest.Mocked<EstimateStateMachineService>;
       stateMachine.transition.mockRejectedValueOnce(new BadRequestException('Transition not allowed'));
 

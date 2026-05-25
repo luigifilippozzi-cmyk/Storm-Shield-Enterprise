@@ -52,14 +52,17 @@ export interface BalanceSheetReport {
 export class ReportsService {
   constructor(private readonly tenantDb: TenantDatabaseService) {}
 
-  private async getPostedLineBalances(
+  private getPostedLineBalances(
     knex: Knex,
     tenantId: string,
     opts: { as_of_date?: string; date_from?: string; date_to?: string; fiscal_period_id?: string },
   ) {
-    const q = knex('journal_entry_lines as jel')
-      .join('journal_entries as je', 'jel.journal_entry_id', 'je.id')
-      .join('chart_of_accounts as coa', 'jel.account_id', 'coa.id')
+    const schema = this.tenantDb.tenantSchema;
+    const t = (name: string) => (schema ? `${schema}.${name}` : name);
+
+    const q = knex({ jel: t('journal_entry_lines') })
+      .join({ je: t('journal_entries') }, 'jel.journal_entry_id', 'je.id')
+      .join({ coa: t('chart_of_accounts') }, 'jel.account_id', 'coa.id')
       .where('je.tenant_id', tenantId)
       .where('jel.tenant_id', tenantId)
       .where('je.status', 'posted')
@@ -96,7 +99,7 @@ export class ReportsService {
     as_of_date?: string;
     fiscal_period_id?: string;
   }): Promise<TrialBalanceReport> {
-    const knex = await this.tenantDb.getConnection();
+    const knex = this.tenantDb.getPublicConnection();
     const asOfDate = opts.as_of_date || new Date().toISOString().slice(0, 10);
 
     const rows = await this.getPostedLineBalances(knex, tenantId, {
@@ -137,7 +140,7 @@ export class ReportsService {
     date_to?: string;
     fiscal_period_id?: string;
   }): Promise<ProfitLossReport> {
-    const knex = await this.tenantDb.getConnection();
+    const knex = this.tenantDb.getPublicConnection();
     const today = new Date().toISOString().slice(0, 10);
 
     // Default to current calendar year
@@ -188,7 +191,7 @@ export class ReportsService {
   }
 
   async getBalanceSheet(tenantId: string, opts: { as_of_date?: string }): Promise<BalanceSheetReport> {
-    const knex = await this.tenantDb.getConnection();
+    const knex = this.tenantDb.getPublicConnection();
     const asOfDate = opts.as_of_date || new Date().toISOString().slice(0, 10);
 
     const rows = await this.getPostedLineBalances(knex, tenantId, { as_of_date: asOfDate });

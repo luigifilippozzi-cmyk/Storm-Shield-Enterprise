@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { JournalEntriesService } from './journal-entries.service';
 import { FiscalPeriodsService } from '../fiscal-periods/fiscal-periods.service';
@@ -52,7 +52,7 @@ describe('JournalEntriesService', () => {
             findOpenPeriodForDate: jest.fn().mockResolvedValue(MOCK_PERIOD),
           },
         },
-        { provide: TenantDatabaseService, useValue: { getConnection: jest.fn().mockResolvedValue(knex) } },
+        { provide: TenantDatabaseService, useValue: { getConnection: jest.fn().mockResolvedValue(knex), table: jest.fn().mockReturnValue(knex._chain), getPublicConnection: jest.fn().mockReturnValue(knex), tenantSchema: 'test_schema' } },
       ],
     }).compile();
     service = module.get<JournalEntriesService>(JournalEntriesService);
@@ -64,7 +64,7 @@ describe('JournalEntriesService', () => {
     { account_id: ACCOUNT_B, debit: 0, credit: 100 },
   ];
 
-  // ── findAll ──────────────────────────────────────────────────
+  // â”€â”€ findAll â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('findAll', () => {
     it('should return paginated journal entries', async () => {
@@ -88,7 +88,7 @@ describe('JournalEntriesService', () => {
     });
   });
 
-  // ── findOne ──────────────────────────────────────────────────
+  // â”€â”€ findOne â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('findOne', () => {
     it('should return entry with lines', async () => {
@@ -109,7 +109,7 @@ describe('JournalEntriesService', () => {
     });
   });
 
-  // ── create ───────────────────────────────────────────────────
+  // â”€â”€ create â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('create', () => {
     it('should create entry with balanced lines', async () => {
@@ -207,7 +207,7 @@ describe('JournalEntriesService', () => {
     });
   });
 
-  // ── post ─────────────────────────────────────────────────────
+  // â”€â”€ post â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('post', () => {
     it('should post a draft entry', async () => {
@@ -243,31 +243,26 @@ describe('JournalEntriesService', () => {
     });
   });
 
-  // ── reverse ──────────────────────────────────────────────────
+  // â”€â”€ reverse â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('reverse', () => {
     it('should reverse a posted entry', async () => {
       const mockEntry = { id: ENTRY_ID, status: 'posted', entry_number: 'JE-2026-0001', total_debit: '100.00', total_credit: '100.00' };
-      knex._chain.first.mockReturnValueOnce(mockEntry); // find entry
-      // lines: the service calls knex('journal_entry_lines').where({...})
-      // Since where() returns the chain, and the chain is iterable via the final await,
-      // we need the second knex() call to eventually resolve to an array.
-      // The service awaits the chain directly (no .first()), so we mock the where to return a thenable array.
+      knex._chain.first.mockReturnValueOnce(mockEntry);
+
       const mockLines = [
         { account_id: ACCOUNT_A, debit: 100, credit: 0, description: 'Debit line' },
         { account_id: ACCOUNT_B, debit: 0, credit: 100, description: 'Credit line' },
       ];
-      // Override: second call to knex() for journal_entry_lines returns a promise-like array
-      knex.mockImplementationOnce(() => {
-        // Already first call returned chain for journal_entries.where.first
-        return knex._chain;
-      }).mockImplementationOnce(() => {
-        const linesChain: any = { where: jest.fn().mockResolvedValue(mockLines) };
-        return linesChain;
-      });
+      // 1st where: entry lookup (returns chain for .first())
+      // 2nd where: table('journal_entry_lines').where({...}) resolves to mockLines
+      knex._chain.where
+        .mockReturnValueOnce(knex._chain)
+        .mockReturnValueOnce(Promise.resolve(mockLines));
+
       // entry number count
       knex._chain.count.mockReturnValueOnce([{ count: '1' }]);
-      // transaction
+      // transaction: INSERT journal_entries returning reversalEntry
       const reversalEntry = { id: '00000000-0000-0000-0000-000000000099', status: 'posted', entry_number: 'JE-2026-0002' };
       knex._chain.returning.mockReturnValueOnce([reversalEntry]);
       knex._chain.insert.mockReturnValue(knex._chain);
@@ -289,7 +284,7 @@ describe('JournalEntriesService', () => {
     });
   });
 
-  // ── remove ───────────────────────────────────────────────────
+  // â”€â”€ remove â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('remove', () => {
     it('should delete a draft entry and its lines', async () => {

@@ -3,11 +3,11 @@ name: SSE Project Status
 description: Current state of Storm Shield Enterprise project — metrics, health, priorities for Dev Manager
 type: project
 ---
-# SSE Project Status — 2026-05-25 (Dev Manager — Sessão Autônoma)
+# SSE Project Status — 2026-05-25 (Dev Manager — Sessão Autônoma BUG-C)
 
-## Revisão DM — 2026-05-25 (PR #84)
+## Revisão DM — 2026-05-25 (PR #85)
 
-**Saúde: 🟢 VERDE** — CI SUCCESS. Deploy Web Vercel SUCCESS (2026-05-25). Deploy API Fly.io FAILURE (pré-existente T-20260412-1 — infra, não bloqueia código). 0 PRs abertos.
+**Saúde: 🟡 AMARELO** — PR #85 OPEN (aguardando merge + deploy manual). T-20260412-1 ainda bloqueia auto-deploy Fly.io. Luigi deve fazer merge + `flyctl deploy` manual para validar BUG-C em staging.
 
 **Módulos: 15/15** | Testes: **599** | Endpoints: **128** | Migrations: **19** | ADRs: **17** | Controllers: **19** | Pages: **44** | Specs: **29**
 
@@ -16,10 +16,12 @@ type: project
 | PR | Tipo | Descrição | Status |
 |---|---|---|---|
 | #84 | fix(web) | BUG-A: /login/tasks 404 Clerk + BUG-B: X-Clerk-Org-Id em 12 hooks + AuthGuard security fix | MERGED 2026-05-25 |
+| #85 | fix(api) | BUG-C: pool-safe queries via TenantDatabaseService.table() — fix PgBouncer SET search_path reset | OPEN 2026-05-25 |
 
 ### Tarefas concluídas
 
 - **T-20260524-1 COMPLETED** — BUG-A: Clerk redireciona para `/login/tasks` após choose-org task → criado redirect shim + mudado routing="path". BUG-B: 12 hooks não enviavam X-Clerk-Org-Id → TenantMiddleware não resolvia tenant → dashboard sem dados. Adicionado orgId em todos os hooks via useAuth(). Security fix: AuthGuard valida X-Clerk-Org-Id contra JWT org_id (previne cross-tenant spoofing). PR #84 merged.
+- **BUG-C COMPLETED (PR #85 OPEN)** — Root cause: Neon PgBouncer (transaction mode) resets `SET search_path` between transactions → queries hit empty public schema. Fix: `TenantDatabaseService.table(name)` gera `knex('tenant_xxx.tableName')` sem depender de sessão. 20 services migrados, 20 specs atualizados. 599/599 testes passando.
 - Fly.io API confirmado UP (health /health = 200, /financial/summary = 401 sem auth) — T-20260412-1 não bloqueia o API em si, apenas o CI de deploy.
 
 ### Verificação Regras CLAUDE.md §10 (regras 1-14)
@@ -32,8 +34,8 @@ type: project
 - PR #84: fix(web/api) — fix de infra/meta. Sem tela nova. Regra 16 N/A. Regras 15-18 ✓
 
 ### Bloqueios atuais
-1. **T-20260412-1 BLOCKED (infra)** — deploy-api-staging.yml (Fly.io) falha no CI de deploy, mas o container deployado em 2026-05-02 ainda está UP e respondendo (/health = 200). Não bloqueia desenvolvimento.
-2. **BUG-B parcialmente resolvido** — Dashboard deve exibir dados após PR #84 deployado no Vercel. Verificação final requer login manual de Luigi com org ativa.
+1. **T-20260412-1 BLOCKED (infra)** — deploy-api-staging.yml (Fly.io) falha no CI de deploy, mas o container deployado em 2026-05-02 ainda está UP e respondendo (/health = 200). Não bloqueia desenvolvimento. Luigi deve fazer `flyctl deploy` manual após merge do PR #85.
+2. **BUG-C aguardando deploy** — PR #85 OPEN. Requer merge + `flyctl deploy` manual de Luigi para validar em staging. Dados vazios persistirão até deploy do novo código.
 
 ### Inconsistências
 1. **Admin module sem service** — `apps/api/src/modules/admin/` sem `admin.service.ts` (pré-existente).
@@ -41,12 +43,12 @@ type: project
 3. **Tenants module coverage** — 61.4% (abaixo da meta 80%) — P2.
 
 ### Prioridades P1/P2 para próxima sessão
-1. **P1 (Luigi)**: Testar login em staging — verificar se dashboard exibe dados reais pós-PR #84.
+1. **P1 (Luigi)**: Merge PR #85 + `flyctl deploy` manual → verificar `/customers`, `/estimates`, dashboard com dados reais.
 2. **P1 (Luigi)**: Iniciar planejamento Fase 2 (RF-008 convites + IA + Plaid + n8n).
 3. **P2 (DM)**: tenants.service.ts coverage (61.4% → 80%+).
 4. **P2 (DM)**: PV4 violation em platform-admin/page.tsx.
 
-### Última sessão: 2026-05-25 (DM Agent — T-20260524-1 Clerk auth + hooks fix) ✅ VERDE
+### Última sessão: 2026-05-25 (DM Agent — BUG-C PgBouncer pool-safe fix + PR #85) 🟡 AGUARDANDO DEPLOY
 
 ---
 

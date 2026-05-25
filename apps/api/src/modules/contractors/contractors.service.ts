@@ -21,10 +21,9 @@ export class ContractorsService {
   constructor(private readonly tenantDb: TenantDatabaseService) {}
 
   async findAll(tenantId: string, query: QueryContractorDto): Promise<PaginatedResult<any>> {
-    const knex = await this.tenantDb.getConnection();
     const { search, status, specialty, page = 1, limit = 20, sort_by = 'created_at', sort_order = 'desc' } = query;
 
-    const baseQuery = knex('contractors')
+    const baseQuery = this.tenantDb.table('contractors')
       .where({ tenant_id: tenantId, deleted_at: null });
 
     if (search) {
@@ -70,8 +69,7 @@ export class ContractorsService {
   }
 
   async create(tenantId: string, dto: CreateContractorDto) {
-    const knex = await this.tenantDb.getConnection();
-    const [record] = await knex('contractors')
+    const [record] = await this.tenantDb.table('contractors')
       .insert({
         id: generateId(),
         tenant_id: tenantId,
@@ -82,17 +80,16 @@ export class ContractorsService {
   }
 
   async findOne(tenantId: string, id: string) {
-    const knex = await this.tenantDb.getConnection();
-    const record = await knex('contractors')
+    const record = await this.tenantDb.table('contractors')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .first();
     if (!record) throw new NotFoundException('Contractor not found');
 
-    const payments = await knex('contractor_payments')
+    const payments = await this.tenantDb.table('contractor_payments')
       .where({ contractor_id: id, tenant_id: tenantId })
       .orderBy('payment_date', 'desc');
 
-    const [{ total_paid }] = await knex('contractor_payments')
+    const [{ total_paid }] = await this.tenantDb.table('contractor_payments')
       .where({ contractor_id: id, tenant_id: tenantId })
       .sum('amount as total_paid');
 
@@ -100,8 +97,7 @@ export class ContractorsService {
   }
 
   async update(tenantId: string, id: string, dto: UpdateContractorDto) {
-    const knex = await this.tenantDb.getConnection();
-    const [record] = await knex('contractors')
+    const [record] = await this.tenantDb.table('contractors')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .update({ ...dto, updated_at: new Date() })
       .returning('*');
@@ -110,8 +106,7 @@ export class ContractorsService {
   }
 
   async remove(tenantId: string, id: string) {
-    const knex = await this.tenantDb.getConnection();
-    const updated = await knex('contractors')
+    const updated = await this.tenantDb.table('contractors')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .update({ deleted_at: new Date() });
     if (!updated) throw new NotFoundException('Contractor not found');
@@ -121,27 +116,23 @@ export class ContractorsService {
   // ── Payments ──
 
   async getPayments(tenantId: string, contractorId: string) {
-    const knex = await this.tenantDb.getConnection();
-
-    const contractor = await knex('contractors')
+    const contractor = await this.tenantDb.table('contractors')
       .where({ id: contractorId, tenant_id: tenantId, deleted_at: null })
       .first();
     if (!contractor) throw new NotFoundException('Contractor not found');
 
-    return knex('contractor_payments')
+    return this.tenantDb.table('contractor_payments')
       .where({ contractor_id: contractorId, tenant_id: tenantId })
       .orderBy('payment_date', 'desc');
   }
 
   async createPayment(tenantId: string, userId: string, dto: CreateContractorPaymentDto) {
-    const knex = await this.tenantDb.getConnection();
-
-    const contractor = await knex('contractors')
+    const contractor = await this.tenantDb.table('contractors')
       .where({ id: dto.contractor_id, tenant_id: tenantId, deleted_at: null })
       .first();
     if (!contractor) throw new NotFoundException('Contractor not found');
 
-    const [record] = await knex('contractor_payments')
+    const [record] = await this.tenantDb.table('contractor_payments')
       .insert({
         id: generateId(),
         tenant_id: tenantId,
@@ -153,15 +144,14 @@ export class ContractorsService {
   }
 
   async getYtdPayments(tenantId: string, contractorId: string, year?: number) {
-    const knex = await this.tenantDb.getConnection();
     const targetYear = year || new Date().getFullYear();
 
-    const contractor = await knex('contractors')
+    const contractor = await this.tenantDb.table('contractors')
       .where({ id: contractorId, tenant_id: tenantId, deleted_at: null })
       .first();
     if (!contractor) throw new NotFoundException('Contractor not found');
 
-    const [{ total }] = await knex('contractor_payments')
+    const [{ total }] = await this.tenantDb.table('contractor_payments')
       .where({ contractor_id: contractorId, tenant_id: tenantId })
       .whereRaw('EXTRACT(YEAR FROM payment_date) = ?', [targetYear])
       .sum('amount as total');

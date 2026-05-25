@@ -17,10 +17,8 @@ export class DisposalService {
     assetId: string,
     dto: DisposeAssetDto,
   ) {
-    const knex = await this.tenantDb.getConnection();
-
     // Load asset
-    const asset = await knex('fixed_assets')
+    const asset = await this.tenantDb.table('fixed_assets')
       .where({ id: assetId, tenant_id: tenantId, deleted_at: null })
       .first();
     if (!asset) throw new NotFoundException('Fixed asset not found');
@@ -30,7 +28,7 @@ export class DisposalService {
     }
 
     // Load category for GL accounts
-    const category = await knex('asset_categories')
+    const category = await this.tenantDb.table('asset_categories')
       .where({ id: asset.category_id, tenant_id: tenantId })
       .first();
     if (!category) throw new BadRequestException('Asset category not found');
@@ -149,7 +147,7 @@ export class DisposalService {
     await this.journalEntriesService.post(tenantId, journalEntry.id, userId);
 
     // Create disposal record
-    const [disposal] = await knex('asset_disposals')
+    const [disposal] = await this.tenantDb.table('asset_disposals')
       .insert({
         id: generateId(),
         tenant_id: tenantId,
@@ -168,7 +166,7 @@ export class DisposalService {
       .returning('*');
 
     // Update asset status
-    await knex('fixed_assets')
+    await this.tenantDb.table('fixed_assets')
       .where({ id: assetId, tenant_id: tenantId })
       .update({
         status: 'disposed',
@@ -179,8 +177,7 @@ export class DisposalService {
   }
 
   async findDisposals(tenantId: string, assetId?: string) {
-    const knex = await this.tenantDb.getConnection();
-    const query = knex('asset_disposals')
+    const query = this.tenantDb.table('asset_disposals')
       .where({ tenant_id: tenantId })
       .orderBy('disposal_date', 'desc');
 

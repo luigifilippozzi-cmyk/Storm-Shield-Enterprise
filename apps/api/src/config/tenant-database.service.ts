@@ -5,15 +5,18 @@ import type { Request } from 'express';
 import { KNEX_CONNECTION } from './database.tokens';
 
 /**
- * Request-scoped service that provides a Knex instance with:
- * 1. search_path set to the tenant's schema (schema-level isolation)
- * 2. app.current_tenant_id session variable set (for RLS policies)
+ * Request-scoped service that provides schema-isolated Knex query builders.
  *
- * This dual-layer approach ensures tenant isolation even if application
- * code forgets a WHERE tenant_id = X clause.
+ * Isolation strategy (3 layers):
+ * 1. Explicit schema qualification via table() — pool-safe, does not rely on
+ *    SET search_path (which is reset by PgBouncer in transaction mode).
+ * 2. app.current_tenant_id session variable — for RLS policies (best-effort;
+ *    may be reset by connection poolers in transaction mode).
+ * 3. WHERE tenant_id = X in every query — application-level safety net.
  *
- * Services should inject this instead of KNEX_CONNECTION directly
- * for any tenant-scoped data access.
+ * Prefer table() over getConnection() for all tenant-scoped data queries.
+ * Use getConnection() only for raw SQL or transactions that require a full
+ * Knex instance.
  */
 @Injectable({ scope: Scope.REQUEST })
 export class TenantDatabaseService {
@@ -25,8 +28,33 @@ export class TenantDatabaseService {
   ) {}
 
   /**
-   * Returns a Knex query builder scoped to the current tenant's schema.
-   * The search_path is set on first call and cached for the request lifecycle.
+   * Returns a QueryBuilder for a tenant-schema-qualified table.
+   *
+   * Uses explicit schema qualification (e.g. "tenant_xxx"."customers") which
+   * is pool-safe — it does NOT depend on SET search_path being preserved
+   * across connection pool hops or PgBouncer transaction-mode resets.
+   *
+   * Prefer this over getConnection() for all standard CRUD operations.
+   */
+  table<TRecord extends {} = any, TResult = TRecord[]>(
+    tableName: string,
+  ): Knex.QueryBuilder<TRecord, TResult> {
+    const schema = this.request.tenantSchema;
+    if (schema) {
+      // Explicit schema.table qualification avoids reliance on search_path.
+      // Knex (pg dialect) auto-quotes identifiers: "schema"."table".
+      return this.knex(`${schema}.${tableName}`) as Knex.QueryBuilder<TRecord, TResult>;
+    }
+    return this.knex<TRecord, TResult>(tableName);
+  }
+
+  /**
+   * Returns a Knex instance with search_path set to the tenant schema.
+   *
+   * WARNING: The SET search_path call may be silently discarded by PgBouncer
+   * in transaction mode (Neon pooled URL). Use table() for regular queries;
+   * reserve getConnection() for raw SQL or transactions where you manage
+   * the connection lifecycle explicitly.
    */
   async getConnection(): Promise<Knex> {
     if (!this.schemaSet && this.request.tenantSchema && this.request.tenantId) {

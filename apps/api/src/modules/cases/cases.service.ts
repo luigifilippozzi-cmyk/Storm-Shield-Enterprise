@@ -23,10 +23,9 @@ export class CasesService {
   constructor(private readonly tenantDb: TenantDatabaseService) {}
 
   async findAll(tenantId: string, query: QueryCaseDto) {
-    const knex = await this.tenantDb.getConnection();
     const { status, priority, case_type, customer_id, assigned_to_user_id, page = 1, limit = 20 } = query;
 
-    const baseQuery = knex('cases').where({ tenant_id: tenantId });
+    const baseQuery = this.tenantDb.table('cases').where({ tenant_id: tenantId });
 
     if (status) baseQuery.where('status', status);
     if (priority) baseQuery.where('priority', priority);
@@ -56,17 +55,14 @@ export class CasesService {
   }
 
   async findOne(tenantId: string, id: string) {
-    const knex = await this.tenantDb.getConnection();
-    const record = await knex('cases').where({ id, tenant_id: tenantId }).first();
+    const record = await this.tenantDb.table('cases').where({ id, tenant_id: tenantId }).first();
     if (!record) throw new NotFoundException('Case not found');
     return record;
   }
 
   async create(tenantId: string, userId: string, dto: CreateCaseDto) {
-    const knex = await this.tenantDb.getConnection();
-
     // Explicit field mapping — no spread to prevent mass assignment of server-controlled fields
-    const [record] = await knex('cases')
+    const [record] = await this.tenantDb.table('cases')
       .insert({
         id: generateId(),
         tenant_id: tenantId,
@@ -84,13 +80,12 @@ export class CasesService {
       })
       .returning('*');
 
-    await this._auditLog(knex, tenantId, record.id, userId, null, CaseStatus.OPEN, 'Case created');
+    await this._auditLog(tenantId, record.id, userId, null, CaseStatus.OPEN, 'Case created');
     return record;
   }
 
   async update(tenantId: string, id: string, userId: string, dto: UpdateCaseDto) {
-    const knex = await this.tenantDb.getConnection();
-    const existing = await knex('cases').where({ id, tenant_id: tenantId }).first();
+    const existing = await this.tenantDb.table('cases').where({ id, tenant_id: tenantId }).first();
     if (!existing) throw new NotFoundException('Case not found');
 
     if (dto.status && dto.status !== existing.status) {
@@ -106,10 +101,10 @@ export class CasesService {
     if (dto.assigned_to_user_id !== undefined) updateData.assigned_to_user_id = dto.assigned_to_user_id;
 
     if (dto.status && dto.status !== existing.status) {
-      await this._auditLog(knex, tenantId, id, userId, existing.status, dto.status, null);
+      await this._auditLog(tenantId, id, userId, existing.status, dto.status, null);
     }
 
-    const [record] = await knex('cases')
+    const [record] = await this.tenantDb.table('cases')
       .where({ id, tenant_id: tenantId })
       .update(updateData)
       .returning('*');
@@ -118,13 +113,12 @@ export class CasesService {
   }
 
   async resolve(tenantId: string, id: string, userId: string, dto: ResolveCaseDto) {
-    const knex = await this.tenantDb.getConnection();
-    const existing = await knex('cases').where({ id, tenant_id: tenantId }).first();
+    const existing = await this.tenantDb.table('cases').where({ id, tenant_id: tenantId }).first();
     if (!existing) throw new NotFoundException('Case not found');
 
     this._validateTransition(existing.status, CaseStatus.RESOLVED);
 
-    const [record] = await knex('cases')
+    const [record] = await this.tenantDb.table('cases')
       .where({ id, tenant_id: tenantId })
       .update({
         status: CaseStatus.RESOLVED,
@@ -135,7 +129,7 @@ export class CasesService {
       .returning('*');
 
     await this._auditLog(
-      knex, tenantId, id, userId,
+      tenantId, id, userId,
       existing.status, CaseStatus.RESOLVED,
       dto.resolution_notes ?? 'Resolved',
     );
@@ -143,13 +137,12 @@ export class CasesService {
   }
 
   async remove(tenantId: string, id: string, userId: string) {
-    const knex = await this.tenantDb.getConnection();
-    const existing = await knex('cases').where({ id, tenant_id: tenantId }).first();
+    const existing = await this.tenantDb.table('cases').where({ id, tenant_id: tenantId }).first();
     if (!existing) throw new NotFoundException('Case not found');
 
-    await knex('cases').where({ id, tenant_id: tenantId }).del();
+    await this.tenantDb.table('cases').where({ id, tenant_id: tenantId }).del();
 
-    await this._auditLog(knex, tenantId, id, userId, existing.status, existing.status, 'Case deleted');
+    await this._auditLog(tenantId, id, userId, existing.status, existing.status, 'Case deleted');
     return { deleted: true };
   }
 
@@ -165,7 +158,6 @@ export class CasesService {
   }
 
   private async _auditLog(
-    knex: any,
     tenantId: string,
     caseId: string,
     userId: string,
@@ -173,7 +165,7 @@ export class CasesService {
     toStatus: CaseStatus,
     notes: string | null,
   ) {
-    await knex('audit_logs')
+    await this.tenantDb.table('audit_logs')
       .insert({
         id: generateId(),
         tenant_id: tenantId,

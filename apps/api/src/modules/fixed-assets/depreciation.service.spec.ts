@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { DepreciationService } from './depreciation.service';
 import { TenantDatabaseService } from '../../config/tenant-database.service';
@@ -45,14 +45,14 @@ describe('DepreciationService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DepreciationService,
-        { provide: TenantDatabaseService, useValue: { getConnection: jest.fn().mockResolvedValue(knex) } },
+        { provide: TenantDatabaseService, useValue: { getConnection: jest.fn().mockResolvedValue(knex), table: jest.fn().mockReturnValue(knex._chain), getPublicConnection: jest.fn().mockReturnValue(knex), tenantSchema: 'test_schema' } },
         { provide: JournalEntriesService, useValue: mockJeService },
       ],
     }).compile();
     service = module.get<DepreciationService>(DepreciationService);
   });
 
-  // ── calculateMonthlyDepreciation ────────────────────────────
+  // â”€â”€ calculateMonthlyDepreciation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('calculateMonthlyDepreciation', () => {
     it('should calculate straight-line depreciation', () => {
@@ -103,7 +103,7 @@ describe('DepreciationService', () => {
     });
   });
 
-  // ── executeDepreciation ─────────────────────────────────────
+  // â”€â”€ executeDepreciation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('executeDepreciation', () => {
     const mockAsset = {
@@ -186,7 +186,7 @@ describe('DepreciationService', () => {
     });
   });
 
-  // ── executeBatchDepreciation ─────────────────────────────────
+  // â”€â”€ executeBatchDepreciation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('executeBatchDepreciation', () => {
     it('should process all active assets', async () => {

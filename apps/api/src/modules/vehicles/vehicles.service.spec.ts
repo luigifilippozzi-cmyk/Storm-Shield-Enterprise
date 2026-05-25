@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { VehiclesService } from './vehicles.service';
 import { TenantDatabaseService } from '../../config/tenant-database.service';
@@ -40,7 +40,7 @@ describe('VehiclesService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         VehiclesService,
-        { provide: TenantDatabaseService, useValue: { getConnection: jest.fn().mockResolvedValue(knex) } },
+        { provide: TenantDatabaseService, useValue: { getConnection: jest.fn().mockResolvedValue(knex), table: jest.fn().mockReturnValue(knex._chain), getPublicConnection: jest.fn().mockReturnValue(knex), tenantSchema: 'test_schema' } },
         { provide: StorageService, useValue: { upload: jest.fn(), delete: jest.fn(), generateKey: jest.fn().mockReturnValue('key') } },
         { provide: ActivationEventsService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
       ],
@@ -161,7 +161,7 @@ describe('VehiclesService', () => {
     });
   });
 
-  describe('findAll — filters', () => {
+  describe('findAll â€” filters', () => {
     const setupPaginated = (data: any[] = []) => {
       knex._chain.count.mockReturnValueOnce([{ count: String(data.length) }]);
       knex._chain.offset.mockReturnValueOnce(data);
@@ -202,7 +202,7 @@ describe('VehiclesService', () => {
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           VehiclesService,
-          { provide: TenantDatabaseService, useValue: { getConnection: jest.fn().mockResolvedValue(knex) } },
+          { provide: TenantDatabaseService, useValue: { getConnection: jest.fn().mockResolvedValue(knex), table: jest.fn().mockReturnValue(knex._chain), getPublicConnection: jest.fn().mockReturnValue(knex), tenantSchema: 'test_schema' } },
           { provide: StorageService, useValue: storageService },
           { provide: ActivationEventsService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
         ],

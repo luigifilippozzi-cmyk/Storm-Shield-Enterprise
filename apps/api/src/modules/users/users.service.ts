@@ -20,10 +20,13 @@ export class UsersService {
   constructor(private readonly tenantDb: TenantDatabaseService) {}
 
   async findAll(tenantId: string, query: QueryUserDto): Promise<PaginatedResult<any>> {
-    const knex = await this.tenantDb.getConnection();
     const { search, status, role, page = 1, limit = 20, sort_by = 'created_at', sort_order = 'desc' } = query;
 
-    const baseQuery = knex('users')
+    const schema = this.tenantDb.tenantSchema;
+    const t = (name: string) => (schema ? `${schema}.${name}` : name);
+    const knex = this.tenantDb.getPublicConnection();
+
+    const baseQuery = knex({ users: t('users') })
       .where({ 'users.tenant_id': tenantId, 'users.deleted_at': null });
 
     if (search) {
@@ -41,8 +44,8 @@ export class UsersService {
 
     if (role) {
       baseQuery
-        .leftJoin('user_role_assignments as ura_filter', 'users.id', 'ura_filter.user_id')
-        .leftJoin('roles as r_filter', 'ura_filter.role_id', 'r_filter.id')
+        .leftJoin(t('user_role_assignments') + ' as ura_filter', 'users.id', 'ura_filter.user_id')
+        .leftJoin(t('roles') + ' as r_filter', 'ura_filter.role_id', 'r_filter.id')
         .where('r_filter.name', role);
     }
 
@@ -71,11 +74,13 @@ export class UsersService {
   }
 
   async create(tenantId: string, dto: CreateUserDto) {
-    const knex = await this.tenantDb.getConnection();
+    const schema = this.tenantDb.tenantSchema;
+    const t = (name: string) => (schema ? `${schema}.${name}` : name);
+    const knex = this.tenantDb.getPublicConnection();
     const { role_id, ...userData } = dto;
 
     return knex.transaction(async (trx) => {
-      const [user] = await trx('users')
+      const [user] = await trx(t('users'))
         .insert({
           id: generateId(),
           tenant_id: tenantId,
@@ -85,7 +90,7 @@ export class UsersService {
         .returning('*');
 
       if (role_id) {
-        await trx('user_role_assignments').insert({
+        await trx(t('user_role_assignments')).insert({
           id: generateId(),
           tenant_id: tenantId,
           user_id: user.id,
@@ -98,14 +103,17 @@ export class UsersService {
   }
 
   async findOne(tenantId: string, id: string) {
-    const knex = await this.tenantDb.getConnection();
-    const user = await knex('users')
+    const user = await this.tenantDb.table('users')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .first();
     if (!user) throw new NotFoundException('User not found');
 
-    const roles = await knex('user_role_assignments')
-      .leftJoin('roles', 'user_role_assignments.role_id', 'roles.id')
+    const schema = this.tenantDb.tenantSchema;
+    const t = (name: string) => (schema ? `${schema}.${name}` : name);
+    const knex = this.tenantDb.getPublicConnection();
+
+    const roles = await knex({ user_role_assignments: t('user_role_assignments') })
+      .leftJoin(t('roles') + ' as roles', 'user_role_assignments.role_id', 'roles.id')
       .where({ 'user_role_assignments.user_id': id, 'user_role_assignments.tenant_id': tenantId })
       .select('roles.id', 'roles.name', 'roles.description');
 
@@ -113,8 +121,7 @@ export class UsersService {
   }
 
   async update(tenantId: string, id: string, dto: UpdateUserDto) {
-    const knex = await this.tenantDb.getConnection();
-    const [user] = await knex('users')
+    const [user] = await this.tenantDb.table('users')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .update({ ...dto, updated_at: new Date() })
       .returning('*');
@@ -123,24 +130,22 @@ export class UsersService {
   }
 
   async remove(tenantId: string, id: string) {
-    const knex = await this.tenantDb.getConnection();
-    const user = await knex('users')
+    const user = await this.tenantDb.table('users')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .first();
     if (!user) throw new NotFoundException('User not found');
 
-    await knex('users')
+    await this.tenantDb.table('users')
       .where({ id, tenant_id: tenantId })
       .update({ deleted_at: new Date() });
     return { deleted: true };
   }
 
   async assignRole(tenantId: string, userId: string, roleId: string) {
-    const knex = await this.tenantDb.getConnection();
-    const user = await knex('users').where({ id: userId, tenant_id: tenantId, deleted_at: null }).first();
+    const user = await this.tenantDb.table('users').where({ id: userId, tenant_id: tenantId, deleted_at: null }).first();
     if (!user) throw new NotFoundException('User not found');
 
-    await knex('user_role_assignments')
+    await this.tenantDb.table('user_role_assignments')
       .insert({
         id: generateId(),
         tenant_id: tenantId,
@@ -154,8 +159,7 @@ export class UsersService {
   }
 
   async removeRole(tenantId: string, userId: string, roleId: string) {
-    const knex = await this.tenantDb.getConnection();
-    await knex('user_role_assignments')
+    await this.tenantDb.table('user_role_assignments')
       .where({ tenant_id: tenantId, user_id: userId, role_id: roleId })
       .del();
     return { removed: true };

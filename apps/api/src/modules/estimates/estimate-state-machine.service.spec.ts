@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import {
   EstimateStateMachineService,
@@ -44,7 +44,7 @@ const makeKnex = (estimateRow: any) => {
   });
   chain.first.mockResolvedValue(estimateRow);
 
-  // Transaction chain — must be callable as trx('table') returning itself
+  // Transaction chain â€” must be callable as trx('table') returning itself
   const trxChain: any = {};
   const trxMethods = ['where', 'update', 'insert', 'returning'];
   trxMethods.forEach((m) => {
@@ -55,6 +55,7 @@ const makeKnex = (estimateRow: any) => {
 
   const knexFn: any = jest.fn().mockReturnValue(chain);
   Object.assign(knexFn, chain);
+  knexFn._chain = chain;
   knexFn.transaction = jest.fn().mockImplementation(async (cb) => cb(trxFn));
 
   return { knexFn, trxChain, trxFn };
@@ -73,14 +74,14 @@ describe('EstimateStateMachineService', () => {
         EstimateStateMachineService,
         {
           provide: TenantDatabaseService,
-          useValue: { getConnection: jest.fn().mockResolvedValue(knex) },
+          useValue: { getConnection: jest.fn().mockResolvedValue(knex), table: jest.fn().mockReturnValue(knex._chain), getPublicConnection: jest.fn().mockReturnValue(knex), tenantSchema: 'test_schema' },
         },
       ],
     }).compile();
     return module.get<EstimateStateMachineService>(EstimateStateMachineService);
   };
 
-  // ── ALLOWED_TRANSITIONS map ────────────────────────────────────────────────
+  // â”€â”€ ALLOWED_TRANSITIONS map â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('ALLOWED_TRANSITIONS constant', () => {
     it('covers all 10 canonical statuses as keys', () => {
@@ -129,9 +130,9 @@ describe('EstimateStateMachineService', () => {
     });
   });
 
-  // ── transition() — not found ───────────────────────────────────────────────
+  // â”€â”€ transition() â€” not found â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-  describe('transition() — estimate not found', () => {
+  describe('transition() â€” estimate not found', () => {
     it('throws NotFoundException when estimate does not exist', async () => {
       const { knexFn } = makeKnex(null);
       (knexFn().first as jest.Mock).mockResolvedValue(null);
@@ -143,9 +144,9 @@ describe('EstimateStateMachineService', () => {
     });
   });
 
-  // ── transition() — valid transitions ──────────────────────────────────────
+  // â”€â”€ transition() â€” valid transitions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-  describe('transition() — valid transitions', () => {
+  describe('transition() â€” valid transitions', () => {
     const VALID_PAIRS: [string, string][] = [];
     for (const [from, targets] of ALLOWED_TRANSITIONS) {
       for (const to of targets) {
@@ -153,7 +154,7 @@ describe('EstimateStateMachineService', () => {
       }
     }
 
-    it.each(VALID_PAIRS)('%s → %s: succeeds and persists change log', async (from, to) => {
+    it.each(VALID_PAIRS)('%s â†’ %s: succeeds and persists change log', async (from, to) => {
       const estimateRow = { id: ESTIMATE_ID, tenant_id: TENANT_ID, status: from };
       const { knexFn, trxChain } = makeKnex(estimateRow);
 
@@ -182,9 +183,9 @@ describe('EstimateStateMachineService', () => {
     });
   });
 
-  // ── transition() — invalid transitions ────────────────────────────────────
+  // â”€â”€ transition() â€” invalid transitions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-  describe('transition() — invalid transitions', () => {
+  describe('transition() â€” invalid transitions', () => {
     const INVALID_PAIRS: [string, string][] = [];
     for (const from of ALL_STATUSES) {
       const allowed = ALLOWED_TRANSITIONS.get(from)!;
@@ -195,7 +196,7 @@ describe('EstimateStateMachineService', () => {
       }
     }
 
-    it.each(INVALID_PAIRS)('%s → %s: throws BadRequestException', async (from, to) => {
+    it.each(INVALID_PAIRS)('%s â†’ %s: throws BadRequestException', async (from, to) => {
       const estimateRow = { id: ESTIMATE_ID, tenant_id: TENANT_ID, status: from };
       const { knexFn } = makeKnex(estimateRow);
 
@@ -207,9 +208,9 @@ describe('EstimateStateMachineService', () => {
     });
   });
 
-  // ── transition() — with notes ──────────────────────────────────────────────
+  // â”€â”€ transition() â€” with notes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-  describe('transition() — with notes', () => {
+  describe('transition() â€” with notes', () => {
     it('persists optional notes to the change log', async () => {
       const estimateRow = { id: ESTIMATE_ID, tenant_id: TENANT_ID, status: 'draft' };
       const { knexFn, trxChain } = makeKnex(estimateRow);
@@ -247,7 +248,7 @@ describe('EstimateStateMachineService', () => {
     });
   });
 
-  // ── getHistory() ───────────────────────────────────────────────────────────
+  // â”€â”€ getHistory() â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('getHistory()', () => {
     it('returns ordered history for a known estimate', async () => {
@@ -267,6 +268,7 @@ describe('EstimateStateMachineService', () => {
 
       const knexFn: any = jest.fn().mockReturnValue(chain);
       Object.assign(knexFn, chain);
+      knexFn._chain = chain;
       knexFn.transaction = jest.fn();
 
       service = await buildModule(knexFn);
@@ -285,6 +287,7 @@ describe('EstimateStateMachineService', () => {
 
       const knexFn: any = jest.fn().mockReturnValue(chain);
       Object.assign(knexFn, chain);
+      knexFn._chain = chain;
       knexFn.transaction = jest.fn();
 
       service = await buildModule(knexFn);

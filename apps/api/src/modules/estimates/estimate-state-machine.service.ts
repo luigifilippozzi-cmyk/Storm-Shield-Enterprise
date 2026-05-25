@@ -36,9 +36,11 @@ export class EstimateStateMachineService {
     userId: string,
     notes?: string,
   ): Promise<{ estimate: any; statusChange: any }> {
-    const knex = await this.tenantDb.getConnection();
+    const schema = this.tenantDb.tenantSchema;
+    const t = (name: string) => (schema ? `${schema}.${name}` : name);
+    const knex = this.tenantDb.getPublicConnection();
 
-    const estimate = await knex('estimates')
+    const estimate = await this.tenantDb.table('estimates')
       .where({ id: estimateId, tenant_id: tenantId, deleted_at: null })
       .first();
 
@@ -59,12 +61,12 @@ export class EstimateStateMachineService {
     return knex.transaction(async (trx) => {
       const now = new Date();
 
-      const [updatedEstimate] = await trx('estimates')
+      const [updatedEstimate] = await trx(t('estimates'))
         .where({ id: estimateId, tenant_id: tenantId })
         .update({ status: toStatus, updated_at: now })
         .returning('*');
 
-      const [statusChange] = await trx('estimate_status_changes')
+      const [statusChange] = await trx(t('estimate_status_changes'))
         .insert({
           id: generateId(),
           tenant_id: tenantId,
@@ -85,9 +87,7 @@ export class EstimateStateMachineService {
    * Return the full status change history for an estimate, oldest-first.
    */
   async getHistory(tenantId: string, estimateId: string): Promise<any[]> {
-    const knex = await this.tenantDb.getConnection();
-
-    const estimate = await knex('estimates')
+    const estimate = await this.tenantDb.table('estimates')
       .where({ id: estimateId, tenant_id: tenantId, deleted_at: null })
       .first();
 
@@ -95,7 +95,7 @@ export class EstimateStateMachineService {
       throw new NotFoundException(`Estimate ${estimateId} not found`);
     }
 
-    return knex('estimate_status_changes')
+    return this.tenantDb.table('estimate_status_changes')
       .where({ estimate_id: estimateId, tenant_id: tenantId })
       .orderBy('changed_at', 'asc');
   }

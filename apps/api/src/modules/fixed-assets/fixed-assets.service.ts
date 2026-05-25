@@ -20,14 +20,13 @@ export class FixedAssetsService {
   constructor(private readonly tenantDb: TenantDatabaseService) {}
 
   async findAll(tenantId: string, query: QueryFixedAssetDto): Promise<PaginatedResult<any>> {
-    const knex = await this.tenantDb.getConnection();
     const {
       search, status, category_id, depreciation_method,
       page = 1, limit = 50,
       sort_by = 'asset_tag', sort_order = 'asc',
     } = query;
 
-    const baseQuery = knex('fixed_assets').where({ tenant_id: tenantId, deleted_at: null });
+    const baseQuery = this.tenantDb.table('fixed_assets').where({ tenant_id: tenantId, deleted_at: null });
 
     if (search) {
       baseQuery.where(function () {
@@ -60,8 +59,7 @@ export class FixedAssetsService {
   }
 
   async findOne(tenantId: string, id: string) {
-    const knex = await this.tenantDb.getConnection();
-    const record = await knex('fixed_assets')
+    const record = await this.tenantDb.table('fixed_assets')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .first();
     if (!record) throw new NotFoundException('Fixed asset not found');
@@ -69,16 +67,14 @@ export class FixedAssetsService {
   }
 
   async create(tenantId: string, dto: CreateFixedAssetDto) {
-    const knex = await this.tenantDb.getConnection();
-
     // Validate category exists
-    const category = await knex('asset_categories')
+    const category = await this.tenantDb.table('asset_categories')
       .where({ id: dto.category_id, tenant_id: tenantId })
       .first();
     if (!category) throw new BadRequestException('Asset category not found');
 
     // Validate unique asset_tag
-    const existing = await knex('fixed_assets')
+    const existing = await this.tenantDb.table('fixed_assets')
       .where({ tenant_id: tenantId, asset_tag: dto.asset_tag, deleted_at: null })
       .first();
     if (existing) throw new BadRequestException(`Asset tag "${dto.asset_tag}" already exists`);
@@ -91,7 +87,7 @@ export class FixedAssetsService {
 
     const netBookValue = dto.acquisition_cost;
 
-    const [record] = await knex('fixed_assets')
+    const [record] = await this.tenantDb.table('fixed_assets')
       .insert({
         id: generateId(),
         tenant_id: tenantId,
@@ -106,9 +102,7 @@ export class FixedAssetsService {
   }
 
   async update(tenantId: string, id: string, dto: UpdateFixedAssetDto) {
-    const knex = await this.tenantDb.getConnection();
-
-    const existing = await knex('fixed_assets')
+    const existing = await this.tenantDb.table('fixed_assets')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .first();
     if (!existing) throw new NotFoundException('Fixed asset not found');
@@ -117,7 +111,7 @@ export class FixedAssetsService {
       throw new BadRequestException('Cannot update a disposed asset');
     }
 
-    const [record] = await knex('fixed_assets')
+    const [record] = await this.tenantDb.table('fixed_assets')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .update({ ...dto, updated_at: new Date() })
       .returning('*');
@@ -125,9 +119,7 @@ export class FixedAssetsService {
   }
 
   async remove(tenantId: string, id: string) {
-    const knex = await this.tenantDb.getConnection();
-
-    const existing = await knex('fixed_assets')
+    const existing = await this.tenantDb.table('fixed_assets')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .first();
     if (!existing) throw new NotFoundException('Fixed asset not found');
@@ -136,7 +128,7 @@ export class FixedAssetsService {
       throw new BadRequestException('Cannot delete an asset with depreciation entries. Dispose it instead.');
     }
 
-    await knex('fixed_assets')
+    await this.tenantDb.table('fixed_assets')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .update({ deleted_at: new Date() });
 
@@ -144,28 +136,24 @@ export class FixedAssetsService {
   }
 
   async getDepreciationHistory(tenantId: string, assetId: string) {
-    const knex = await this.tenantDb.getConnection();
-
     // Verify asset exists
-    const asset = await knex('fixed_assets')
+    const asset = await this.tenantDb.table('fixed_assets')
       .where({ id: assetId, tenant_id: tenantId, deleted_at: null })
       .first();
     if (!asset) throw new NotFoundException('Fixed asset not found');
 
-    return knex('depreciation_entries')
+    return this.tenantDb.table('depreciation_entries')
       .where({ tenant_id: tenantId, fixed_asset_id: assetId })
       .orderBy('entry_date', 'asc');
   }
 
   async getSchedule(tenantId: string, assetId: string) {
-    const knex = await this.tenantDb.getConnection();
-
-    const asset = await knex('fixed_assets')
+    const asset = await this.tenantDb.table('fixed_assets')
       .where({ id: assetId, tenant_id: tenantId, deleted_at: null })
       .first();
     if (!asset) throw new NotFoundException('Fixed asset not found');
 
-    return knex('depreciation_schedules')
+    return this.tenantDb.table('depreciation_schedules')
       .where({ tenant_id: tenantId, fixed_asset_id: assetId })
       .orderBy('period_number', 'asc');
   }

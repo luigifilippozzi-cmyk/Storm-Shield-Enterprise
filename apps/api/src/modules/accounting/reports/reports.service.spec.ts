@@ -73,7 +73,7 @@ describe('ReportsService', () => {
         ReportsService,
         {
           provide: TenantDatabaseService,
-          useValue: { getConnection: jest.fn() },
+          useValue: { getConnection: jest.fn(), getPublicConnection: jest.fn(), tenantSchema: 'test_schema' },
         },
       ],
     }).compile();
@@ -83,7 +83,9 @@ describe('ReportsService', () => {
   });
 
   function setupKnex(rows = mockRows) {
-    tenantDb.getConnection.mockResolvedValue(makeKnexMock(rows) as any);
+    const mock = makeKnexMock(rows) as any;
+    tenantDb.getConnection.mockResolvedValue(mock);
+    (tenantDb.getPublicConnection as jest.Mock).mockReturnValue(mock);
   }
 
   // ── Trial Balance ──────────────────────────────────────────────────────

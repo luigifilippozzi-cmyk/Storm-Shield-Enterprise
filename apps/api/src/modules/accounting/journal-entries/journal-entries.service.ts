@@ -18,13 +18,12 @@ export class JournalEntriesService {
   ) {}
 
   async findAll(tenantId: string, query: QueryJournalEntryDto): Promise<PaginatedResult<any>> {
-    const knex = await this.tenantDb.getConnection();
     const {
       search, status, fiscal_period_id, date_from, date_to,
       page = 1, limit = 20, sort_by = 'entry_date', sort_order = 'desc',
     } = query;
 
-    const baseQuery = knex('journal_entries').where({ tenant_id: tenantId });
+    const baseQuery = this.tenantDb.table('journal_entries').where({ tenant_id: tenantId });
 
     if (search) {
       baseQuery.where(function () {
@@ -54,15 +53,17 @@ export class JournalEntriesService {
   }
 
   async findOne(tenantId: string, id: string) {
-    const knex = await this.tenantDb.getConnection();
-    const entry = await knex('journal_entries')
+    const entry = await this.tenantDb.table('journal_entries')
       .where({ id, tenant_id: tenantId })
       .first();
     if (!entry) throw new NotFoundException('Journal entry not found');
 
-    const lines = await knex('journal_entry_lines')
+    const schema = this.tenantDb.tenantSchema;
+    const t = (name: string) => (schema ? `${schema}.${name}` : name);
+
+    const lines = await this.tenantDb.table('journal_entry_lines')
       .where({ journal_entry_id: id, tenant_id: tenantId })
-      .leftJoin('chart_of_accounts', 'journal_entry_lines.account_id', 'chart_of_accounts.id')
+      .leftJoin(t('chart_of_accounts'), 'journal_entry_lines.account_id', 'chart_of_accounts.id')
       .select(
         'journal_entry_lines.*',
         'chart_of_accounts.account_number',
@@ -74,8 +75,6 @@ export class JournalEntriesService {
   }
 
   async create(tenantId: string, userId: string, dto: CreateJournalEntryDto) {
-    const knex = await this.tenantDb.getConnection();
-
     // Validate minimum 2 lines
     if (!dto.lines || dto.lines.length < 2) {
       throw new BadRequestException('Journal entry must have at least 2 lines');
@@ -108,7 +107,7 @@ export class JournalEntriesService {
 
     // Validate all account_ids exist and are active
     const accountIds = dto.lines.map((l) => l.account_id);
-    const accounts = await knex('chart_of_accounts')
+    const accounts = await this.tenantDb.table('chart_of_accounts')
       .where({ tenant_id: tenantId, deleted_at: null, is_active: true })
       .whereIn('id', accountIds);
     if (accounts.length !== new Set(accountIds).size) {
@@ -116,10 +115,14 @@ export class JournalEntriesService {
     }
 
     // Generate entry number
-    const entryNumber = await this.generateEntryNumber(knex, tenantId);
+    const entryNumber = await this.generateEntryNumber(tenantId);
+
+    const schema = this.tenantDb.tenantSchema;
+    const t = (name: string) => (schema ? `${schema}.${name}` : name);
+    const knex = this.tenantDb.getPublicConnection();
 
     return knex.transaction(async (trx) => {
-      const [entry] = await trx('journal_entries')
+      const [entry] = await trx(t('journal_entries'))
         .insert({
           id: generateId(),
           tenant_id: tenantId,
@@ -147,15 +150,14 @@ export class JournalEntriesService {
         sort_order: index + 1,
       }));
 
-      await trx('journal_entry_lines').insert(lineRecords);
+      await trx(t('journal_entry_lines')).insert(lineRecords);
 
       return { ...entry, lines: lineRecords };
     });
   }
 
   async post(tenantId: string, id: string, userId: string) {
-    const knex = await this.tenantDb.getConnection();
-    const entry = await knex('journal_entries')
+    const entry = await this.tenantDb.table('journal_entries')
       .where({ id, tenant_id: tenantId })
       .first();
     if (!entry) throw new NotFoundException('Journal entry not found');
@@ -165,7 +167,7 @@ export class JournalEntriesService {
     }
 
     // Verify fiscal period is still open
-    const period = await knex('fiscal_periods')
+    const period = await this.tenantDb.table('fiscal_periods')
       .where({ id: entry.fiscal_period_id, tenant_id: tenantId })
       .first();
     if (!period || period.status !== 'open') {
@@ -177,7 +179,7 @@ export class JournalEntriesService {
       throw new BadRequestException('Entry does not balance');
     }
 
-    const [record] = await knex('journal_entries')
+    const [record] = await this.tenantDb.table('journal_entries')
       .where({ id, tenant_id: tenantId })
       .update({ status: 'posted', posted_at: new Date(), posted_by: userId })
       .returning('*');
@@ -185,8 +187,7 @@ export class JournalEntriesService {
   }
 
   async reverse(tenantId: string, id: string, userId: string, description?: string) {
-    const knex = await this.tenantDb.getConnection();
-    const entry = await knex('journal_entries')
+    const entry = await this.tenantDb.table('journal_entries')
       .where({ id, tenant_id: tenantId })
       .first();
     if (!entry) throw new NotFoundException('Journal entry not found');
@@ -201,19 +202,23 @@ export class JournalEntriesService {
       throw new BadRequestException('No open fiscal period for today\'s date');
     }
 
-    const lines = await knex('journal_entry_lines')
+    const lines = await this.tenantDb.table('journal_entry_lines')
       .where({ journal_entry_id: id, tenant_id: tenantId });
 
-    const entryNumber = await this.generateEntryNumber(knex, tenantId);
+    const entryNumber = await this.generateEntryNumber(tenantId);
+
+    const schema = this.tenantDb.tenantSchema;
+    const t = (name: string) => (schema ? `${schema}.${name}` : name);
+    const knex = this.tenantDb.getPublicConnection();
 
     return knex.transaction(async (trx) => {
       // Mark original as reversed
-      await trx('journal_entries')
+      await trx(t('journal_entries'))
         .where({ id, tenant_id: tenantId })
         .update({ status: 'reversed' });
 
       // Create reversing entry (swap debits and credits)
-      const [reversalEntry] = await trx('journal_entries')
+      const [reversalEntry] = await trx(t('journal_entries'))
         .insert({
           id: generateId(),
           tenant_id: tenantId,
@@ -245,15 +250,14 @@ export class JournalEntriesService {
         sort_order: index + 1,
       }));
 
-      await trx('journal_entry_lines').insert(reversalLines);
+      await trx(t('journal_entry_lines')).insert(reversalLines);
 
       return reversalEntry;
     });
   }
 
   async remove(tenantId: string, id: string) {
-    const knex = await this.tenantDb.getConnection();
-    const entry = await knex('journal_entries')
+    const entry = await this.tenantDb.table('journal_entries')
       .where({ id, tenant_id: tenantId })
       .first();
     if (!entry) throw new NotFoundException('Journal entry not found');
@@ -262,20 +266,24 @@ export class JournalEntriesService {
       throw new BadRequestException('Only draft entries can be deleted');
     }
 
+    const schema = this.tenantDb.tenantSchema;
+    const t = (name: string) => (schema ? `${schema}.${name}` : name);
+    const knex = this.tenantDb.getPublicConnection();
+
     return knex.transaction(async (trx) => {
-      await trx('journal_entry_lines')
+      await trx(t('journal_entry_lines'))
         .where({ journal_entry_id: id, tenant_id: tenantId })
         .del();
-      await trx('journal_entries')
+      await trx(t('journal_entries'))
         .where({ id, tenant_id: tenantId })
         .del();
       return { deleted: true };
     });
   }
 
-  private async generateEntryNumber(knex: any, tenantId: string): Promise<string> {
+  private async generateEntryNumber(tenantId: string): Promise<string> {
     const year = new Date().getFullYear();
-    const [result] = await knex('journal_entries')
+    const [result] = await this.tenantDb.table('journal_entries')
       .where({ tenant_id: tenantId })
       .whereRaw("entry_number LIKE ?", [`JE-${year}-%`])
       .count('id as count');
