@@ -2947,4 +2947,74 @@ Criterios de aceite CA1-CA9 satisfeitos (ver RF-010 no backlog). Especialmente: 
 
 Protocolo: `docs/process/HANDOFF_PROTOCOL.md` §4 (template canonico) + §7 (ciclo de vida)
 
+---ocumentada na Bussola §2.5 (Persona 0 — Platform Operator). Hoje o provisioning de tenants e operacoes de ciclo de vida sao feitos via SQL com sse_user — sem audit trail nativo e exigindo acesso direto ao DB. Esta RF cria a area `/app/platform-admin` (invisivel a todas as outras personas) e a primeira aba operacional: Gestao de Tenants.
+
+RFs completos em: `docs/strategy/RF_BACKLOG.md` — secao RF-009
+
+### Escopo
+
+1. Novo guard `PlatformOperatorGuard` — valida SUPER_USER_EMAIL (e backup) — 403 silencioso para outros
+2. Novo route group frontend `(platform-admin)` — sem sidebar de personas, redirect silencioso se nao-PO
+3. Novo modulo backend `platform` — CRUD sobre `public.tenants` via KNEX_ADMIN_CONNECTION
+4. Migration 017 — campos de lifecycle em `public.tenants` (suspended_at, cancelled_at, activated_at)
+5. Operacoes: criar tenant (schema + seed + convite Clerk), suspender, reativar, cancelar, alterar plano
+6. Health dashboard cross-tenant — lista com plano, status, activation_status, last_user_login_at
+
+### Escopo negativo
+
+- NAO integrar Stripe nesta RF (billing manual)
+- NAO permitir editar dados operacionais do tenant via platform-admin
+- NAO criar segundo Platform Operator via UI
+- NAO implementar purge de dados de tenant cancelado — apenas bloqueio de acesso
+- NAO implementar last_user_login_at em real-time via webhook Clerk — batch diario ou stub, DM decide
+
+### Done quando
+
+Criterios de aceite CA1-CA10 satisfeitos (ver RF-009 no backlog). Especialmente: CA7 (PlatformOperatorGuard retorna 403 para owner do tenant), CA8 (audit_logs com is_platform_op=true), CA3 (suspender bloqueia requests imediatamente).
+
+Protocolo: `docs/process/HANDOFF_PROTOCOL.md` §4 (template canonico) + §7 (ciclo de vida)
+
+---
+
+## [2026-05-24] RF-010 — P1 — Platform Admin: Support Ticket Management
+
+**Origin:** Sessão PO Cowork 2026-05-24
+**Priority:** P1
+**Status:** PENDING
+**Dependencia:** RF-009 (PlatformOperatorGuard) — RF-010a (tenant-side) pode ir sem RF-009; RF-010b (platform-side) depende do guard
+**Branch:** feature/SSE-rf010-support-tickets
+**Subagentes PR:** security-reviewer (CRITICO — vazamento de platform_notes e tenant-isolation no public schema sem RLS) + db-reviewer (migration 018, public schema sem RLS) + test-runner (CA5 serializacao e-obrigatorio) + frontend-reviewer (duas UIs distintas)
+
+### Contexto
+
+Sistema leve de chamados internos ao SSE. Dois lados: (a) tenant-side — formulario em `/app/support` onde owner ou admin abre ticket; (b) platform-admin side — fila em `/app/platform-admin/support` onde Platform Operator ve todos os tickets e gerencia resolucao. Canal interno SSE (sem integracao externa nesta RF). Ciclo: Open → In Progress → Resolved.
+
+RFs completos em: `docs/strategy/RF_BACKLOG.md` — secao RF-010
+
+### Escopo
+
+1. Tabela `public.support_tickets` — schema publico, sem RLS, isolamento no service layer
+2. Modulo `support` — endpoints tenant-side (POST/GET com filtro tenant_id hardcoded) e platform-side (GET all + PATCH status)
+3. Tenant-side UI — `/app/support` com formulario de abertura + lista dos proprios tickets + badge de status
+4. Platform-side UI — `/app/platform-admin/support` com fila global + filtros + drawer de resolucao
+5. Migration 018 — tabela + ENUMs + indexes
+
+### Regra critica de seguranca
+
+Campo `platform_notes` NUNCA deve aparecer em endpoints ou DTOs tenant-side. CA5 e o teste mais critico. Security-reviewer deve auditar especificamente a serializacao dos DTOs.
+
+### Escopo negativo
+
+- NAO notificacoes automaticas por email (ENH P2 futura)
+- NAO threading/comments nos tickets
+- NAO integracao com GitHub Issues nesta RF
+- NAO technician/estimator/accountant/viewer podem abrir tickets (somente owner e admin)
+- NAO file attachments nesta RF
+
+### Done quando
+
+Criterios de aceite CA1-CA9 satisfeitos (ver RF-010 no backlog). Especialmente: CA5 (platform_notes nunca vazado) e CA3 (fila completa com filtros para Platform Operator).
+
+Protocolo: `docs/process/HANDOFF_PROTOCOL.md` §4 (template canonico) + §7 (ciclo de vida)
+
 ---

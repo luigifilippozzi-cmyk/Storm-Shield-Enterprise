@@ -7,7 +7,80 @@ type: project
 
 # PO Sessions — Storm Shield Enterprise
 
+---
+
+## Sessão 2026-05-25 — PO Cowork
+
+**Foco:** Housekeeping pós-PR #84 — registro de sessão, restauração de dm_queue.md truncado, commit dos arquivos sujos
+
+**Decisões:** Nenhuma decisão estratégica nova. Sessão operacional.
+
+**T-20260524-1 confirmado COMPLETED:** PR #84 merged — BUG-A (Clerk /login/tasks 404) + BUG-B (X-Clerk-Org-Id ausente em 12 hooks) + security fix (cross-tenant spoofing via X-Clerk-Org-Id). 599 testes passando.
+
+**Correção de integridade:** dm_queue.md estava truncado no working tree (RF-009 cortado na metade, RF-010 ausente) — restaurado a partir do HEAD via Edit tool.
+
+**PRs revisados:** #84 (retrospectiva — já merged)
+**Issues criadas:** 0
+**Handoffs DM:** 0 (RF-009 e RF-010 já em dm_queue.md como PENDING)
+**Alinhamento Bússola:** N/A (sessão de housekeeping)
+**Bloqueios:** T-20260412-1 (Fly.io CI) persiste — não crítico
+**Próxima sessão:** (1) verificação manual staging com conta Acme — KPIs com dados reais; (2) planejamento Fase 2 — RF-008 convites + IA + Plaid + n8n
+
 > Log mantido pelo PO Assistant (modo Cowork). Complementar ao `project_sse_status.md` (mantido pelo PM Agent).
+
+---
+
+## Sessão 2026-05-24 — PO Cowork (continuação T-20260509-2)
+
+**Decisões:**
+- Neon `tenants.settings->>'clerk_org_id'` atualizado via `fix-org.cjs` (usando padrão `reset-acme-demo.cjs` com `family:4` IPv4) — reversão: reexecutar script se Neon credenciais rotacionarem
+- Clerk org `org_3EC9cu4VckyAhRCb1TXhSLWAgmg` vinculada ao tenant Acme — workaround via `clerk.setActive()` no browser aceito temporariamente até BUG-A corrigido
+
+**Bugs descobertos:**
+- BUG-A: `/login/tasks` → 404 (Clerk choose-org task redireciona para rota inexistente no Next.js)
+- BUG-B: Dashboard KPIs = `—` (API Fly.io unreachable — consequência de T-20260412-1)
+
+**PRs revisados:** nenhum
+**Issues criadas:** nenhuma (handoff via dm_queue.md)
+**Handoffs DM:** T-20260524-1 (P1) — Fix `/login/tasks` + diagnóstico dados dashboard
+**Alinhamento Bússola:** N/A (sessão de infraestrutura/UAT setup)
+**Bloqueios:** T-20260412-1 (Fly.io API down) impede UAT com dados reais
+**Próxima sessão:** aguardar T-20260524-1 COMPLETED + T-20260412-1 desbloqueado para retomar UAT roteiro completo
+
+> Log mantido pelo PO Assistant (modo Cowork). Complementar ao `project_sse_status.md` (mantido pelo PM Agent).
+
+---
+
+## Sessao 2026-05-19 — PO Cowork
+
+**Foco:** T-20260509-2 (seed Acme staging) + BUG-05 (IPv4 Neon) — conclusao de ambos
+
+**Decisoes:** Nenhuma decisao estrategica nova. Execucao operacional.
+
+**Bugs corrigidos (seed acme-demo-data.seed.ts — 17 bugs schema-mismatch):**
+- estimates: total_amount->total, declined->rejected, estimated_by ausente
+- estimate_lines: total_price->total, line_type ausente
+- service_orders: description->notes, start_date->started_at, completed_date->completed_at
+- financial_transactions: type->transaction_type, payment_method/created_by ausentes
+- chart_of_accounts: type->account_type (x13), code->account_number, onConflict corrigido
+- journal_entries: reference_number->entry_number, memo->description, created_by ausente
+- journal_entry_lines: debit_amount->debit, credit_amount->credit, line_number->sort_order, created_at/updated_at removidos
+- asset_categories: schema totalmente reescrito (4 FKs de COA, category_name, default_*)
+- fixed_assets: category_id, asset_name, useful_life_months, depreciation_start_date, net_book_value
+- depreciation_schedules: fixed_asset_id, period_number, period_start/end, accumulated_amount, remaining_value, status 'scheduled'
+
+**Outros fixes:**
+- acme-personas.seed.ts: dominio .test -> .com (Clerk rejeita TLD .test)
+- run-seeds.ps1: reescrito em ASCII puro (em-dashes e checkmarks removidos — violavam Regra 2 PowerShell)
+- Guard do demo-data: customers->estimates como sinal de completude
+
+**Novos artefatos:**
+- `provision-acme.ps1` + `apps/api/provision-acme-neon.cjs` — provisioning standalone para Neon
+- `reset-acme-demo.ps1` + `apps/api/reset-acme-demo.cjs` — limpeza de dados parciais
+
+**Issues criadas:** 0 | **PRs revisados:** 0 | **ADRs:** 0
+**Bloqueios ativos:** T-20260412-1 (Fly.io API deploy) — nao tocado nesta sessao
+**Proxima sessao:** UAT manual com roteiros de `docs/audits/` + retomar T-20260412-1
 
 ---
 
@@ -1202,3 +1275,19 @@ Tarefas do PM Agent do arquivo antigo foram migradas com IDs novos e mantidas:
 
 - **Dev Manager:** 10 tarefas em `dm_queue.md` (3 do PM originais + 7 novas do PO). Executar em ordem de prioridade, com atenção especial à T-20260417-5 (que leva tudo desta sessão ao repo via PR).
 - **PM Agent:** adotar template canônico do `HANDOFF_PROTOCOL.md` §5 na próxima 
+
+## Sessão 2026-05-24 — PO Cowork
+
+Decisoes:
+- RF-009 APROVADO — Platform Admin: Tenant Lifecycle Management (P1, proxima sprint). Fecha RF Regra-0 da Bussola §2.5. Condicao de reversao: se PO permanecer em SQL para provisioning alem de 5 tenants ativos, adiar RF-009b e priorizar script auditado.
+- RF-010 APROVADO — Platform Admin: Support Ticket Management (P1, proxima sprint). Canal interno SSE, 3 estados (Open→In Progress→Resolved). Condicao de reversao: se volume >50 tickets/mes antes do RF estar DONE, pivota para GitHub Issues como canal provisorio.
+- Bussola bumped para v1.4 (§8 + §9 atualizados).
+
+Bugs: nenhum | ENH: nenhum | RF/ADR: RF-009, RF-010
+Issues criadas: nenhuma (RFs no backlog, aguardam sprint planning com DM)
+PRs revisados: nenhum
+Bloqueios: T-20260412-1 (deploy API) persiste
+Alinhamento Bussola: Persona 0 (Platform Operator, §2.5) — gap Regra-0 e suporte operacional
+Proxima sessao: sprint planning para validar split RF-009a/009b e RF-010a/010b com DM + ratificar numeracao de migrations 017/018
+
+---

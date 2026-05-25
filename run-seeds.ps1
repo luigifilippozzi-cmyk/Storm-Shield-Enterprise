@@ -1,5 +1,5 @@
 
-# T-20260509-2 — Run Acme seed personas and demo data
+# T-20260509-2 - Run Acme seed personas and demo data
 Set-Location $PSScriptRoot
 
 # Load .env file
@@ -15,7 +15,7 @@ foreach ($line in $envContent) {
 }
 
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "T-20260509-2 — Seed Acme tenant" -ForegroundColor Cyan
+Write-Host "T-20260509-2 - Seed Acme tenant" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Environment: $($env:NODE_ENV)" -ForegroundColor Green
@@ -28,7 +28,7 @@ if ($LASTEXITCODE -ne 0) {
     Write-Host "ERROR: Personas seed failed!" -ForegroundColor Red
     exit 1
 }
-Write-Host "✓ Personas seed completed" -ForegroundColor Green
+Write-Host "[OK] Personas seed completed" -ForegroundColor Green
 Write-Host ""
 
 # Seed 2: Demo data
@@ -38,10 +38,10 @@ if ($LASTEXITCODE -ne 0) {
     Write-Host "ERROR: Demo-data seed failed!" -ForegroundColor Red
     exit 1
 }
-Write-Host "✓ Demo-data seed completed" -ForegroundColor Green
+Write-Host "[OK] Demo-data seed completed" -ForegroundColor Green
 Write-Host ""
 
 Write-Host "========================================" -ForegroundColor Green
-Write-Host "✓ T-20260509-2 COMPLETED" -ForegroundColor Green
+Write-Host "[OK] T-20260509-2 COMPLETED" -ForegroundColor Green
 Write-Host "UAT manual is now deblocked!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green

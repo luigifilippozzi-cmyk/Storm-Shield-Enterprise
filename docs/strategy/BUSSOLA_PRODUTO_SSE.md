@@ -10,6 +10,7 @@
 > **v1.1 (2026-04-21):** incorpora aprendizados de `ANALISE_NS_vs_BUSSOLA_v1.md` — novo princípio P8 (offline-first), §5 expandida, §7 Global Search + nomenclatura "Workspace", §8 estendida com RF-004/006/007.
 > **v1.2 (2026-04-21):** incorporação parcial do pacote MF (ADR-013) — §6 reorganizada em §6.1 Produto (P1–P8 intactos), §6.2 Visuais (PV1–PV6 novos), §6.3 UX (PUX1–PUX6 novos). Zero mudança em P1–P8 nem em §1–§5, §7–§8.
 > **v1.3 (2026-05-01):** §2.5 "Persona de Plataforma" adicionada (Platform Operator). Framing "4 personas primárias do cliente" preservado. Subordina RFs de plataforma (Regra-0, suporte cross-tenant). Zero mudança em §1, §2.1–§2.4, §3–§8.
+> **v1.4 (2026-05-24):** §8 atualizada com RF-009 (Platform Admin: Tenant Lifecycle) e RF-010 (Platform Admin: Support Tickets) como prioridades de sprint. §9 com registro das decisões.
 
 ---
 
@@ -128,6 +129,7 @@ Toda decisão de roadmap passa pelo filtro: **"isso aumenta activation rate ou m
 #### Notas de governança
 
 - **Único e imutável por env var:** identificado por `SUPER_USER_EMAIL` no backend; alteração exige deploy. Backup dormente via `SUPER_USER_BACKUP_EMAIL` + `SUPER_USER_BACKUP_ACTIVE=false`. Detalhes em RF Regra-0 e ADR-017 (forthcoming).
+- **Criação e gestão do ciclo de vida de tenants é atribuição exclusiva do Platform Operator (Super User).** Provisioning, alteração de plano, suspensão, reativação e cancelamento de tenant **não podem ser executados por nenhuma outra persona do sistema** — nem por `owner`, nem via SQL direto, nem por script ad-hoc. Toda operação fora da UI de `/app/platform-admin` é exceção operacional temporária a ser eliminada. RF Regra-0 fecha este gap. Decisão registrada em 2026-05-17 após constatação de que provisionamento manual via script exige credencial de superusuário e não produz audit trail nativo.
 - **Não pluraliza neste estágio:** uma pessoa. Se surgir 2ª persona de plataforma (ex: Platform Support Engineer), reabrir §2.5 e considerar promover para §0 ou expandir.
 - **Não orienta roadmap de produto:** §3 (Diagnóstico), §4 (Gaps), §6 (Princípios), §7 (Navegação) e §8 (Ordem de Ataque) continuam ancorados nas 4 personas primárias do cliente.
 - **Não afeta a métrica de activation:** activation rate é de cliente. Provisionar tenant não é "ativar tenant".
@@ -462,6 +464,8 @@ Adotamos o termo **"Workspace"** (e não "Center" como NS) para não importar ja
 | **P1** (v1.1) | 60–90 dias | **RF-006 Payment Hold / Disputed Estimate** | Gap 5 complementar | Evita shop continuar trabalho enquanto claim está travado. Inspiração NS Payment Hold. |
 | **P1** (v1.1) | Concorrente com Cockpit | **Ajuste RF do Cockpit** — incluir Available Balance distinct from Cash Balance | Gap 4 refinado | Sem isso, KPI "Cash disponível" é enganoso durante float bancário. Inspiração NS In-Transit Payments. |
 | **P2** (v1.1) | 90–120 dias | **RF-007 Case Management simplificado** | Gap 5 parcial | Customer complaint + disputes não-estimate. Estrutura leve, anti-rec #13 formaliza limite de escopo. |
+| **P1** (v1.4) | Próxima sprint | **RF-009 Platform Admin: Tenant Lifecycle Management** — criar, convidar, suspender, reativar, cancelar tenant; alterar plano; health dashboard cross-tenant | Regra-0 (§2.5) | Elimina provisioning manual via SQL. Platform Operator não pode operar sem UI auditável. Bloqueia escala. |
+| **P1** (v1.4) | Próxima sprint | **RF-010 Platform Admin: Support Ticket Management** — formulário interno tenant-side + fila cross-tenant para o Super User | Plataforma: suporte operacional | Sem canal de chamados, feedback de bugs/melhorias chega sem rastreabilidade. Essencial antes de ter mais de 3 tenants ativos. |
 
 ### Nota sobre Fase 2 (IA + Integrações)
 
@@ -499,6 +503,9 @@ Este reordenamento é **sugestão do PO** e entra como input para o Dev Manager.
 | 2026-04-21 | Bússola SSE **v1.2** oficializada via ADR-013 | PO Cowork |
 | 2026-05-01 | **§2.5 adicionada** — "Persona de Plataforma" (Platform Operator) como sub-seção; "4 personas primárias do cliente" preservado; orienta RFs de plataforma (Regra-0) | PO Cowork |
 | 2026-05-01 | Bússola SSE **v1.3** oficializada via ADR-016 | PO Cowork |
+| 2026-05-24 | **RF-009 aprovado** — Platform Admin: Tenant Lifecycle Management (criar/convidar/suspender/reativar/cancelar tenant + alterar plano + health dashboard). Fecha "RF Regra-0" de §2.5. P1 próxima sprint. Condição de reversão: se Platform Operator decidir permanecer em SQL para provisioning além de 5 tenants ativos, adiar RF-009 UI e priorizar automação via script auditado. | PO Cowork |
+| 2026-05-24 | **RF-010 aprovado** — Platform Admin: Support Ticket Management (formulário tenant-side + fila platform-admin). Canal interno SSE, 3 estados (Open→In Progress→Resolved). P1 próxima sprint. Condição de reversão: se volume de tickets ultrapassar 50/mês antes do RF estar DONE, pivota para integração com GitHub Issues como canal provisório. | PO Cowork |
+| 2026-05-24 | Bússola SSE **v1.4** — §8 + §9 atualizadas com RF-009 e RF-010 | PO Cowork |
 
 ---
 

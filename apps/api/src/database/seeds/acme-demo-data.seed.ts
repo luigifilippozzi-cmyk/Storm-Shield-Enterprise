@@ -19,10 +19,10 @@ export async function seedAcmeDemoData(
 
   const t = (tableName: string) => knex.withSchema(schemaName).table(tableName);
 
-  // ── Guard: skip if demo data already present ──────────────────────────────
-  const existingCustomers = await t('customers').count('id as n').first();
-  if (existingCustomers && Number(existingCustomers.n) > 0) {
-    console.log('Demo data already present — skipping seedAcmeDemoData.');
+  // ── Guard: skip if demo data already present (check estimates as completion signal) ──
+  const existingEstimates = await t('estimates').count('id as n').first();
+  if (existingEstimates && Number(existingEstimates.n) > 0) {
+    console.log('Demo data already present (estimates found) -- skipping seedAcmeDemoData.');
     return;
   }
 
@@ -141,8 +141,16 @@ export async function seedAcmeDemoData(
   }
 
   // ── Estimates (12) ────────────────────────────────────────────────────────
-  const estimateStatuses = ['draft', 'sent', 'approved', 'approved', 'approved', 'declined',
-    'approved', 'sent', 'approved', 'approved', 'declined', 'approved'];
+  const estimateStatuses = ['draft', 'sent', 'approved', 'approved', 'approved', 'rejected',
+    'approved', 'sent', 'approved', 'approved', 'rejected', 'approved'];
+
+  // Look up the estimator (or any user) to satisfy estimated_by NOT NULL
+  const estimatorUser = await t('users')
+    .whereRaw(`email LIKE '%estimator%' OR email LIKE '%owner%'`)
+    .orderBy('created_at', 'asc')
+    .first();
+  const fallbackUser = estimatorUser ?? (await t('users').orderBy('created_at', 'asc').first());
+  const estimatedById: string = fallbackUser?.id ?? tenantId; // last resort: tenantId (should never happen)
 
   const estimateIds: string[] = [];
   for (let i = 0; i < 12; i++) {
@@ -164,8 +172,9 @@ export async function seedAcmeDemoData(
         status: estimateStatuses[i],
         subtotal: baseAmt.toFixed(2),
         tax_amount: (baseAmt * 0.08275).toFixed(2),
-        total_amount: (baseAmt * 1.08275).toFixed(2),
-        notes: `Demo estimate ${i + 1} — Acme UAT seed`,
+        total: (baseAmt * 1.08275).toFixed(2),
+        estimated_by: estimatedById,
+        notes: `Demo estimate ${i + 1} - Acme UAT seed`,
         created_at: new Date(Date.now() - (30 - i) * 86400000),
         updated_at: new Date(),
       })
@@ -179,10 +188,11 @@ export async function seedAcmeDemoData(
           id: generateId(),
           tenant_id: tenantId,
           estimate_id: id,
+          line_type: j === 0 ? 'labor' : 'parts',
           description: j === 0 ? 'PDR Labor' : 'Parts & Materials',
           quantity: 1,
           unit_price: (j === 0 ? baseAmt * 0.6 : baseAmt * 0.4).toFixed(2),
-          total_price: (j === 0 ? baseAmt * 0.6 : baseAmt * 0.4).toFixed(2),
+          total: (j === 0 ? baseAmt * 0.6 : baseAmt * 0.4).toFixed(2),
           sort_order: j,
           created_at: new Date(),
           updated_at: new Date(),
@@ -207,9 +217,9 @@ export async function seedAcmeDemoData(
         vehicle_id: vehicleIds[i % vehicleIds.length],
         order_number: `SO-2026-${String(i + 1).padStart(4, '0')}`,
         status: soStatuses[i],
-        description: `Demo service order ${i + 1} — Acme UAT seed`,
-        start_date: new Date(Date.now() - (20 - i * 3) * 86400000),
-        completed_date: soStatuses[i] === 'completed' ? new Date(Date.now() - (5 - i) * 86400000) : null,
+        notes: `Demo service order ${i + 1} - Acme UAT seed`,
+        started_at: new Date(Date.now() - (20 - i * 3) * 86400000),
+        completed_at: soStatuses[i] === 'completed' ? new Date(Date.now() - (5 - i) * 86400000) : null,
         created_at: new Date(),
         updated_at: new Date(),
       })
@@ -256,12 +266,14 @@ export async function seedAcmeDemoData(
       .insert({
         id: generateId(),
         tenant_id: tenantId,
-        type: isIncome ? 'income' : 'expense',
+        transaction_type: isIncome ? 'income' : 'expense',
         category: txCategories[i % txCategories.length],
         amount,
         description: `Demo transaction ${i + 1}`,
+        payment_method: isIncome ? 'check' : 'ach',
         transaction_date: new Date(Date.now() - daysAgo * 86400000),
         reference_number: `TXN-DEMO-${String(i + 1).padStart(4, '0')}`,
+        created_by: estimatedById,
         created_at: new Date(),
         updated_at: new Date(),
       })
@@ -274,36 +286,36 @@ export async function seedAcmeDemoData(
   if (!coaCount || Number(coaCount.n) === 0) {
     console.log('  COA empty — seeding minimal chart of accounts for demo JEs…');
     const coaRows = [
-      { code: '1010', name: 'Cash / Checking', type: 'asset', normal_balance: 'debit', is_active: true },
-      { code: '1100', name: 'Accounts Receivable', type: 'asset', normal_balance: 'debit', is_active: true },
-      { code: '4010', name: 'PDR Revenue', type: 'revenue', normal_balance: 'credit', is_active: true },
-      { code: '4020', name: 'Paint & Body Revenue', type: 'revenue', normal_balance: 'credit', is_active: true },
-      { code: '4030', name: 'Insurance Revenue', type: 'revenue', normal_balance: 'credit', is_active: true },
-      { code: '5010', name: 'Parts Expense', type: 'expense', normal_balance: 'debit', is_active: true },
-      { code: '5100', name: 'Payroll Expense', type: 'expense', normal_balance: 'debit', is_active: true },
-      { code: '5200', name: 'Contractor Expense', type: 'expense', normal_balance: 'debit', is_active: true },
-      { code: '5800', name: 'Depreciation Expense', type: 'expense', normal_balance: 'debit', is_active: true },
-      { code: '1590', name: 'Accumulated Depreciation', type: 'asset', normal_balance: 'credit', is_active: true },
-      { code: '1510', name: 'Equipment', type: 'asset', normal_balance: 'debit', is_active: true },
-      { code: '3010', name: "Owner's Equity", type: 'equity', normal_balance: 'credit', is_active: true },
-      { code: '3100', name: 'Retained Earnings', type: 'equity', normal_balance: 'credit', is_active: true },
+      { account_number: '1010', name: 'Cash / Checking', account_type: 'asset', normal_balance: 'debit', is_active: true },
+      { account_number: '1100', name: 'Accounts Receivable', account_type: 'asset', normal_balance: 'debit', is_active: true },
+      { account_number: '4010', name: 'PDR Revenue', account_type: 'revenue', normal_balance: 'credit', is_active: true },
+      { account_number: '4020', name: 'Paint & Body Revenue', account_type: 'revenue', normal_balance: 'credit', is_active: true },
+      { account_number: '4030', name: 'Insurance Revenue', account_type: 'revenue', normal_balance: 'credit', is_active: true },
+      { account_number: '5010', name: 'Parts Expense', account_type: 'expense', normal_balance: 'debit', is_active: true },
+      { account_number: '5100', name: 'Payroll Expense', account_type: 'expense', normal_balance: 'debit', is_active: true },
+      { account_number: '5200', name: 'Contractor Expense', account_type: 'expense', normal_balance: 'debit', is_active: true },
+      { account_number: '5800', name: 'Depreciation Expense', account_type: 'expense', normal_balance: 'debit', is_active: true },
+      { account_number: '1590', name: 'Accumulated Depreciation', account_type: 'asset', normal_balance: 'credit', is_active: true },
+      { account_number: '1510', name: 'Equipment', account_type: 'asset', normal_balance: 'debit', is_active: true },
+      { account_number: '3010', name: "Owner's Equity", account_type: 'equity', normal_balance: 'credit', is_active: true },
+      { account_number: '3100', name: 'Retained Earnings', account_type: 'equity', normal_balance: 'credit', is_active: true },
     ];
     for (const row of coaRows) {
       await t('chart_of_accounts')
         .insert({ id: generateId(), tenant_id: tenantId, ...row, created_at: new Date(), updated_at: new Date() })
-        .onConflict('code')
+        .onConflict(['tenant_id', 'account_number'])
         .ignore();
     }
   }
 
   // ── Journal Entries (3 posted — required for P&L / BS / TB) ──────────────
-  const [cashAccount] = await t('chart_of_accounts').where({ code: '1010' }).select('id');
-  const [arAccount] = await t('chart_of_accounts').where({ code: '1100' }).select('id');
-  const [revenueAccount] = await t('chart_of_accounts').where({ code: '4010' }).select('id');
-  const [insuranceRevAccount] = await t('chart_of_accounts').where({ code: '4030' }).select('id');
-  const [partsExpAccount] = await t('chart_of_accounts').where({ code: '5010' }).select('id');
-  const [deprExpAccount] = await t('chart_of_accounts').where({ code: '5800' }).select('id');
-  const [accumDeprAccount] = await t('chart_of_accounts').where({ code: '1590' }).select('id');
+  const [cashAccount] = await t('chart_of_accounts').where({ account_number: '1010' }).select('id');
+  const [arAccount] = await t('chart_of_accounts').where({ account_number: '1100' }).select('id');
+  const [revenueAccount] = await t('chart_of_accounts').where({ account_number: '4010' }).select('id');
+  const [insuranceRevAccount] = await t('chart_of_accounts').where({ account_number: '4030' }).select('id');
+  const [partsExpAccount] = await t('chart_of_accounts').where({ account_number: '5010' }).select('id');
+  const [deprExpAccount] = await t('chart_of_accounts').where({ account_number: '5800' }).select('id');
+  const [accumDeprAccount] = await t('chart_of_accounts').where({ account_number: '1590' }).select('id');
 
   if (cashAccount && revenueAccount) {
     const jeData = [
@@ -348,10 +360,11 @@ export async function seedAcmeDemoData(
           id: je.id,
           tenant_id: tenantId,
           entry_date: je.date,
-          reference_number: je.ref,
-          memo: je.memo,
+          entry_number: je.ref,
+          description: je.memo,
           status: 'posted',
           fiscal_period_id: je.period,
+          created_by: estimatedById,
           created_at: new Date(),
           updated_at: new Date(),
         })
@@ -365,12 +378,10 @@ export async function seedAcmeDemoData(
             tenant_id: tenantId,
             journal_entry_id: je.id,
             account_id: line.account_id,
-            debit_amount: line.debit,
-            credit_amount: line.credit,
+            debit: line.debit,
+            credit: line.credit,
             description: line.desc,
-            line_number: idx + 1,
-            created_at: new Date(),
-            updated_at: new Date(),
+            sort_order: idx + 1,
           })
           .onConflict('id')
           .ignore();
@@ -379,71 +390,92 @@ export async function seedAcmeDemoData(
   }
 
   // ── Asset Category + Fixed Asset (FAM) ───────────────────────────────────
-  let assetCategoryId: string | null = null;
-  const existingCat = await t('asset_categories').where({ name: 'Machinery & Equipment' }).first();
-  if (existingCat) {
-    assetCategoryId = existingCat.id;
+  // asset_categories requires 4 NOT NULL FK refs to chart_of_accounts — look them up first
+  const [famEquipAcct] = await t('chart_of_accounts').where({ account_number: '1510' }).select('id');
+  const [famDeprAcct]  = await t('chart_of_accounts').where({ account_number: '5800' }).select('id');
+  const [famAccumAcct] = await t('chart_of_accounts').where({ account_number: '1590' }).select('id');
+
+  if (famEquipAcct && famDeprAcct && famAccumAcct) {
+    let assetCategoryId: string | null = null;
+    const existingCat = await t('asset_categories').where({ category_name: 'Machinery & Equipment' }).first();
+    if (existingCat) {
+      assetCategoryId = existingCat.id;
+    } else {
+      assetCategoryId = generateId();
+      await t('asset_categories')
+        .insert({
+          id: assetCategoryId,
+          tenant_id: tenantId,
+          category_name: 'Machinery & Equipment',
+          default_depreciation_method: 'straight_line',
+          default_useful_life_months: 84,
+          default_salvage_pct: '10.00',
+          asset_account_id: famEquipAcct.id,
+          depreciation_account_id: famDeprAcct.id,
+          expense_account_id: famDeprAcct.id,
+          gain_loss_account_id: famAccumAcct.id,
+          created_at: new Date(),
+          updated_at: new Date(),
+        })
+        .onConflict('id')
+        .ignore();
+    }
+
+    if (assetCategoryId) {
+      const assetId = generateId();
+      await t('fixed_assets')
+        .insert({
+          id: assetId,
+          tenant_id: tenantId,
+          category_id: assetCategoryId,
+          asset_tag: 'FAM-DEMO-001',
+          asset_name: 'Demo PDR Compressor Unit',
+          description: 'Dent repair air compressor - demo asset for UAT',
+          serial_number: 'SN-DEMO-2026-001',
+          acquisition_date: '2026-01-01',
+          acquisition_cost: '3000.00',
+          salvage_value: '300.00',
+          useful_life_months: 84,
+          depreciation_method: 'straight_line',
+          depreciation_start_date: '2026-01-01',
+          accumulated_depreciation: '0.00',
+          net_book_value: '3000.00',
+          status: 'active',
+          created_at: new Date(),
+          updated_at: new Date(),
+        })
+        .onConflict('id')
+        .ignore();
+
+      // Monthly straight-line depreciation schedules for Jan-Apr 2026 (periods 1-4)
+      const monthlyDepr = ((3000 - 300) / 7 / 12).toFixed(2);
+      const schedPeriods = [
+        { num: 1, start: '2026-01-01', end: '2026-01-31' },
+        { num: 2, start: '2026-02-01', end: '2026-02-28' },
+        { num: 3, start: '2026-03-01', end: '2026-03-31' },
+        { num: 4, start: '2026-04-01', end: '2026-04-30' },
+      ];
+      for (const p of schedPeriods) {
+        await t('depreciation_schedules')
+          .insert({
+            id: generateId(),
+            tenant_id: tenantId,
+            fixed_asset_id: assetId,
+            period_number: p.num,
+            period_start: p.start,
+            period_end: p.end,
+            depreciation_amount: monthlyDepr,
+            accumulated_amount: (parseFloat(monthlyDepr) * p.num).toFixed(2),
+            remaining_value: (3000 - parseFloat(monthlyDepr) * p.num).toFixed(2),
+            status: p.num < 4 ? 'posted' : 'scheduled',
+            created_at: new Date(),
+          })
+          .onConflict(['fixed_asset_id', 'period_number'])
+          .ignore();
+      }
+    }
   } else {
-    assetCategoryId = generateId();
-    await t('asset_categories')
-      .insert({
-        id: assetCategoryId,
-        tenant_id: tenantId,
-        name: 'Machinery & Equipment',
-        depreciation_method: 'straight_line',
-        useful_life_years: 7,
-        salvage_value_percent: '10.00',
-        gl_asset_account_code: '1510',
-        gl_depreciation_account_code: '5800',
-        gl_accumulated_account_code: '1590',
-        created_at: new Date(),
-        updated_at: new Date(),
-      })
-      .onConflict('id')
-      .ignore();
-  }
-
-  const assetId = generateId();
-  await t('fixed_assets')
-    .insert({
-      id: assetId,
-      tenant_id: tenantId,
-      asset_category_id: assetCategoryId,
-      asset_tag: 'FAM-DEMO-001',
-      name: 'Demo PDR Compressor Unit',
-      description: 'Dent repair air compressor — demo asset for UAT',
-      serial_number: 'SN-DEMO-2026-001',
-      acquisition_date: '2026-01-01',
-      acquisition_cost: '3000.00',
-      salvage_value: '300.00',
-      useful_life_years: 7,
-      depreciation_method: 'straight_line',
-      status: 'active',
-      created_at: new Date(),
-      updated_at: new Date(),
-    })
-    .onConflict('asset_tag')
-    .ignore();
-
-  // Monthly straight-line depreciation schedules for Jan–Apr 2026
-  const monthlyDepr = ((3000 - 300) / 7 / 12).toFixed(2);
-  const schedMonths = ['2026-01-01', '2026-02-01', '2026-03-01', '2026-04-01'];
-  for (const [idx, periodDate] of schedMonths.entries()) {
-    await t('depreciation_schedules')
-      .insert({
-        id: generateId(),
-        tenant_id: tenantId,
-        asset_id: assetId,
-        period_date: periodDate,
-        depreciation_amount: monthlyDepr,
-        accumulated_depreciation: (parseFloat(monthlyDepr) * (idx + 1)).toFixed(2),
-        book_value: (3000 - parseFloat(monthlyDepr) * (idx + 1)).toFixed(2),
-        status: idx < 3 ? 'posted' : 'pending',
-        created_at: new Date(),
-        updated_at: new Date(),
-      })
-      .onConflict(['asset_id', 'period_date'])
-      .ignore();
+    console.log('  FAM skipped: required GL accounts (1510/5800/1590) not found in COA');
   }
 
   console.log('✓ Acme demo data seeded:');

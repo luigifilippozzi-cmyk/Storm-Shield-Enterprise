@@ -3,8 +3,8 @@
 > **Nota:** Neste documento, "NS" refere-se a um ERP proprietário de terceiros usado exclusivamente como referência comparativa externa, sem relação comercial, licenciamento ou endosso. O nome da marca foi substituído por precaução (ver ADR-014).
 
 > Backlog de Requisitos Funcionais derivados dos Gaps Críticos da Bússola.
-> **Status:** v0.2 — atualizado em 2026-04-21 (incorporação de RF-004..007 via ADR-012)
-> **Convenção de numeração:** RF-NNN sequencial. Próximo RF a criar: **RF-008**.
+> **Status:** v0.4 — atualizado em 2026-05-24 (RF-009 e RF-010 adicionados via sessão PO Cowork)
+> **Convenção de numeração:** RF-NNN sequencial. Próximo RF a criar: **RF-011**.
 > **Status permitidos:** PROPOSED | APPROVED | IN_PROGRESS | DONE | CANCELED
 > **Autoridade:** Bússola §4 (gaps) + §8 (ordem de ataque). RFs aqui derivam diretamente de gaps.
 > **Autoridade adicional (RF-004..007):** ADR-012 (incorporação parcial de padrões NS) + `ANALISE_NS_vs_BUSSOLA_v1.md`.
@@ -667,6 +667,219 @@ Da Bússola §8, ainda PENDENTES de virar RF:
 ---
 
 *Este backlog é vivo. Atualizar status de cada RF conforme implementação. Adicionar novos RFs ao final, mantendo numeração sequencial. Cada RF DONE deve mover para uma seção "DONE" no final OU ficar in-place com status atualizado — decisão a tomar quando primeiro RF for DONE.*
+
+---
+
+## RF-009 — Platform Admin: Tenant Lifecycle Management
+
+**Status:** PROPOSED
+**Prioridade:** P1
+**Fase:** 2 (próxima sprint)
+**Aprovado em:** 2026-05-24 (sessão PO Cowork)
+**Gap fechado:** "RF Regra-0" de Bússola §2.5 — provisioning manual via SQL elimina audit trail nativo.
+**Persona primária:** Persona 0 — Platform Operator (Bússola §2.5). Nenhuma das 4 personas de cliente.
+**Princípio respeitado:** P4 (operação não depende de acesso direto ao DB) + §2.5 notas de governança.
+**Origem:** Bússola §2.5 landing da Persona 0 + decisão 2026-05-17 registrada no §9.
+
+### Descrição
+
+Criar a área `/app/platform-admin` (invisível a todas as outras personas) com a primeira aba operacional: **Gestão de Tenants**. O Platform Operator (Super User) — identificado exclusivamente por `SUPER_USER_EMAIL` no backend — consegue criar novos tenants com convite ao owner, gerenciar o ciclo de vida de tenants existentes (suspender, reativar, cancelar), alterar plano manualmente e visualizar dashboard de saúde cross-tenant.
+
+Toda operação que atravessa boundary de tenant deve ser registrada em `audit_logs` com flag `is_platform_op = true`.
+
+### Regras de Negócio
+
+- **RN1** — Guard exclusivo `PlatformOperatorGuard`: verifica que o Clerk user autenticado tem email igual a `process.env.SUPER_USER_EMAIL`. Se não, retorna 403 imediatamente, sem revelar que a rota existe. Backup: `SUPER_USER_BACKUP_EMAIL` + `SUPER_USER_BACKUP_ACTIVE` (só ativo se `= 'true'`).
+- **RN2** — Rota `/app/platform-admin` e todos os sub-paths são protegidos por `PlatformOperatorGuard` tanto no frontend (redirect silencioso) quanto no backend (403 sem mensagem descritiva). Nunca aparecem na sidebar de outras personas.
+- **RN3** — **Criar tenant**: formulário com `shop_name`, `owner_email`, `plan_tier` (default: `free`). Ao submeter: (a) `POST /platform/tenants` executa script de provisioning existente com `KNEX_ADMIN_CONNECTION`; (b) cria registro em `public.tenants`; (c) dispara convite Clerk para `owner_email` com role `owner`. Todo esse fluxo grava em `audit_logs` com `is_platform_op = true`.
+- **RN4** — **Ciclo de vida**: operações permitidas e estados do campo `status` em `public.tenants`:
+  ```
+  active → suspended    (bloqueio imediato: TenantMiddleware bloqueia requests)
+  suspended → active    (reativação: TenantMiddleware volta a deixar passar)
+  active → cancelled    (grace period de 30 dias: dados preservados, acesso bloqueado)
+  suspended → cancelled (mesma lógica)
+  cancelled → [nenhum]  (terminal — reativação exige operação manual de DB + ADR)
+  ```
+- **RN5** — **Alterar plano**: dropdown com os 4 tiers. Atualiza `plan_tier` em `public.tenants`. `PlanGuard` usa esse campo em runtime — impacto imediato. **Integração Stripe fica fora desta RF** (billing manual por enquanto). DM deve documentar warning de divergência Stripe x DB como risco de debt técnico.
+- **RN6** — **Health dashboard cross-tenant**: tabela com colunas: `tenant_name`, `plan_tier`, `status`, `created_at`, `activated_at` (primeiro evento do happy path, se existir), `last_user_login_at` (max de `user_sessions.last_active_at` cross-schema — DM define se query direta ou view materializada), `activation_status` (activated / not_activated baseado em `activation_events`). Filtros: plano, status, activation_status.
+- **RN7** — **Nenhuma persona de cliente consegue provisionar tenant** — nem via UI nem via endpoint. `POST /tenants` (existente para outros fins, se houver) deve ser revogado ou restrito por `PlatformOperatorGuard`. Decisão de Bússola §2.5.
+- **RN8** — Toda operação de CRUD sobre `public.tenants` via `/platform/*` endpoints usa `KNEX_ADMIN_CONNECTION` (regra 12 CLAUDE.md). Nunca `TenantDatabaseService` para operações cross-tenant.
+- **RN9** — Campos adicionais necessários em `public.tenants` (migration 017): `suspended_at TIMESTAMPTZ NULL`, `cancelled_at TIMESTAMPTZ NULL`, `activated_at TIMESTAMPTZ NULL`, `last_user_login_at TIMESTAMPTZ NULL` (atualizado por job ou webhook Clerk).
+
+### Módulos impactados
+
+**Backend:**
+- Novo módulo `apps/api/src/modules/platform/`: `platform.module.ts`, `platform.controller.ts`, `platform.service.ts`
+- Novo guard: `apps/api/src/common/guards/platform-operator.guard.ts`
+- `apps/api/src/middleware/tenant.middleware.ts` — confirmar que já bloqueia tenants `suspended`/`cancelled`; se não, adicionar check
+- `apps/api/src/database/migrations/017_platform_admin_tenant_fields.sql` — ver RN9
+
+**Frontend:**
+- Novo layout: `apps/web/src/app/(platform-admin)/layout.tsx` (rota group separado, sem sidebar de personas)
+- Novas rotas: `/app/platform-admin/page.tsx` (redirect para `/tenants`), `/app/platform-admin/tenants/page.tsx`, `/app/platform-admin/tenants/new/page.tsx`, `/app/platform-admin/tenants/[id]/page.tsx`
+- Componentes: `tenants-table.tsx`, `tenant-health-badge.tsx`, `tenant-lifecycle-actions.tsx` (dropdown: Suspend/Reactivate/Cancel), `create-tenant-form.tsx`
+- Middleware Next.js: redirecionar qualquer não-Platform Operator que acesse `/app/platform-admin/*` para `/app` silenciosamente
+
+### Migrations
+
+**Sim.** `017_platform_admin_tenant_fields.sql` — ALTER `public.tenants` com colunas RN9. Idempotente (IF NOT EXISTS). Usa `KNEX_ADMIN_CONNECTION`. Não adicionar RLS — public schema, tabela já sem RLS (platform-level).
+
+### Critérios de Aceite
+
+- [ ] CA1 — Platform Operator loga e vê `/app/platform-admin/tenants`; qualquer outro role é redirecionado silenciosamente para seu workspace
+- [ ] CA2 — Criar tenant via formulário: schema provisionado + seed data + convite Clerk enviado ao owner_email + registro em `audit_logs` com `is_platform_op = true`
+- [ ] CA3 — Suspender tenant: requests subsequentes do tenant retornam 403 com mensagem "Account suspended" (TenantMiddleware)
+- [ ] CA4 — Reativar tenant: acesso restaurado imediatamente
+- [ ] CA5 — Alterar plano: `PlanGuard` reflete o novo tier na próxima request (sem restart)
+- [ ] CA6 — Health dashboard lista todos os tenants com filtros de plano/status/activation_status funcionando
+- [ ] CA7 — `PlatformOperatorGuard` retorna 403 para qualquer outro role (incluindo owner do tenant) — não 401, não 404
+- [ ] CA8 — Operações de lifecycle geram audit_log com `is_platform_op = true` e `user_id` do Platform Operator
+- [ ] CA9 — Cobertura ≥ 80% no módulo platform (guard, service, controller)
+- [ ] CA10 — PR descreve Persona 0 (Platform Operator, §2.5) e gap "RF Regra-0" — Regra 16 CLAUDE.md
+
+### Escopo negativo
+
+- **NÃO** implementar billing automático via Stripe nesta RF (manual; Stripe vem em RF futura)
+- **NÃO** permitir que Platform Operator edite dados operacionais de um tenant (clientes, estimates, etc) — apenas metadados de plataforma
+- **NÃO** criar segundo Platform Operator via UI — singletons por env var conforme §2.5
+- **NÃO** implementar soft-delete ou purge de dados de tenant cancelado — apenas bloqueio de acesso; purge é operação manual com ADR
+- **NÃO** implementar `last_user_login_at` em real-time via webhook Clerk nesta RF — pode ser job batch diário ou stub fixo; DM decide
+
+### Subagentes obrigatórios para o PR
+
+`security-reviewer` (guard é crítico — falha aqui = cross-tenant breach) + `db-reviewer` (migration 017 + uso de KNEX_ADMIN_CONNECTION) + `test-runner` (guard coverage é bloqueante) + `frontend-reviewer` (nova rota group + middleware Next.js).
+
+### Complexidade estimada
+
+**L (alto).** PO assessment — DM deve validar.
+
+Justificativa: novo módulo + novo guard + novo route group no frontend + migration + integração com provisioning existente + mudanças no TenantMiddleware. O guard de segurança é a parte mais crítica. Sugestão de split: RF-009a (guard + rotas frontend protegidas + health dashboard read-only) → RF-009b (create tenant + lifecycle actions).
+
+### Condição de reversão
+
+Se Platform Operator decidir permanecer em SQL para provisioning além de 5 tenants ativos, adiar RF-009b (actions) e priorizar automação via script auditado com output para `audit_logs`. RF-009a (health dashboard + guard) não tem condição de reversão — é bloqueante para qualquer escala.
+
+### Dependências
+
+- Script de provisioning de tenant existente (`tenant-provisioning.ts`) — reutilizar internamente
+- `TenantMiddleware` — confirmar cobertura de status `suspended`/`cancelled`
+- RF-008 (convites por email) — RF-009 (criar tenant) dispara convite similar; pode reusar serviço de RF-008 se DONE antes; se não, RF-009 implementa convite Clerk direto sem o fluxo completo de RF-008
+
+---
+
+## RF-010 — Platform Admin: Support Ticket Management
+
+**Status:** PROPOSED
+**Prioridade:** P1
+**Fase:** 2 (próxima sprint)
+**Aprovado em:** 2026-05-24 (sessão PO Cowork)
+**Gap fechado:** Plataforma — sem canal de chamados, feedback de bugs/melhorias chega sem rastreabilidade. Não mapeado nos 8 gaps de produto (correto — é gap de plataforma, não de produto para o ICP).
+**Persona primária:** Persona 0 — Platform Operator (recebe/gerencia). Secundária: Owner-Operator e Admin de tenant (abrem chamados).
+**Princípio respeitado:** P6 (tenant não vê complexidade da plataforma); §2.5 (operações de plataforma com audit trail).
+**Origem:** Solicitação PO 2026-05-24 — necessidade operacional antes de escalar tenants.
+
+### Descrição
+
+Sistema leve de chamados internos ao SSE com dois lados: (a) **tenant-side** — formulário em `/app/support` onde owner ou admin abre um ticket descrevendo um bug ou melhoria; (b) **platform-admin side** — fila em `/app/platform-admin/support` onde o Platform Operator vê todos os tickets, muda status e registra resolução. Ciclo de vida: **Open → In Progress → Resolved**.
+
+A tabela `support_tickets` fica no schema `public` (cross-tenant, sem RLS) — apenas o Platform Operator tem acesso direto à tabela via `KNEX_ADMIN_CONNECTION`; tenants acessam via endpoints que aplicam filtro `tenant_id` hardcoded no service.
+
+### Regras de Negócio
+
+- **RN1** — Tabela `public.support_tickets`:
+  ```
+  id                  UUID v7 PK
+  tenant_id           UUID NOT NULL REFERENCES public.tenants(id)
+  submitted_by_user_id TEXT NOT NULL              -- Clerk user ID (sem FK — cross-schema)
+  submitted_by_email  TEXT NOT NULL               -- denormalizado para display
+  title               TEXT NOT NULL
+  description         TEXT NOT NULL
+  ticket_type         TEXT NOT NULL DEFAULT 'bug' -- ENUM: bug | enhancement | question | other
+  priority            TEXT NOT NULL DEFAULT 'medium' -- ENUM: low | medium | high | critical
+  status              TEXT NOT NULL DEFAULT 'open' -- ENUM: open | in_progress | resolved
+  platform_notes      TEXT NULL                   -- notas internas do Super User; NÃO visível ao tenant
+  resolution_notes    TEXT NULL                   -- resposta ao tenant; visível ao tenant
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+  updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+  resolved_at         TIMESTAMPTZ NULL
+  ```
+
+- **RN2** — **Tenant-side (abertura):** roles `owner` e `admin` podem criar tickets. Outros roles veem mensagem "Contact your account administrator". Endpoint `POST /support/tickets` filtra `tenant_id` pelo contexto do request (TenantDatabaseService NÃO é usado — este endpoint usa `KNEX_ADMIN_CONNECTION` e injeta `tenant_id` do middleware, mas escreve em schema `public`).
+- **RN3** — **Tenant-side (consulta):** `GET /support/tickets` retorna apenas tickets do `tenant_id` do usuário autenticado. Campo `platform_notes` é **omitido** na resposta. Campo `resolution_notes` é incluído.
+- **RN4** — **Platform Operator (fila completa):** `GET /platform/support/tickets` (protegido por `PlatformOperatorGuard`) retorna todos os tickets com todos os campos incluindo `platform_notes`. Filtros: `status`, `priority`, `tenant_id`, `ticket_type`.
+- **RN5** — **Transições de status** (Platform Operator apenas):
+  ```
+  open → in_progress  (Platform Operator começa a trabalhar)
+  in_progress → resolved  (resolve com resolution_notes obrigatório)
+  resolved → open  (reabrir: raro, mas possível se tenant reportar que issue voltou)
+  ```
+  Tenant não muda status — apenas cria e consulta.
+- **RN6** — Ao mudar para `resolved`: `resolved_at = now()`, `resolution_notes` obrigatório (mínimo 10 caracteres). Tenant vê a nota de resolução na consulta.
+- **RN7** — Tenant vê badge de status no formulário/lista de seus tickets: Open (amarelo), In Progress (azul), Resolved (verde). Sem mais detalhes do lado de dentro da plataforma.
+- **RN8** — Nenhuma notification automática (email/push) nesta RF — Platform Operator consulta a fila ativamente. Notificações automáticas são ENH P2 futura.
+- **RN9** — Audit log em toda mudança de status (gravado em `audit_logs` com `is_platform_op = true` quando feito pelo Platform Operator, `is_platform_op = false` quando criação pelo tenant).
+
+### Módulos impactados
+
+**Backend:**
+- Novo módulo `apps/api/src/modules/support/`: `support.module.ts`, `support.service.ts`, `support.controller.ts`, DTOs
+- Endpoints tenant-side: `POST /support/tickets`, `GET /support/tickets`, `GET /support/tickets/:id`
+- Endpoints platform-side: `GET /platform/support/tickets`, `PATCH /platform/support/tickets/:id` (status + notas), adicionados ao módulo `platform` de RF-009
+- `apps/api/src/database/migrations/018_support_tickets.sql`
+
+**Frontend:**
+- Tenant-side: `apps/web/src/app/(dashboard)/support/page.tsx` — lista de tickets do tenant + botão "Abrir chamado" + modal com formulário
+- Componentes: `support-ticket-form-modal.tsx`, `support-tickets-table.tsx`, `ticket-status-badge.tsx`
+- Platform-side: `apps/web/src/app/(platform-admin)/support/page.tsx` — fila global + filtros + detail drawer com campos de resolução
+
+### Migrations
+
+**Sim.** `018_support_tickets.sql` — tabela `public.support_tickets` + ENUMs (ticket_type, ticket_priority, ticket_status) + indexes em (`tenant_id`, `status`), (`status`, `priority`). Sem RLS (public schema, access control é no service layer). Idempotente.
+
+### Critérios de Aceite
+
+- [ ] CA1 — Owner/admin de tenant abre ticket pelo formulário em `/app/support` (title + description + ticket_type) — ticket criado em `public.support_tickets` com status `open`
+- [ ] CA2 — Tenant consulta seus tickets e vê `resolution_notes` quando status = `resolved`; não vê `platform_notes` em nenhum caso
+- [ ] CA3 — Platform Operator vê fila completa com todos os tickets de todos os tenants + filtros funcionando
+- [ ] CA4 — Platform Operator muda status `open → in_progress → resolved` com `resolution_notes` obrigatório ao resolver
+- [ ] CA5 — `platform_notes` não aparece em nenhum endpoint tenant-side (validar no teste de serialização do DTO)
+- [ ] CA6 — Technician/estimator/accountant/viewer recebem 403 ao tentar criar ticket
+- [ ] CA7 — Mudanças de status geram audit_log entries corretas (`is_platform_op` correto por ator)
+- [ ] CA8 — Cobertura ≥ 80% no módulo support (service + controller)
+- [ ] CA9 — PR descreve Persona 0 (Platform Operator) como gestora + Owner-Operator como submitter — Regra 16 CLAUDE.md
+
+### Escopo negativo
+
+- **NÃO** implementar notificações automáticas por email nesta RF (ENH P2 futura)
+- **NÃO** permitir que technician/estimator/accountant/viewer abram tickets — apenas owner e admin
+- **NÃO** implementar threading/comments nos tickets (notas internas e resolution_notes são suficientes)
+- **NÃO** integrar com GitHub Issues nesta RF — integração externa é ENH se volume justificar
+- **NÃO** permitir que tenant veja tickets de outros tenants em nenhuma hipótese
+- **NÃO** implementar SLA automático ou escalação (ENH futura)
+- **NÃO** implementar file attachments em tickets nesta RF (StorageService pode ser usado em ENH futura)
+
+### Subagentes obrigatórios para o PR
+
+`security-reviewer` (vazamento de `platform_notes` é risco de dados sensíveis; tenant-isolation no public schema é não-trivial) + `db-reviewer` (migration 018, public schema sem RLS) + `test-runner` (CA5 de serialização é crítico) + `frontend-reviewer` (tenant-side form + platform-side queue).
+
+### Complexidade estimada
+
+**M-L (médio-alto).** PO assessment — DM deve validar.
+
+Justificativa: novo módulo + migration + dois lados de UI distintos + isolamento tenant no public schema é padrão incomum (sem RLS, requer disciplina no service layer). Risco principal: vazar `platform_notes` para tenant. CA5 é o teste mais crítico.
+
+**Sugestão de split:** RF-010a (backend + tenant-side form + consulta básica) → RF-010b (platform-admin queue + filtros + status transitions).
+
+### Condição de reversão
+
+Se volume de tickets ultrapassar 50/mês antes do RF estar DONE, pivota para integração com GitHub Issues como canal provisório (tenant envia email ao PO → PO cria issue manualmente). RF-010 entra após volume ser previsível.
+
+### Dependências
+
+- **RF-009** (PlatformOperatorGuard) — RF-010 platform-side usa o mesmo guard; se RF-009 não tiver sido entregue, RF-010a (tenant-side) pode ir sem RF-009, mas RF-010b (platform-side) depende do guard
+- **TenantMiddleware** — `tenant_id` precisa estar disponível no request context para injetar no `support_tickets` ao criar
+
+---
 
 ---
 

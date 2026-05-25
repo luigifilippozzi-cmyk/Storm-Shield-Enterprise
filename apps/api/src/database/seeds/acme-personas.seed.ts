@@ -9,13 +9,13 @@ const DEMO_PASSWORD = process.env.DEMO_SEED_PASSWORD ?? 'DemoPass!2026';
 const SCHEMA_NAME_RE = /^tenant_[0-9a-f]{8}_[0-9a-f]{4}_[0-9a-f]{4}_[0-9a-f]{4}_[0-9a-f]{12}$/;
 
 const PERSONAS = [
-  { email: 'owner@acme.sse-demo.test', firstName: 'John', lastName: "O'Connor", role: 'owner' },
-  { email: 'admin@acme.sse-demo.test', firstName: 'Maria', lastName: 'Santos', role: 'admin' },
-  { email: 'manager@acme.sse-demo.test', firstName: 'David', lastName: 'Kim', role: 'manager' },
-  { email: 'estimator@acme.sse-demo.test', firstName: 'Sarah', lastName: 'Johnson', role: 'estimator' },
-  { email: 'tech@acme.sse-demo.test', firstName: 'Carlos', lastName: 'Mendez', role: 'technician' },
-  { email: 'accountant@acme.sse-demo.test', firstName: 'Linda', lastName: 'Foster', role: 'accountant' },
-  { email: 'viewer@acme.sse-demo.test', firstName: 'Robert', lastName: 'Taylor', role: 'viewer' },
+  { email: 'owner@acme-sse-demo.com', firstName: 'John', lastName: "O'Connor", role: 'owner' },
+  { email: 'admin@acme-sse-demo.com', firstName: 'Maria', lastName: 'Santos', role: 'admin' },
+  { email: 'manager@acme-sse-demo.com', firstName: 'David', lastName: 'Kim', role: 'manager' },
+  { email: 'estimator@acme-sse-demo.com', firstName: 'Sarah', lastName: 'Johnson', role: 'estimator' },
+  { email: 'tech@acme-sse-demo.com', firstName: 'Carlos', lastName: 'Mendez', role: 'technician' },
+  { email: 'accountant@acme-sse-demo.com', firstName: 'Linda', lastName: 'Foster', role: 'accountant' },
+  { email: 'viewer@acme-sse-demo.com', firstName: 'Robert', lastName: 'Taylor', role: 'viewer' },
 ];
 
 export async function seedAcmePersonas(
