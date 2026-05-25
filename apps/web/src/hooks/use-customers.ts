@@ -50,10 +50,12 @@ export type UpdateCustomerInput = Partial<CreateCustomerInput>;
 // ── Helper to build auth headers ──
 
 function useApiHeaders() {
-  const { getToken } = useAuth();
+  const { getToken, orgId } = useAuth();
   return async () => {
     const token = (await getToken()) || undefined;
-    return { token };
+    const headers: Record<string, string> = {};
+    if (orgId) headers['X-Clerk-Org-Id'] = orgId;
+    return { token, headers };
   };
 }
 
@@ -77,8 +79,8 @@ export function useCustomers(filters: CustomerFilters = {}) {
   return useQuery({
     queryKey: ['customers', filters],
     queryFn: async () => {
-      const { token } = await getHeaders();
-      return api<PaginatedCustomers>(endpoint, { token });
+      const { token, headers } = await getHeaders();
+      return api<PaginatedCustomers>(endpoint, { token, headers });
     },
   });
 }
@@ -89,8 +91,8 @@ export function useCustomer(id: string) {
   return useQuery({
     queryKey: ['customers', id],
     queryFn: async () => {
-      const { token } = await getHeaders();
-      return api<Customer>(`/customers/${id}`, { token });
+      const { token, headers } = await getHeaders();
+      return api<Customer>(`/customers/${id}`, { token, headers });
     },
     enabled: !!id,
   });
@@ -102,11 +104,12 @@ export function useCreateCustomer() {
 
   return useMutation({
     mutationFn: async (data: CreateCustomerInput) => {
-      const { token } = await getHeaders();
+      const { token, headers } = await getHeaders();
       return api<Customer>('/customers', {
         method: 'POST',
         body: JSON.stringify(data),
         token,
+        headers,
       });
     },
     onSuccess: () => {
@@ -121,11 +124,12 @@ export function useUpdateCustomer(id: string) {
 
   return useMutation({
     mutationFn: async (data: UpdateCustomerInput) => {
-      const { token } = await getHeaders();
+      const { token, headers } = await getHeaders();
       return api<Customer>(`/customers/${id}`, {
         method: 'PUT',
         body: JSON.stringify(data),
         token,
+        headers,
       });
     },
     onSuccess: () => {
@@ -140,10 +144,11 @@ export function useDeleteCustomer() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { token } = await getHeaders();
+      const { token, headers } = await getHeaders();
       return api<void>(`/customers/${id}`, {
         method: 'DELETE',
         token,
+        headers,
       });
     },
     onSuccess: () => {
@@ -180,8 +185,8 @@ export function useCustomerSummary(id: string) {
   return useQuery({
     queryKey: ['customers', id, 'summary'],
     queryFn: async () => {
-      const { token } = await getHeaders();
-      return api<CustomerSummary>(`/customers/${id}/summary`, { token });
+      const { token, headers } = await getHeaders();
+      return api<CustomerSummary>(`/customers/${id}/summary`, { token, headers });
     },
     enabled: !!id,
   });
@@ -193,8 +198,8 @@ export function useCustomerActivityTimeline(id: string, limit = 50) {
   return useQuery({
     queryKey: ['customers', id, 'activity-timeline', limit],
     queryFn: async () => {
-      const { token } = await getHeaders();
-      return api<ActivityEvent[]>(`/customers/${id}/activity-timeline?limit=${limit}`, { token });
+      const { token, headers } = await getHeaders();
+      return api<ActivityEvent[]>(`/customers/${id}/activity-timeline?limit=${limit}`, { token, headers });
     },
     enabled: !!id,
   });

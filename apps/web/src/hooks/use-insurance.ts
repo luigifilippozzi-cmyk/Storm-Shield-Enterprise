@@ -42,10 +42,12 @@ export type UpdateInsuranceCompanyInput = Partial<CreateInsuranceCompanyInput>;
 // ── Helper to build auth headers ──
 
 function useApiHeaders() {
-  const { getToken } = useAuth();
+  const { getToken, orgId } = useAuth();
   return async () => {
     const token = (await getToken()) || undefined;
-    return { token };
+    const headers: Record<string, string> = {};
+    if (orgId) headers['X-Clerk-Org-Id'] = orgId;
+    return { token, headers };
   };
 }
 
@@ -68,8 +70,8 @@ export function useInsuranceCompanies(filters: InsuranceCompanyFilters = {}) {
   return useQuery({
     queryKey: ['insurance', filters],
     queryFn: async () => {
-      const { token } = await getHeaders();
-      return api<PaginatedInsuranceCompanies>(endpoint, { token });
+      const { token, headers } = await getHeaders();
+      return api<PaginatedInsuranceCompanies>(endpoint, { token, headers });
     },
   });
 }
@@ -80,8 +82,8 @@ export function useInsuranceCompany(id: string) {
   return useQuery({
     queryKey: ['insurance', id],
     queryFn: async () => {
-      const { token } = await getHeaders();
-      return api<InsuranceCompany>(`/insurance/${id}`, { token });
+      const { token, headers } = await getHeaders();
+      return api<InsuranceCompany>(`/insurance/${id}`, { token, headers });
     },
     enabled: !!id,
   });
@@ -93,11 +95,12 @@ export function useCreateInsuranceCompany() {
 
   return useMutation({
     mutationFn: async (data: CreateInsuranceCompanyInput) => {
-      const { token } = await getHeaders();
+      const { token, headers } = await getHeaders();
       return api<InsuranceCompany>('/insurance', {
         method: 'POST',
         body: JSON.stringify(data),
         token,
+        headers,
       });
     },
     onSuccess: () => {
@@ -112,11 +115,12 @@ export function useUpdateInsuranceCompany(id: string) {
 
   return useMutation({
     mutationFn: async (data: UpdateInsuranceCompanyInput) => {
-      const { token } = await getHeaders();
+      const { token, headers } = await getHeaders();
       return api<InsuranceCompany>(`/insurance/${id}`, {
         method: 'PUT',
         body: JSON.stringify(data),
         token,
+        headers,
       });
     },
     onSuccess: () => {
@@ -131,10 +135,11 @@ export function useDeleteInsuranceCompany() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { token } = await getHeaders();
+      const { token, headers } = await getHeaders();
       return api<void>(`/insurance/${id}`, {
         method: 'DELETE',
         token,
+        headers,
       });
     },
     onSuccess: () => {

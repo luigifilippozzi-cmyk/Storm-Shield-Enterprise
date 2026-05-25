@@ -35,10 +35,12 @@ export interface PaginatedAccounts {
 }
 
 function useApiHeaders() {
-  const { getToken } = useAuth();
+  const { getToken, orgId } = useAuth();
   return async () => {
     const token = (await getToken()) || undefined;
-    return { token };
+    const headers: Record<string, string> = {};
+    if (orgId) headers['X-Clerk-Org-Id'] = orgId;
+    return { token, headers };
   };
 }
 
@@ -54,8 +56,8 @@ export function useAccounts(filters: AccountFilters = {}) {
   return useQuery<PaginatedAccounts>({
     queryKey: ['accounts', filters],
     queryFn: async () => {
-      const { token } = await getHeaders();
-      return api<PaginatedAccounts>(`/accounting/accounts?${params}`, { token });
+      const { token, headers } = await getHeaders();
+      return api<PaginatedAccounts>(`/accounting/accounts?${params}`, { token, headers });
     },
   });
 }

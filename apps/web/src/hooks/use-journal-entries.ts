@@ -49,10 +49,12 @@ export interface PaginatedJournalEntries {
 }
 
 function useApiHeaders() {
-  const { getToken } = useAuth();
+  const { getToken, orgId } = useAuth();
   return async () => {
     const token = (await getToken()) || undefined;
-    return { token };
+    const headers: Record<string, string> = {};
+    if (orgId) headers['X-Clerk-Org-Id'] = orgId;
+    return { token, headers };
   };
 }
 
@@ -70,8 +72,8 @@ export function useJournalEntries(filters: JournalEntryFilters = {}) {
   return useQuery<PaginatedJournalEntries>({
     queryKey: ['journal-entries', filters],
     queryFn: async () => {
-      const { token } = await getHeaders();
-      return api<PaginatedJournalEntries>(`/accounting/journal-entries?${params}`, { token });
+      const { token, headers } = await getHeaders();
+      return api<PaginatedJournalEntries>(`/accounting/journal-entries?${params}`, { token, headers });
     },
   });
 }
@@ -81,8 +83,8 @@ export function useJournalEntry(id: string) {
   return useQuery<JournalEntry>({
     queryKey: ['journal-entry', id],
     queryFn: async () => {
-      const { token } = await getHeaders();
-      return api<JournalEntry>(`/accounting/journal-entries/${id}`, { token });
+      const { token, headers } = await getHeaders();
+      return api<JournalEntry>(`/accounting/journal-entries/${id}`, { token, headers });
     },
     enabled: !!id,
   });

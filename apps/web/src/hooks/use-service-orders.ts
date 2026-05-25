@@ -32,8 +32,13 @@ export interface CreateServiceOrderInput {
 export type UpdateServiceOrderInput = Partial<CreateServiceOrderInput>;
 
 function useApiHeaders() {
-  const { getToken } = useAuth();
-  return async () => ({ token: (await getToken()) || undefined });
+  const { getToken, orgId } = useAuth();
+  return async () => {
+    const token = (await getToken()) || undefined;
+    const headers: Record<string, string> = {};
+    if (orgId) headers['X-Clerk-Org-Id'] = orgId;
+    return { token, headers };
+  };
 }
 
 export function useServiceOrders(filters: ServiceOrderFilters = {}) {
@@ -47,8 +52,8 @@ export function useServiceOrders(filters: ServiceOrderFilters = {}) {
   return useQuery({
     queryKey: ['service-orders', filters],
     queryFn: async () => {
-      const { token } = await getHeaders();
-      return api<PaginatedServiceOrders>(`/service-orders${qs ? `?${qs}` : ''}`, { token });
+      const { token, headers } = await getHeaders();
+      return api<PaginatedServiceOrders>(`/service-orders${qs ? `?${qs}` : ''}`, { token, headers });
     },
   });
 }
@@ -58,8 +63,8 @@ export function useServiceOrder(id: string) {
   return useQuery({
     queryKey: ['service-orders', id],
     queryFn: async () => {
-      const { token } = await getHeaders();
-      return api<ServiceOrder>(`/service-orders/${id}`, { token });
+      const { token, headers } = await getHeaders();
+      return api<ServiceOrder>(`/service-orders/${id}`, { token, headers });
     },
     enabled: !!id,
   });
@@ -70,8 +75,8 @@ export function useCreateServiceOrder() {
   const getHeaders = useApiHeaders();
   return useMutation({
     mutationFn: async (data: CreateServiceOrderInput) => {
-      const { token } = await getHeaders();
-      return api<ServiceOrder>('/service-orders', { method: 'POST', body: JSON.stringify(data), token });
+      const { token, headers } = await getHeaders();
+      return api<ServiceOrder>('/service-orders', { method: 'POST', body: JSON.stringify(data), token, headers });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['service-orders'] }),
   });
@@ -82,8 +87,8 @@ export function useUpdateServiceOrder(id: string) {
   const getHeaders = useApiHeaders();
   return useMutation({
     mutationFn: async (data: UpdateServiceOrderInput) => {
-      const { token } = await getHeaders();
-      return api<ServiceOrder>(`/service-orders/${id}`, { method: 'PUT', body: JSON.stringify(data), token });
+      const { token, headers } = await getHeaders();
+      return api<ServiceOrder>(`/service-orders/${id}`, { method: 'PUT', body: JSON.stringify(data), token, headers });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['service-orders'] }),
   });
@@ -94,8 +99,8 @@ export function useUpdateServiceOrderStatus(id: string) {
   const getHeaders = useApiHeaders();
   return useMutation({
     mutationFn: async (status: string) => {
-      const { token } = await getHeaders();
-      return api<ServiceOrder>(`/service-orders/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }), token });
+      const { token, headers } = await getHeaders();
+      return api<ServiceOrder>(`/service-orders/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }), token, headers });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['service-orders'] }),
   });
@@ -106,8 +111,8 @@ export function useDeleteServiceOrder() {
   const getHeaders = useApiHeaders();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { token } = await getHeaders();
-      return api<void>(`/service-orders/${id}`, { method: 'DELETE', token });
+      const { token, headers } = await getHeaders();
+      return api<void>(`/service-orders/${id}`, { method: 'DELETE', token, headers });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['service-orders'] }),
   });
@@ -125,8 +130,8 @@ export function useForceProgress(id: string) {
   const getHeaders = useApiHeaders();
   return useMutation({
     mutationFn: async (data: ForceProgressInput) => {
-      const { token } = await getHeaders();
-      return api<ServiceOrder>(`/service-orders/${id}/force-progress`, { method: 'POST', body: JSON.stringify(data), token });
+      const { token, headers } = await getHeaders();
+      return api<ServiceOrder>(`/service-orders/${id}/force-progress`, { method: 'POST', body: JSON.stringify(data), token, headers });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['service-orders', id] });

@@ -57,8 +57,13 @@ export interface BalanceSheetReport {
 }
 
 function useApiHeaders() {
-  const { getToken } = useAuth();
-  return async () => ({ token: (await getToken()) || undefined });
+  const { getToken, orgId } = useAuth();
+  return async () => {
+    const token = (await getToken()) || undefined;
+    const headers: Record<string, string> = {};
+    if (orgId) headers['X-Clerk-Org-Id'] = orgId;
+    return { token, headers };
+  };
 }
 
 export function useTrialBalance(opts: { as_of_date?: string; fiscal_period_id?: string } = {}) {
@@ -71,8 +76,8 @@ export function useTrialBalance(opts: { as_of_date?: string; fiscal_period_id?: 
   return useQuery({
     queryKey: ['accounting', 'reports', 'trial-balance', opts],
     queryFn: async () => {
-      const { token } = await getHeaders();
-      return api<TrialBalanceReport>(`/accounting/reports/trial-balance${qs ? `?${qs}` : ''}`, { token });
+      const { token, headers } = await getHeaders();
+      return api<TrialBalanceReport>(`/accounting/reports/trial-balance${qs ? `?${qs}` : ''}`, { token, headers });
     },
   });
 }
@@ -88,8 +93,8 @@ export function useProfitLoss(opts: { date_from?: string; date_to?: string; fisc
   return useQuery({
     queryKey: ['accounting', 'reports', 'profit-loss', opts],
     queryFn: async () => {
-      const { token } = await getHeaders();
-      return api<ProfitLossReport>(`/accounting/reports/profit-loss${qs ? `?${qs}` : ''}`, { token });
+      const { token, headers } = await getHeaders();
+      return api<ProfitLossReport>(`/accounting/reports/profit-loss${qs ? `?${qs}` : ''}`, { token, headers });
     },
   });
 }
@@ -103,8 +108,8 @@ export function useBalanceSheet(opts: { as_of_date?: string } = {}) {
   return useQuery({
     queryKey: ['accounting', 'reports', 'balance-sheet', opts],
     queryFn: async () => {
-      const { token } = await getHeaders();
-      return api<BalanceSheetReport>(`/accounting/reports/balance-sheet${qs ? `?${qs}` : ''}`, { token });
+      const { token, headers } = await getHeaders();
+      return api<BalanceSheetReport>(`/accounting/reports/balance-sheet${qs ? `?${qs}` : ''}`, { token, headers });
     },
   });
 }

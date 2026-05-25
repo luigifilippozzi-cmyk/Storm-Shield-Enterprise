@@ -49,8 +49,13 @@ export interface CreateEstimateInput {
 export type UpdateEstimateInput = Partial<CreateEstimateInput>;
 
 function useApiHeaders() {
-  const { getToken } = useAuth();
-  return async () => ({ token: (await getToken()) || undefined });
+  const { getToken, orgId } = useAuth();
+  return async () => {
+    const token = (await getToken()) || undefined;
+    const headers: Record<string, string> = {};
+    if (orgId) headers['X-Clerk-Org-Id'] = orgId;
+    return { token, headers };
+  };
 }
 
 export function useEstimates(filters: EstimateFilters = {}) {
@@ -64,8 +69,8 @@ export function useEstimates(filters: EstimateFilters = {}) {
   return useQuery({
     queryKey: ['estimates', filters],
     queryFn: async () => {
-      const { token } = await getHeaders();
-      return api<PaginatedEstimates>(`/estimates${qs ? `?${qs}` : ''}`, { token });
+      const { token, headers } = await getHeaders();
+      return api<PaginatedEstimates>(`/estimates${qs ? `?${qs}` : ''}`, { token, headers });
     },
   });
 }
@@ -75,8 +80,8 @@ export function useEstimate(id: string) {
   return useQuery({
     queryKey: ['estimates', id],
     queryFn: async () => {
-      const { token } = await getHeaders();
-      return api<Estimate>(`/estimates/${id}`, { token });
+      const { token, headers } = await getHeaders();
+      return api<Estimate>(`/estimates/${id}`, { token, headers });
     },
     enabled: !!id,
   });
@@ -87,8 +92,8 @@ export function useCreateEstimate() {
   const getHeaders = useApiHeaders();
   return useMutation({
     mutationFn: async (data: CreateEstimateInput) => {
-      const { token } = await getHeaders();
-      return api<Estimate>('/estimates', { method: 'POST', body: JSON.stringify(data), token });
+      const { token, headers } = await getHeaders();
+      return api<Estimate>('/estimates', { method: 'POST', body: JSON.stringify(data), token, headers });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['estimates'] }),
   });
@@ -99,8 +104,8 @@ export function useUpdateEstimate(id: string) {
   const getHeaders = useApiHeaders();
   return useMutation({
     mutationFn: async (data: UpdateEstimateInput) => {
-      const { token } = await getHeaders();
-      return api<Estimate>(`/estimates/${id}`, { method: 'PUT', body: JSON.stringify(data), token });
+      const { token, headers } = await getHeaders();
+      return api<Estimate>(`/estimates/${id}`, { method: 'PUT', body: JSON.stringify(data), token, headers });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['estimates'] }),
   });
@@ -111,8 +116,8 @@ export function useUpdateEstimateStatus(id: string) {
   const getHeaders = useApiHeaders();
   return useMutation({
     mutationFn: async (status: string) => {
-      const { token } = await getHeaders();
-      return api<Estimate>(`/estimates/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }), token });
+      const { token, headers } = await getHeaders();
+      return api<Estimate>(`/estimates/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }), token, headers });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['estimates'] }),
   });
@@ -123,8 +128,8 @@ export function useUpdateEstimateStatusById() {
   const getHeaders = useApiHeaders();
   return useMutation({
     mutationFn: async ({ id, status, notes }: { id: string; status: string; notes?: string }) => {
-      const { token } = await getHeaders();
-      return api<Estimate>(`/estimates/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status, notes }), token });
+      const { token, headers } = await getHeaders();
+      return api<Estimate>(`/estimates/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status, notes }), token, headers });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['estimates'] }),
   });
@@ -135,8 +140,8 @@ export function useDeleteEstimate() {
   const getHeaders = useApiHeaders();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { token } = await getHeaders();
-      return api<void>(`/estimates/${id}`, { method: 'DELETE', token });
+      const { token, headers } = await getHeaders();
+      return api<void>(`/estimates/${id}`, { method: 'DELETE', token, headers });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['estimates'] }),
   });
@@ -168,11 +173,11 @@ export function useUploadEstimateDocument(estimateId: string) {
   const getHeaders = useApiHeaders();
   return useMutation({
     mutationFn: async (data: { file: File; document_type?: string }) => {
-      const { token } = await getHeaders();
+      const { token, headers } = await getHeaders();
       const formData = new FormData();
       formData.append('file', data.file);
       if (data.document_type) formData.append('document_type', data.document_type);
-      return apiUpload<EstimateDocument>(`/estimates/${estimateId}/documents`, formData, { token });
+      return apiUpload<EstimateDocument>(`/estimates/${estimateId}/documents`, formData, { token, headers });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['estimates', estimateId] }),
   });
@@ -183,8 +188,8 @@ export function useDeleteEstimateDocument(estimateId: string) {
   const getHeaders = useApiHeaders();
   return useMutation({
     mutationFn: async (documentId: string) => {
-      const { token } = await getHeaders();
-      return api<void>(`/estimates/${estimateId}/documents/${documentId}`, { method: 'DELETE', token });
+      const { token, headers } = await getHeaders();
+      return api<void>(`/estimates/${estimateId}/documents/${documentId}`, { method: 'DELETE', token, headers });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['estimates', estimateId] }),
   });
@@ -213,11 +218,12 @@ export function useCreateSupplement(estimateId: string) {
   const getHeaders = useApiHeaders();
   return useMutation({
     mutationFn: async (data: SupplementInput) => {
-      const { token } = await getHeaders();
+      const { token, headers } = await getHeaders();
       return api<EstimateSupplementData>(`/estimates/${estimateId}/supplements`, {
         method: 'POST',
         body: JSON.stringify(data),
         token,
+        headers,
       });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['estimates', estimateId] }),
@@ -241,8 +247,8 @@ export function useOpenDispute(estimateId: string) {
   const getHeaders = useApiHeaders();
   return useMutation({
     mutationFn: async (data: OpenDisputeInput) => {
-      const { token } = await getHeaders();
-      return api<Estimate>(`/estimates/${estimateId}/dispute`, { method: 'POST', body: JSON.stringify(data), token });
+      const { token, headers } = await getHeaders();
+      return api<Estimate>(`/estimates/${estimateId}/dispute`, { method: 'POST', body: JSON.stringify(data), token, headers });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['estimates', estimateId] });
@@ -256,8 +262,8 @@ export function useResolveDispute(estimateId: string) {
   const getHeaders = useApiHeaders();
   return useMutation({
     mutationFn: async (data: ResolveDisputeInput) => {
-      const { token } = await getHeaders();
-      return api<Estimate>(`/estimates/${estimateId}/resolve-dispute`, { method: 'POST', body: JSON.stringify(data), token });
+      const { token, headers } = await getHeaders();
+      return api<Estimate>(`/estimates/${estimateId}/resolve-dispute`, { method: 'POST', body: JSON.stringify(data), token, headers });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['estimates', estimateId] });
