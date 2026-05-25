@@ -15,8 +15,9 @@ type: project
 
 **Origin:** PO Cowork (UAT 2026-05-25)
 **Priority:** P1
-**Status:** PENDING
+**Status:** COMPLETED — 2026-05-25 → PR #85 → aguardando merge + deploy manual
 **Branch:** fix/SSE-bugc-staging-data-empty
+**PR:** #85 OPEN
 **Subagentes PR:** security-reviewer + test-runner
 
 ### Comportamento atual
