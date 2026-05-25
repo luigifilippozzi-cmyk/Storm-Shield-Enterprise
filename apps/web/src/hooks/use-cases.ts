@@ -68,10 +68,12 @@ export interface UpdateCaseInput {
 // ── Helper ──
 
 function useApiHeaders() {
-  const { getToken } = useAuth();
+  const { getToken, orgId } = useAuth();
   return async () => {
     const token = (await getToken()) || undefined;
-    return { token };
+    const headers: Record<string, string> = {};
+    if (orgId) headers['X-Clerk-Org-Id'] = orgId;
+    return { token, headers };
   };
 }
 
@@ -94,8 +96,8 @@ export function useCases(filters: CaseFilters = {}) {
   return useQuery({
     queryKey: ['cases', filters],
     queryFn: async () => {
-      const { token } = await getHeaders();
-      return api<PaginatedCases>(`/cases${qs ? `?${qs}` : ''}`, { token });
+      const { token, headers } = await getHeaders();
+      return api<PaginatedCases>(`/cases${qs ? `?${qs}` : ''}`, { token, headers });
     },
   });
 }
@@ -106,8 +108,8 @@ export function useCase(id: string) {
   return useQuery({
     queryKey: ['cases', id],
     queryFn: async () => {
-      const { token } = await getHeaders();
-      return api<Case>(`/cases/${id}`, { token });
+      const { token, headers } = await getHeaders();
+      return api<Case>(`/cases/${id}`, { token, headers });
     },
     enabled: !!id,
   });
@@ -119,8 +121,8 @@ export function useCreateCase() {
 
   return useMutation({
     mutationFn: async (data: CreateCaseInput) => {
-      const { token } = await getHeaders();
-      return api<Case>('/cases', { method: 'POST', body: JSON.stringify(data), token });
+      const { token, headers } = await getHeaders();
+      return api<Case>('/cases', { method: 'POST', body: JSON.stringify(data), token, headers });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cases'] });
@@ -134,8 +136,8 @@ export function useUpdateCase(id: string) {
 
   return useMutation({
     mutationFn: async (data: UpdateCaseInput) => {
-      const { token } = await getHeaders();
-      return api<Case>(`/cases/${id}`, { method: 'PATCH', body: JSON.stringify(data), token });
+      const { token, headers } = await getHeaders();
+      return api<Case>(`/cases/${id}`, { method: 'PATCH', body: JSON.stringify(data), token, headers });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cases'] });
@@ -149,11 +151,12 @@ export function useResolveCase(id: string) {
 
   return useMutation({
     mutationFn: async (resolution_notes?: string) => {
-      const { token } = await getHeaders();
+      const { token, headers } = await getHeaders();
       return api<Case>(`/cases/${id}/resolve`, {
         method: 'POST',
         body: JSON.stringify({ resolution_notes }),
         token,
+        headers,
       });
     },
     onSuccess: () => {
@@ -168,8 +171,8 @@ export function useDeleteCase() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { token } = await getHeaders();
-      return api<{ deleted: boolean }>(`/cases/${id}`, { method: 'DELETE', token });
+      const { token, headers } = await getHeaders();
+      return api<{ deleted: boolean }>(`/cases/${id}`, { method: 'DELETE', token, headers });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cases'] });

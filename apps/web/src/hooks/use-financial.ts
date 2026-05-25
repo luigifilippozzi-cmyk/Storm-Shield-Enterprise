@@ -42,8 +42,13 @@ export interface CreateTransactionInput {
 export type UpdateTransactionInput = Partial<CreateTransactionInput>;
 
 function useApiHeaders() {
-  const { getToken } = useAuth();
-  return async () => ({ token: (await getToken()) || undefined });
+  const { getToken, orgId } = useAuth();
+  return async () => {
+    const token = (await getToken()) || undefined;
+    const headers: Record<string, string> = {};
+    if (orgId) headers['X-Clerk-Org-Id'] = orgId;
+    return { token, headers };
+  };
 }
 
 export interface FinancialDashboard {
@@ -59,8 +64,8 @@ export function useFinancialDashboard() {
   return useQuery({
     queryKey: ['financial', 'dashboard'],
     queryFn: async () => {
-      const { token } = await getHeaders();
-      return api<FinancialDashboard>('/financial/dashboard', { token });
+      const { token, headers } = await getHeaders();
+      return api<FinancialDashboard>('/financial/dashboard', { token, headers });
     },
   });
 }
@@ -70,8 +75,8 @@ export function useFinancialSummary() {
   return useQuery({
     queryKey: ['financial', 'summary'],
     queryFn: async () => {
-      const { token } = await getHeaders();
-      return api<FinancialSummary>('/financial/summary', { token });
+      const { token, headers } = await getHeaders();
+      return api<FinancialSummary>('/financial/summary', { token, headers });
     },
   });
 }
@@ -87,8 +92,8 @@ export function useTransactions(filters: TransactionFilters = {}) {
   return useQuery({
     queryKey: ['financial', 'transactions', filters],
     queryFn: async () => {
-      const { token } = await getHeaders();
-      return api<PaginatedTransactions>(`/financial${qs ? `?${qs}` : ''}`, { token });
+      const { token, headers } = await getHeaders();
+      return api<PaginatedTransactions>(`/financial${qs ? `?${qs}` : ''}`, { token, headers });
     },
   });
 }
@@ -98,8 +103,8 @@ export function useTransaction(id: string) {
   return useQuery({
     queryKey: ['financial', 'transactions', id],
     queryFn: async () => {
-      const { token } = await getHeaders();
-      return api<FinancialTransaction>(`/financial/${id}`, { token });
+      const { token, headers } = await getHeaders();
+      return api<FinancialTransaction>(`/financial/${id}`, { token, headers });
     },
     enabled: !!id,
   });
@@ -110,8 +115,8 @@ export function useCreateTransaction() {
   const getHeaders = useApiHeaders();
   return useMutation({
     mutationFn: async (data: CreateTransactionInput) => {
-      const { token } = await getHeaders();
-      return api<FinancialTransaction>('/financial', { method: 'POST', body: JSON.stringify(data), token });
+      const { token, headers } = await getHeaders();
+      return api<FinancialTransaction>('/financial', { method: 'POST', body: JSON.stringify(data), token, headers });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['financial'] });
@@ -124,8 +129,8 @@ export function useDeleteTransaction() {
   const getHeaders = useApiHeaders();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { token } = await getHeaders();
-      return api<void>(`/financial/${id}`, { method: 'DELETE', token });
+      const { token, headers } = await getHeaders();
+      return api<void>(`/financial/${id}`, { method: 'DELETE', token, headers });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['financial'] });

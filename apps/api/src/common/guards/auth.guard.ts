@@ -3,6 +3,7 @@ import {
   CanActivate,
   ExecutionContext,
   UnauthorizedException,
+  ForbiddenException,
   Inject,
 } from '@nestjs/common';
 import { Knex } from 'knex';
@@ -26,6 +27,14 @@ export class AuthGuard implements CanActivate {
 
     const token = authHeader.substring(7);
     const decoded = await this.authService.verifySessionToken(token);
+
+    // Validate X-Clerk-Org-Id header against the JWT's org_id claim to prevent
+    // cross-tenant spoofing: an attacker with a valid JWT for Tenant A cannot
+    // supply Tenant B's orgId in the header to gain access to Tenant B's data.
+    const claimedOrgId = request.headers['x-clerk-org-id'] as string | undefined;
+    if (claimedOrgId && decoded.orgId && claimedOrgId !== decoded.orgId) {
+      throw new ForbiddenException('X-Clerk-Org-Id does not match token claims');
+    }
 
     // Look up the internal user by Clerk external_auth_id
     // The tenant context should already be set by TenantMiddleware

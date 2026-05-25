@@ -43,8 +43,8 @@ export function useInsuranceSeedList() {
   return useQuery<InsuranceSeed[]>({
     queryKey: ['insurance-seed-list'],
     queryFn: async () => {
-      const { token } = await getHeaders();
-      return api<InsuranceSeed[]>('/insurance/seed-list', { token });
+      const { token, headers } = await getHeaders();
+      return api<InsuranceSeed[]>('/insurance/seed-list', { token, headers });
     },
     staleTime: Infinity,
   });

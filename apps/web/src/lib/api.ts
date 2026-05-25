@@ -37,9 +37,9 @@ export async function api<T>(endpoint: string, options: FetchOptions = {}): Prom
 export async function apiUpload<T>(
   endpoint: string,
   formData: FormData,
-  options: { token?: string; tenantId?: string } = {},
+  options: { token?: string; tenantId?: string; headers?: Record<string, string> } = {},
 ): Promise<T> {
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = { ...(options.headers ?? {}) };
 
   if (options.tenantId) {
     headers['X-Tenant-Id'] = options.tenantId;

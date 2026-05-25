@@ -49,10 +49,12 @@ export type UpdateVehicleInput = Partial<CreateVehicleInput>;
 // ── Helper to build auth headers ──
 
 function useApiHeaders() {
-  const { getToken } = useAuth();
+  const { getToken, orgId } = useAuth();
   return async () => {
     const token = (await getToken()) || undefined;
-    return { token };
+    const headers: Record<string, string> = {};
+    if (orgId) headers['X-Clerk-Org-Id'] = orgId;
+    return { token, headers };
   };
 }
 
@@ -76,8 +78,8 @@ export function useVehicles(filters: VehicleFilters = {}) {
   return useQuery({
     queryKey: ['vehicles', filters],
     queryFn: async () => {
-      const { token } = await getHeaders();
-      return api<PaginatedVehicles>(endpoint, { token });
+      const { token, headers } = await getHeaders();
+      return api<PaginatedVehicles>(endpoint, { token, headers });
     },
   });
 }
@@ -88,8 +90,8 @@ export function useVehicle(id: string) {
   return useQuery({
     queryKey: ['vehicles', id],
     queryFn: async () => {
-      const { token } = await getHeaders();
-      return api<Vehicle>(`/vehicles/${id}`, { token });
+      const { token, headers } = await getHeaders();
+      return api<Vehicle>(`/vehicles/${id}`, { token, headers });
     },
     enabled: !!id,
   });
@@ -101,11 +103,12 @@ export function useCreateVehicle() {
 
   return useMutation({
     mutationFn: async (data: CreateVehicleInput) => {
-      const { token } = await getHeaders();
+      const { token, headers } = await getHeaders();
       return api<Vehicle>('/vehicles', {
         method: 'POST',
         body: JSON.stringify(data),
         token,
+        headers,
       });
     },
     onSuccess: () => {
@@ -120,11 +123,12 @@ export function useUpdateVehicle(id: string) {
 
   return useMutation({
     mutationFn: async (data: UpdateVehicleInput) => {
-      const { token } = await getHeaders();
+      const { token, headers } = await getHeaders();
       return api<Vehicle>(`/vehicles/${id}`, {
         method: 'PUT',
         body: JSON.stringify(data),
         token,
+        headers,
       });
     },
     onSuccess: () => {
@@ -139,10 +143,11 @@ export function useDeleteVehicle() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { token } = await getHeaders();
+      const { token, headers } = await getHeaders();
       return api<void>(`/vehicles/${id}`, {
         method: 'DELETE',
         token,
+        headers,
       });
     },
     onSuccess: () => {
@@ -170,12 +175,12 @@ export function useUploadVehiclePhoto(vehicleId: string) {
 
   return useMutation({
     mutationFn: async (data: { file: File; photo_type?: string; description?: string }) => {
-      const { token } = await getHeaders();
+      const { token, headers } = await getHeaders();
       const formData = new FormData();
       formData.append('file', data.file);
       if (data.photo_type) formData.append('photo_type', data.photo_type);
       if (data.description) formData.append('description', data.description);
-      return apiUpload<VehiclePhoto>(`/vehicles/${vehicleId}/photos`, formData, { token });
+      return apiUpload<VehiclePhoto>(`/vehicles/${vehicleId}/photos`, formData, { token, headers });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vehicles', vehicleId] });
@@ -189,10 +194,11 @@ export function useDeleteVehiclePhoto(vehicleId: string) {
 
   return useMutation({
     mutationFn: async (photoId: string) => {
-      const { token } = await getHeaders();
+      const { token, headers } = await getHeaders();
       return api<void>(`/vehicles/${vehicleId}/photos/${photoId}`, {
         method: 'DELETE',
         token,
+        headers,
       });
     },
     onSuccess: () => {
