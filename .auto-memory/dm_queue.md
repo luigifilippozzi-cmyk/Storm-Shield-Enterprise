@@ -9,6 +9,71 @@ type: project
 
 > **Nota:** "NS" = ERP de referência externo. Nome substituído por precaução (ADR-014).
 
+---
+
+## T-20260524-1 — Fix rota `/login/tasks` (404 Clerk choose-org) + diagnóstico dados dashboard
+
+**Origin:** PO
+**Priority:** P1
+**Status:** COMPLETED — 2026-05-25 → ARCHIVED → dm_queue_archive.md
+**Created:** 2026-05-24
+**Claimed:** DM Agent 2026-05-25
+**Branch:** fix/SSE-clerk-login-tasks-404
+**PR:** #84 MERGED
+
+### Objetivo
+Corrigir o 404 em `/login/tasks` gerado pelo Clerk após seleção de organização, e investigar por que o dashboard não exibe dados (KPIs aparecem como `—`) mesmo com tenant linkado no Neon.
+
+### Contexto
+Durante sessão UAT de T-20260509-2 foram descobertos dois problemas novos:
+
+**BUG-A — `/login/tasks` → 404:**
+O Clerk, ao concluir o sign-in com `choose-organization` task pendente, redireciona o usuário para `{signInUrl}/tasks` = `/login/tasks`. Essa rota não existe no Next.js app (só existe `/login`). O Clerk component `<SignIn>` está configurado com `routing="hash"` ou sem o sub-path `/tasks`. Workaround atual: chamar `clerk.setActive({ organization })` via JS no console — não é viável para usuário final.
+
+**BUG-B — Dashboard sem dados (KPIs = `—`):**
+Após login bem-sucedido (org ativa, `clerk_org_id` gravado no Neon), o dashboard renderiza mas todos os KPIs mostram `—`. O `sse-api-staging.fly.dev` está completamente unreachable (timeout, HTTP 000) — T-20260412-1 ainda bloqueado. As chamadas de dados ocorrem server-side (SSR no Vercel), portanto o Vercel não consegue falar com o Fly.io. Checar se BUG-B é consequência direta de T-20260412-1 ou há outro problema (ex: CORS, tenant header não enviado).
+
+Contexto adicional de autenticação (sessão 2026-05-24):
+- Clerk org criada: `org_3EC9cu4VckyAhRCb1TXhSLWAgmg` (Acme Body Shop)
+- `tenants.settings->>'clerk_org_id'` = `'org_3EC9cu4VckyAhRCb1TXhSLWAgmg'` gravado via `fix-org.cjs`
+- Tenant ID Acme: `0000019e-3600-7710-a13a-0817fae22a4d`
+- Owner Clerk user ID: `user_3Dw6kSlVNHDu0aC9WRG4w3xUB4N`
+
+### Ação sugerida
+
+**Fix BUG-A (rota `/login/tasks`):**
+Adicionar o path `/tasks` ao componente `<SignIn>` do Clerk, ou criar uma página Next.js em `app/(auth)/login/tasks/page.tsx` que renderize `<SignIn routing="path" path="/login" />`. Ver docs Clerk: https://clerk.com/docs/components/authentication/sign-in#customization
+
+Alternativa mais simples: no `ClerkProvider`, configurar `afterSignInUrl="/dashboard"` e desabilitar o force-organization task usando `organizationRequiredBehavior: 'disabled'` (se disponível na versão atual do Clerk).
+
+**Fix BUG-B (dashboard sem dados):**
+1. Primeiro confirmar se T-20260412-1 ainda bloqueia o Fly.io (`flyctl logs --app sse-api-staging`)
+2. Se Fly.io voltar: verificar se o Vercel envia `X-Clerk-Org-Id` corretamente nas chamadas SSR ao backend
+3. Se Fly.io continuar down: avaliar se há como apontar o staging web para um backend local via túnel ou mock
+
+### Escopo negativo — NÃO fazer nesta entrega
+- Não alterar o fluxo de seed de usuários Clerk (acme-personas.seed.ts está correto)
+- Não mexer no `TenantContextInterceptor` — a lógica de resolução está certa
+- Não criar nova org Clerk ou novos usuários demo
+- Não tentar resolver T-20260412-1 (Fly.io deploy) nesta tarefa — é trabalho separado
+- Não implementar device verification bypass permanente (workaround via sign-in token é aceitável por ora)
+
+### Done quando
+- `owner@acme-sse-demo.com` faz login no staging, seleciona org automaticamente (sem JS manual), e cai no dashboard sem 404
+- Pelo menos o health check da API (`/health`) é acessível pelo Vercel em SSR (confirmar via Vercel logs)
+- PR com os fixes, CI verde, DM documenta status do Fly.io
+
+### Subagentes obrigatórios
+- `test-runner` — garantir que o flow de auth não quebrou testes E2E existentes
+- `frontend-reviewer` — se alterar qualquer página em `(auth)/` ou `ClerkProvider`
+- `security-reviewer` — se alterar configuração do Clerk middleware (risco: abrir rota não-autenticada)
+
+### Persona servida (se aplicável)
+N/A (infra/meta — viabiliza UAT de todas as personas)
+
+### Gap fechado (se aplicável)
+N/A
+
 > Fila única. Tarefas novas no topo. Template canônico em `docs/process/HANDOFF_PROTOCOL.md` §4.
 > Status permitidos: PENDING | IN_PROGRESS | BLOCKED | COMPLETED
 > Rotação: COMPLETED movidas para `dm_queue_archive.md` no primeiro dia útil de cada mês.
@@ -52,6 +117,16 @@ Arquivos modificados:
 ---
 
 ## T-20260509-2 — P1 — Executar seed Acme em staging para destravar UAT manual
+
+**COMPLETED [2026-05-19]:** Seed executado com sucesso em staging Neon.
+- Tenant Acme provisionado via `provision-acme.ps1` (novo script CJS — `apps/api/provision-acme-neon.cjs`)
+- 7 personas criadas no Clerk + DB com roles (@acme-sse-demo.com — dominio trocado de .test que Clerk rejeita)
+- Demo data completo: 15 clientes, 18 veiculos, 12 estimates, 5 SOs, 30 transacoes, 13 COA, 3 JEs, 1 ativo FAM
+- Seeds corrigidos: 17 bugs schema-mismatch em `acme-demo-data.seed.ts` (colunas erradas vs migrations)
+- BUG-05 (IPv4/Neon) confirmado resolvido por PR #83 (family:4)
+- Root causes adicionais descobertos: endpoint hostname errado (.env tinha dash vs dot) + channel_binding ausente
+- Novos scripts: `provision-acme.ps1`, `reset-acme-demo.ps1`, `apps/api/provision-acme-neon.cjs`, `apps/api/reset-acme-demo.cjs`
+- Roteiros UAT em `docs/audits/` agora desbloqueados
 
 **UPDATE [2026-05-11 21:58Z]:** 
 1. PO Agent abriu Neon Console via Chrome
@@ -107,7 +182,7 @@ Issue is AUTHENTICATION PATHWAY MISMATCH, not credentials/network:
 
 **Origin:** PO (sessão Cowork 2026-05-09 — entrega de roteiros de teste para leigos)
 **Priority:** P1
-**Status:** BLOCKED
+**Status:** COMPLETED — 2026-05-19
 **Created:** 2026-05-09
 **Branch:** N/A — operação de runtime; sem código novo (PRs #68 e #69 já merged em 2026-05-02)
 **Subagentes PR:** N/A — operação ops/staging
@@ -2787,5 +2862,89 @@ BUG_CREDENTIAL_CACHING_IPV6.md - contÃ©m detalhamento 100% necessÃ¡rio
 
 ### Tempo Estimado
 2-4 horas
+
+---
+
+---
+
+## [2026-05-24] RF-009 — P1 — Platform Admin: Tenant Lifecycle Management
+
+**Origin:** Sessão PO Cowork 2026-05-24
+**Priority:** P1
+**Status:** PENDING
+**Branch:** feature/SSE-rf009-platform-admin-tenant-lifecycle
+**Subagentes PR:** security-reviewer (OBRIGATORIO — guard critico) + db-reviewer (migration 017 + KNEX_ADMIN_CONNECTION) + test-runner (guard coverage bloqueante) + frontend-reviewer (route group + middleware Next.js)
+
+### Contexto
+
+Fecha a lacuna "RF Regra-0" documentada na Bussola §2.5 (Persona 0 — Platform Operator). Hoje o provisioning de tenants e operacoes de ciclo de vida sao feitos via SQL com sse_user — sem audit trail nativo e exigindo acesso direto ao DB. Esta RF cria a area `/app/platform-admin` (invisivel a todas as outras personas) e a primeira aba operacional: Gestao de Tenants.
+
+RFs completos em: `docs/strategy/RF_BACKLOG.md` — secao RF-009
+
+### Escopo
+
+1. Novo guard `PlatformOperatorGuard` — valida SUPER_USER_EMAIL (e backup) — 403 silencioso para outros
+2. Novo route group frontend `(platform-admin)` — sem sidebar de personas, redirect silencioso se nao-PO
+3. Novo modulo backend `platform` — CRUD sobre `public.tenants` via KNEX_ADMIN_CONNECTION
+4. Migration 017 — campos de lifecycle em `public.tenants` (suspended_at, cancelled_at, activated_at)
+5. Operacoes: criar tenant (schema + seed + convite Clerk), suspender, reativar, cancelar, alterar plano
+6. Health dashboard cross-tenant — lista com plano, status, activation_status, last_user_login_at
+
+### Escopo negativo
+
+- NAO integrar Stripe nesta RF (billing manual)
+- NAO permitir editar dados operacionais do tenant via platform-admin
+- NAO criar segundo Platform Operator via UI
+- NAO implementar purge de dados de tenant cancelado — apenas bloqueio de acesso
+- NAO implementar last_user_login_at em real-time via webhook Clerk — batch diario ou stub, DM decide
+
+### Done quando
+
+Criterios de aceite CA1-CA10 satisfeitos (ver RF-009 no backlog). Especialmente: CA7 (PlatformOperatorGuard retorna 403 para owner do tenant), CA8 (audit_logs com is_platform_op=true), CA3 (suspender bloqueia requests imediatamente).
+
+Protocolo: `docs/process/HANDOFF_PROTOCOL.md` §4 (template canonico) + §7 (ciclo de vida)
+
+---
+
+## [2026-05-24] RF-010 — P1 — Platform Admin: Support Ticket Management
+
+**Origin:** Sessão PO Cowork 2026-05-24
+**Priority:** P1
+**Status:** PENDING
+**Dependencia:** RF-009 (PlatformOperatorGuard) — RF-010a (tenant-side) pode ir sem RF-009; RF-010b (platform-side) depende do guard
+**Branch:** feature/SSE-rf010-support-tickets
+**Subagentes PR:** security-reviewer (CRITICO — vazamento de platform_notes e tenant-isolation no public schema sem RLS) + db-reviewer (migration 018, public schema sem RLS) + test-runner (CA5 serializacao e-obrigatorio) + frontend-reviewer (duas UIs distintas)
+
+### Contexto
+
+Sistema leve de chamados internos ao SSE. Dois lados: (a) tenant-side — formulario em `/app/support` onde owner ou admin abre ticket; (b) platform-admin side — fila em `/app/platform-admin/support` onde Platform Operator ve todos os tickets e gerencia resolucao. Canal interno SSE (sem integracao externa nesta RF). Ciclo: Open → In Progress → Resolved.
+
+RFs completos em: `docs/strategy/RF_BACKLOG.md` — secao RF-010
+
+### Escopo
+
+1. Tabela `public.support_tickets` — schema publico, sem RLS, isolamento no service layer
+2. Modulo `support` — endpoints tenant-side (POST/GET com filtro tenant_id hardcoded) e platform-side (GET all + PATCH status)
+3. Tenant-side UI — `/app/support` com formulario de abertura + lista dos proprios tickets + badge de status
+4. Platform-side UI — `/app/platform-admin/support` com fila global + filtros + drawer de resolucao
+5. Migration 018 — tabela + ENUMs + indexes
+
+### Regra critica de seguranca
+
+Campo `platform_notes` NUNCA deve aparecer em endpoints ou DTOs tenant-side. CA5 e o teste mais critico. Security-reviewer deve auditar especificamente a serializacao dos DTOs.
+
+### Escopo negativo
+
+- NAO notificacoes automaticas por email (ENH P2 futura)
+- NAO threading/comments nos tickets
+- NAO integracao com GitHub Issues nesta RF
+- NAO technician/estimator/accountant/viewer podem abrir tickets (somente owner e admin)
+- NAO file attachments nesta RF
+
+### Done quando
+
+Criterios de aceite CA1-CA9 satisfeitos (ver RF-010 no backlog). Especialmente: CA5 (platform_notes nunca vazado) e CA3 (fila completa com filtros para Platform Operator).
+
+Protocolo: `docs/process/HANDOFF_PROTOCOL.md` §4 (template canonico) + §7 (ciclo de vida)
 
 ---

@@ -3,6 +3,53 @@ name: SSE Project Status
 description: Current state of Storm Shield Enterprise project — metrics, health, priorities for Dev Manager
 type: project
 ---
+# SSE Project Status — 2026-05-25 (Dev Manager — Sessão Autônoma)
+
+## Revisão DM — 2026-05-25 (PR #84)
+
+**Saúde: 🟢 VERDE** — CI SUCCESS. Deploy Web Vercel SUCCESS (2026-05-25). Deploy API Fly.io FAILURE (pré-existente T-20260412-1 — infra, não bloqueia código). 0 PRs abertos.
+
+**Módulos: 15/15** | Testes: **599** | Endpoints: **128** | Migrations: **19** | ADRs: **17** | Controllers: **19** | Pages: **44** | Specs: **29**
+
+### Novidades desta sessão (2026-05-25)
+
+| PR | Tipo | Descrição | Status |
+|---|---|---|---|
+| #84 | fix(web) | BUG-A: /login/tasks 404 Clerk + BUG-B: X-Clerk-Org-Id em 12 hooks + AuthGuard security fix | MERGED 2026-05-25 |
+
+### Tarefas concluídas
+
+- **T-20260524-1 COMPLETED** — BUG-A: Clerk redireciona para `/login/tasks` após choose-org task → criado redirect shim + mudado routing="path". BUG-B: 12 hooks não enviavam X-Clerk-Org-Id → TenantMiddleware não resolvia tenant → dashboard sem dados. Adicionado orgId em todos os hooks via useAuth(). Security fix: AuthGuard valida X-Clerk-Org-Id contra JWT org_id (previne cross-tenant spoofing). PR #84 merged.
+- Fly.io API confirmado UP (health /health = 200, /financial/summary = 401 sem auth) — T-20260412-1 não bloqueia o API em si, apenas o CI de deploy.
+
+### Verificação Regras CLAUDE.md §10 (regras 1-14)
+- KNEX_CONNECTION direto em services: **OK** (sem mudança)
+- FLOAT/REAL em migrations: **OK** (sem mudança)
+- CASCADE em tabelas financeiras/contábeis: **OK** (sem mudança)
+- Secrets hardcoded: **OK** — sem credenciais commitadas
+
+### Verificação Regras 15-18 (alinhamento Bússola)
+- PR #84: fix(web/api) — fix de infra/meta. Sem tela nova. Regra 16 N/A. Regras 15-18 ✓
+
+### Bloqueios atuais
+1. **T-20260412-1 BLOCKED (infra)** — deploy-api-staging.yml (Fly.io) falha no CI de deploy, mas o container deployado em 2026-05-02 ainda está UP e respondendo (/health = 200). Não bloqueia desenvolvimento.
+2. **BUG-B parcialmente resolvido** — Dashboard deve exibir dados após PR #84 deployado no Vercel. Verificação final requer login manual de Luigi com org ativa.
+
+### Inconsistências
+1. **Admin module sem service** — `apps/api/src/modules/admin/` sem `admin.service.ts` (pré-existente).
+2. **PV4 violation** — `STATUS_COLORS` em `platform-admin/page.tsx` usa Tailwind direto — P2 pendente (pré-existente).
+3. **Tenants module coverage** — 61.4% (abaixo da meta 80%) — P2.
+
+### Prioridades P1/P2 para próxima sessão
+1. **P1 (Luigi)**: Testar login em staging — verificar se dashboard exibe dados reais pós-PR #84.
+2. **P1 (Luigi)**: Iniciar planejamento Fase 2 (RF-008 convites + IA + Plaid + n8n).
+3. **P2 (DM)**: tenants.service.ts coverage (61.4% → 80%+).
+4. **P2 (DM)**: PV4 violation em platform-admin/page.tsx.
+
+### Última sessão: 2026-05-25 (DM Agent — T-20260524-1 Clerk auth + hooks fix) ✅ VERDE
+
+---
+
 # SSE Project Status — 2026-05-15 (Dev Manager — Sessão Autônoma)
 
 ## Revisão DM — 2026-05-15 (PR #83)

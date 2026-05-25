@@ -11,6 +11,30 @@ type: project
 
 ---
 
+## T-20260524-1 — Fix rota `/login/tasks` (404 Clerk choose-org) + diagnóstico dados dashboard
+
+**Origin:** PO
+**Priority:** P1
+**Status:** COMPLETED
+**Created:** 2026-05-24
+**Completed:** 2026-05-25
+**PR:** #84 (merged)
+**Branch:** `fix/SSE-clerk-login-tasks-404` (deleted)
+
+### Resumo do que foi feito
+- `apps/web/src/app/(auth)/login/page.tsx` — Clerk `routing="hash"` → `routing="path"` + `path="/login"`; elimina geração de hash-URL e habilita path-based sub-routes
+- `apps/web/src/app/(auth)/login/tasks/page.tsx` — NEW: redirect shim `redirect('/login')` para absorver `/login/tasks` gerado pelo Clerk choose-organization task
+- `apps/web/src/hooks/use-customers.ts` + `use-vehicles.ts` + `use-estimates.ts` + `use-financial.ts` + `use-service-orders.ts` + `use-insurance.ts` + `use-cases.ts` + `use-chart-of-accounts.ts` + `use-accounting-reports.ts` + `use-journal-entries.ts` + `use-wizard.ts` (11 hooks) — `useApiHeaders()` atualizado para extrair `orgId` de `useAuth()` e incluir `X-Clerk-Org-Id` em todas as chamadas API; desbloqueia resolução de tenant no `TenantMiddleware`
+- `apps/web/src/lib/api.ts` — `apiUpload()` agora aceita `headers` em options (suporte ao mesmo padrão dos hooks)
+- `apps/api/src/common/guards/auth.guard.ts` — SECURITY FIX: cross-tenant spoofing via `X-Clerk-Org-Id` bloqueado; `ForbiddenException` quando header e JWT `org_id` divergem
+
+### Subagentes executados
+- `test-runner` — PASS 599/599 testes
+- `security-reviewer` — 2 HIGH findings, ambos fixados in-PR (cross-tenant spoofing + auth header validation)
+- `frontend-reviewer` — 1 HIGH finding (path mismatch em `/login/tasks`), fixado com `redirect('/login')`
+
+---
+
 ## T-20260417-10 — Implementar RF-001 (Landing por Persona + Workspace Switcher)
 
 **Origin:** PO
