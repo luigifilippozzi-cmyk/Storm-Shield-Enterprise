@@ -36,15 +36,17 @@ export class ServiceOrdersService {
   ) {}
 
   async findAll(tenantId: string, query: QueryServiceOrderDto): Promise<PaginatedResult<any>> {
-    const knex = await this.tenantDb.getConnection();
     const { search, status, customer_id, vehicle_id, assigned_to, page = 1, limit = 20, sort_by = 'created_at', sort_order = 'desc' } = query;
+    const schema = this.tenantDb.tenantSchema;
+    const t = (name: string) => (schema ? `${schema}.${name}` : name);
+    const knex = this.tenantDb.getPublicConnection();
 
-    const baseQuery = knex('service_orders')
+    const baseQuery = this.tenantDb.table('service_orders')
       .where({ 'service_orders.tenant_id': tenantId, 'service_orders.deleted_at': null });
 
     if (search) {
       baseQuery
-        .leftJoin('customers as c_search', 'service_orders.customer_id', 'c_search.id')
+        .leftJoin(`${t('customers')} as c_search`, 'service_orders.customer_id', 'c_search.id')
         .where(function () {
           this.whereILike('service_orders.order_number', `%${search}%`)
             .orWhereILike('c_search.first_name', `%${search}%`)
@@ -81,8 +83,8 @@ export class ServiceOrdersService {
         knex.raw("customers.first_name || ' ' || customers.last_name as customer_name"),
         knex.raw("vehicles.year || ' ' || vehicles.make || ' ' || vehicles.model as vehicle_description"),
       )
-      .leftJoin('customers', 'service_orders.customer_id', 'customers.id')
-      .leftJoin('vehicles', 'service_orders.vehicle_id', 'vehicles.id')
+      .leftJoin(t('customers'), 'service_orders.customer_id', 'customers.id')
+      .leftJoin(t('vehicles'), 'service_orders.vehicle_id', 'vehicles.id')
       .orderBy(`service_orders.${sortColumn}`, sort_order)
       .limit(limit)
       .offset(offset);
@@ -99,9 +101,8 @@ export class ServiceOrdersService {
   }
 
   async create(tenantId: string, dto: CreateServiceOrderDto) {
-    const knex = await this.tenantDb.getConnection();
-    const isFirst = !(await knex('service_orders').where({ tenant_id: tenantId, deleted_at: null }).first());
-    const [record] = await knex('service_orders')
+    const isFirst = !(await this.tenantDb.table('service_orders').where({ tenant_id: tenantId, deleted_at: null }).first());
+    const [record] = await this.tenantDb.table('service_orders')
       .insert({
         id: generateId(),
         tenant_id: tenantId,
@@ -114,8 +115,7 @@ export class ServiceOrdersService {
   }
 
   async findOne(tenantId: string, id: string) {
-    const knex = await this.tenantDb.getConnection();
-    const record = await knex('service_orders')
+    const record = await this.tenantDb.table('service_orders')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .first();
     if (!record) throw new NotFoundException('Service order not found');
@@ -123,8 +123,7 @@ export class ServiceOrdersService {
   }
 
   async update(tenantId: string, id: string, dto: UpdateServiceOrderDto) {
-    const knex = await this.tenantDb.getConnection();
-    const [record] = await knex('service_orders')
+    const [record] = await this.tenantDb.table('service_orders')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .update({ ...dto, updated_at: new Date() })
       .returning('*');
@@ -133,8 +132,7 @@ export class ServiceOrdersService {
   }
 
   async updateStatus(tenantId: string, id: string, dto: UpdateServiceOrderStatusDto) {
-    const knex = await this.tenantDb.getConnection();
-    const order = await knex('service_orders')
+    const order = await this.tenantDb.table('service_orders')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .first();
     if (!order) throw new NotFoundException('Service order not found');
@@ -164,12 +162,12 @@ export class ServiceOrdersService {
       updateFields.delivered_at = new Date();
     }
 
-    const [record] = await knex('service_orders')
+    const [record] = await this.tenantDb.table('service_orders')
       .where({ id, tenant_id: tenantId })
       .update(updateFields)
       .returning('*');
 
-    await knex('so_status_history').insert({
+    await this.tenantDb.table('so_status_history').insert({
       id: generateId(),
       tenant_id: tenantId,
       service_order_id: id,
@@ -183,8 +181,7 @@ export class ServiceOrdersService {
   }
 
   async remove(tenantId: string, id: string) {
-    const knex = await this.tenantDb.getConnection();
-    const order = await knex('service_orders')
+    const order = await this.tenantDb.table('service_orders')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .first();
     if (!order) throw new NotFoundException('Service order not found');
@@ -193,7 +190,7 @@ export class ServiceOrdersService {
       throw new BadRequestException('Only pending or cancelled service orders can be deleted');
     }
 
-    await knex('service_orders')
+    await this.tenantDb.table('service_orders')
       .where({ id, tenant_id: tenantId })
       .update({ deleted_at: new Date() });
     return { deleted: true };
@@ -210,8 +207,7 @@ export class ServiceOrdersService {
       throw new ForbiddenException('Force progress requires the owner role');
     }
 
-    const knex = await this.tenantDb.getConnection();
-    const order = await knex('service_orders')
+    const order = await this.tenantDb.table('service_orders')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .first();
     if (!order) throw new NotFoundException('Service order not found');
@@ -240,12 +236,12 @@ export class ServiceOrdersService {
       updateFields.completed_at = now;
     }
 
-    const [record] = await knex('service_orders')
+    const [record] = await this.tenantDb.table('service_orders')
       .where({ id, tenant_id: tenantId })
       .update(updateFields)
       .returning('*');
 
-    await knex('so_status_history').insert({
+    await this.tenantDb.table('so_status_history').insert({
       id: generateId(),
       tenant_id: tenantId,
       service_order_id: id,
@@ -257,7 +253,7 @@ export class ServiceOrdersService {
 
     // Audit log for compliance (owner override is a high-risk action)
     try {
-      await knex('audit_logs').insert({
+      await this.tenantDb.table('audit_logs').insert({
         id: generateId(),
         tenant_id: tenantId,
         user_id: user.id,

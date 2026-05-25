@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { CasesService } from './cases.service';
 import { TenantDatabaseService } from '../../config/tenant-database.service';
@@ -53,14 +53,14 @@ describe('CasesService', () => {
         CasesService,
         {
           provide: TenantDatabaseService,
-          useValue: { getConnection: jest.fn().mockResolvedValue(knex) },
+          useValue: { getConnection: jest.fn().mockResolvedValue(knex), table: jest.fn().mockReturnValue(knex._chain), getPublicConnection: jest.fn().mockReturnValue(knex), tenantSchema: 'test_schema' },
         },
       ],
     }).compile();
     service = module.get<CasesService>(CasesService);
   });
 
-  // ── findAll ──
+  // â”€â”€ findAll â”€â”€
 
   describe('findAll', () => {
     it('returns paginated cases', async () => {
@@ -103,7 +103,7 @@ describe('CasesService', () => {
     });
   });
 
-  // ── findOne ──
+  // â”€â”€ findOne â”€â”€
 
   describe('findOne', () => {
     it('returns a case when found', async () => {
@@ -121,7 +121,7 @@ describe('CasesService', () => {
     });
   });
 
-  // ── create ──
+  // â”€â”€ create â”€â”€
 
   describe('create', () => {
     it('creates a case with OPEN status and audit log', async () => {
@@ -147,7 +147,7 @@ describe('CasesService', () => {
     });
   });
 
-  // ── update ──
+  // â”€â”€ update â”€â”€
 
   describe('update', () => {
     it('updates case fields when found', async () => {
@@ -168,7 +168,7 @@ describe('CasesService', () => {
       ).rejects.toThrow(NotFoundException);
     });
 
-    it('allows valid OPEN → IN_PROGRESS transition', async () => {
+    it('allows valid OPEN â†’ IN_PROGRESS transition', async () => {
       const updated = { ...mockCase, status: CaseStatus.IN_PROGRESS };
       knex._chain.first.mockResolvedValueOnce(mockCase);
       knex._chain.returning.mockResolvedValueOnce([updated]);
@@ -179,7 +179,7 @@ describe('CasesService', () => {
       expect(result.status).toBe(CaseStatus.IN_PROGRESS);
     });
 
-    it('throws BadRequestException for invalid OPEN → RESOLVED transition', async () => {
+    it('throws BadRequestException for invalid OPEN â†’ RESOLVED transition', async () => {
       knex._chain.first.mockResolvedValueOnce(mockCase); // status = OPEN
 
       await expect(
@@ -187,7 +187,7 @@ describe('CasesService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('throws BadRequestException for invalid CLOSED → any transition', async () => {
+    it('throws BadRequestException for invalid CLOSED â†’ any transition', async () => {
       const closedCase = { ...mockCase, status: CaseStatus.CLOSED };
       knex._chain.first.mockResolvedValueOnce(closedCase);
 
@@ -197,7 +197,7 @@ describe('CasesService', () => {
     });
   });
 
-  // ── resolve ──
+  // â”€â”€ resolve â”€â”€
 
   describe('resolve', () => {
     it('resolves an in-progress case', async () => {
@@ -227,7 +227,7 @@ describe('CasesService', () => {
     });
   });
 
-  // ── remove ──
+  // â”€â”€ remove â”€â”€
 
   describe('remove', () => {
     it('deletes an existing case', async () => {
@@ -245,7 +245,7 @@ describe('CasesService', () => {
     });
   });
 
-  // ── transition matrix completeness ──
+  // â”€â”€ transition matrix completeness â”€â”€
 
   describe('transition matrix', () => {
     const transitions: [CaseStatus, CaseStatus, boolean][] = [
@@ -264,7 +264,7 @@ describe('CasesService', () => {
     ];
 
     transitions.forEach(([from, to, valid]) => {
-      it(`${from} → ${to} should be ${valid ? 'allowed' : 'rejected'}`, async () => {
+      it(`${from} â†’ ${to} should be ${valid ? 'allowed' : 'rejected'}`, async () => {
         const caseInState = { ...mockCase, status: from };
         knex._chain.first.mockResolvedValueOnce(caseInState);
         if (valid) {

@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { DisposalService } from './disposal.service';
 import { TenantDatabaseService } from '../../config/tenant-database.service';
@@ -44,14 +44,14 @@ describe('DisposalService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DisposalService,
-        { provide: TenantDatabaseService, useValue: { getConnection: jest.fn().mockResolvedValue(knex) } },
+        { provide: TenantDatabaseService, useValue: { getConnection: jest.fn().mockResolvedValue(knex), table: jest.fn().mockReturnValue(knex._chain), getPublicConnection: jest.fn().mockReturnValue(knex), tenantSchema: 'test_schema' } },
         { provide: JournalEntriesService, useValue: mockJeService },
       ],
     }).compile();
     service = module.get<DisposalService>(DisposalService);
   });
 
-  // ── disposeAsset ────────────────────────────────────────────
+  // â”€â”€ disposeAsset â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('disposeAsset', () => {
     const mockAsset = {
@@ -146,7 +146,7 @@ describe('DisposalService', () => {
     });
   });
 
-  // ── findDisposals ───────────────────────────────────────────
+  // â”€â”€ findDisposals â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('findDisposals', () => {
     it('should return all disposals for tenant', async () => {

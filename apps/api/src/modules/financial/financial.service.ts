@@ -24,10 +24,9 @@ export class FinancialService {
   ) {}
 
   async findAll(tenantId: string, query: QueryTransactionDto): Promise<PaginatedResult<any>> {
-    const knex = await this.tenantDb.getConnection();
     const { search, transaction_type, category, customer_id, date_from, date_to, page = 1, limit = 20, sort_by = 'created_at', sort_order = 'desc' } = query;
 
-    const baseQuery = knex('financial_transactions')
+    const baseQuery = this.tenantDb.table('financial_transactions')
       .where({ tenant_id: tenantId, deleted_at: null });
 
     if (search) {
@@ -82,9 +81,8 @@ export class FinancialService {
   }
 
   async create(tenantId: string, dto: CreateTransactionDto) {
-    const knex = await this.tenantDb.getConnection();
-    const isFirst = !(await knex('financial_transactions').where({ tenant_id: tenantId, deleted_at: null }).first());
-    const [record] = await knex('financial_transactions')
+    const isFirst = !(await this.tenantDb.table('financial_transactions').where({ tenant_id: tenantId, deleted_at: null }).first());
+    const [record] = await this.tenantDb.table('financial_transactions')
       .insert({
         id: generateId(),
         tenant_id: tenantId,
@@ -96,8 +94,7 @@ export class FinancialService {
   }
 
   async findOne(tenantId: string, id: string) {
-    const knex = await this.tenantDb.getConnection();
-    const record = await knex('financial_transactions')
+    const record = await this.tenantDb.table('financial_transactions')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .first();
     if (!record) throw new NotFoundException('Financial transaction not found');
@@ -105,8 +102,7 @@ export class FinancialService {
   }
 
   async update(tenantId: string, id: string, dto: UpdateTransactionDto) {
-    const knex = await this.tenantDb.getConnection();
-    const [record] = await knex('financial_transactions')
+    const [record] = await this.tenantDb.table('financial_transactions')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .update({ ...dto, updated_at: new Date() })
       .returning('*');
@@ -115,21 +111,20 @@ export class FinancialService {
   }
 
   async remove(tenantId: string, id: string) {
-    const knex = await this.tenantDb.getConnection();
-    const record = await knex('financial_transactions')
+    const record = await this.tenantDb.table('financial_transactions')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .first();
     if (!record) throw new NotFoundException('Financial transaction not found');
 
-    await knex('financial_transactions')
+    await this.tenantDb.table('financial_transactions')
       .where({ id, tenant_id: tenantId })
       .update({ deleted_at: new Date() });
     return { deleted: true };
   }
 
   async getSummary(tenantId: string) {
-    const knex = await this.tenantDb.getConnection();
-    const result = await knex('financial_transactions')
+    const knex = this.tenantDb.getPublicConnection();
+    const result = await this.tenantDb.table('financial_transactions')
       .where({ tenant_id: tenantId, deleted_at: null })
       .select(
         knex.raw("COALESCE(SUM(CASE WHEN transaction_type = 'income' THEN amount ELSE 0 END), 0) as total_income"),
@@ -142,25 +137,25 @@ export class FinancialService {
   }
 
   async getDashboard(tenantId: string) {
-    const knex = await this.tenantDb.getConnection();
+    const knex = this.tenantDb.getPublicConnection();
 
     const summary = await this.getSummary(tenantId);
 
-    const incomeByCategory = await knex('financial_transactions')
+    const incomeByCategory = await this.tenantDb.table('financial_transactions')
       .where({ tenant_id: tenantId, deleted_at: null, transaction_type: 'income' })
       .select('category')
       .sum('amount as total')
       .groupBy('category')
       .orderBy('total', 'desc');
 
-    const expenseByCategory = await knex('financial_transactions')
+    const expenseByCategory = await this.tenantDb.table('financial_transactions')
       .where({ tenant_id: tenantId, deleted_at: null, transaction_type: 'expense' })
       .select('category')
       .sum('amount as total')
       .groupBy('category')
       .orderBy('total', 'desc');
 
-    const monthlyTrend = await knex('financial_transactions')
+    const monthlyTrend = await this.tenantDb.table('financial_transactions')
       .where({ tenant_id: tenantId, deleted_at: null })
       .where('transaction_date', '>=', knex.raw("CURRENT_DATE - INTERVAL '12 months'"))
       .select(
@@ -171,7 +166,7 @@ export class FinancialService {
       .groupByRaw("TO_CHAR(transaction_date, 'YYYY-MM')")
       .orderBy('month', 'asc');
 
-    const recentTransactions = await knex('financial_transactions')
+    const recentTransactions = await this.tenantDb.table('financial_transactions')
       .where({ tenant_id: tenantId, deleted_at: null })
       .orderBy('created_at', 'desc')
       .limit(10);

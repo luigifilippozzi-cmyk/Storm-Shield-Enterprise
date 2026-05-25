@@ -29,10 +29,12 @@ export class VehiclesService {
   ) {}
 
   async findAll(tenantId: string, query: QueryVehicleDto): Promise<PaginatedResult<any>> {
-    const knex = await this.tenantDb.getConnection();
     const { search, customer_id, make, year, condition, page = 1, limit = 20, sort_by = 'created_at', sort_order = 'desc' } = query;
+    const schema = this.tenantDb.tenantSchema;
+    const t = (name: string) => (schema ? `${schema}.${name}` : name);
+    const knex = this.tenantDb.getPublicConnection();
 
-    const baseQuery = knex('vehicles')
+    const baseQuery = this.tenantDb.table('vehicles')
       .where({ 'vehicles.tenant_id': tenantId, 'vehicles.deleted_at': null });
 
     if (search) {
@@ -60,17 +62,14 @@ export class VehiclesService {
       baseQuery.where('vehicles.condition', condition);
     }
 
-    baseQuery.leftJoin('customers', 'vehicles.customer_id', 'customers.id');
+    baseQuery.leftJoin(t('customers'), 'vehicles.customer_id', 'customers.id');
 
-    // Count total
     const [{ count }] = await baseQuery.clone().count('vehicles.id as count');
     const total = Number(count);
 
-    // Validate sort column
     const allowedSorts = ['year', 'make', 'model', 'created_at', 'updated_at', 'mileage'];
     const sortColumn = allowedSorts.includes(sort_by) ? sort_by : 'created_at';
 
-    // Fetch paginated data
     const offset = (page - 1) * limit;
     const data = await baseQuery
       .select(
@@ -93,9 +92,8 @@ export class VehiclesService {
   }
 
   async create(tenantId: string, dto: CreateVehicleDto) {
-    const knex = await this.tenantDb.getConnection();
-    const isFirst = !(await knex('vehicles').where({ tenant_id: tenantId, deleted_at: null }).first());
-    const [record] = await knex('vehicles')
+    const isFirst = !(await this.tenantDb.table('vehicles').where({ tenant_id: tenantId, deleted_at: null }).first());
+    const [record] = await this.tenantDb.table('vehicles')
       .insert({
         id: generateId(),
         tenant_id: tenantId,
@@ -107,13 +105,12 @@ export class VehiclesService {
   }
 
   async findOne(tenantId: string, id: string) {
-    const knex = await this.tenantDb.getConnection();
-    const record = await knex('vehicles')
+    const record = await this.tenantDb.table('vehicles')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .first();
     if (!record) throw new NotFoundException('Vehicle not found');
 
-    const photos = await knex('vehicle_photos')
+    const photos = await this.tenantDb.table('vehicle_photos')
       .where({ vehicle_id: id, tenant_id: tenantId })
       .orderBy('created_at', 'desc');
 
@@ -137,10 +134,7 @@ export class VehiclesService {
       throw new BadRequestException('File size exceeds 10MB limit');
     }
 
-    const knex = await this.tenantDb.getConnection();
-
-    // Verify vehicle exists
-    const vehicle = await knex('vehicles')
+    const vehicle = await this.tenantDb.table('vehicles')
       .where({ id: vehicleId, tenant_id: tenantId, deleted_at: null })
       .first();
     if (!vehicle) throw new NotFoundException('Vehicle not found');
@@ -148,7 +142,7 @@ export class VehiclesService {
     const key = this.storageService.generateKey(tenantId, 'vehicles', file.originalname);
     const { url } = await this.storageService.upload(key, file.buffer, file.mimetype);
 
-    const [photo] = await knex('vehicle_photos')
+    const [photo] = await this.tenantDb.table('vehicle_photos')
       .insert({
         id: generateId(),
         tenant_id: tenantId,
@@ -165,29 +159,25 @@ export class VehiclesService {
   }
 
   async deletePhoto(tenantId: string, vehicleId: string, photoId: string) {
-    const knex = await this.tenantDb.getConnection();
-
-    const photo = await knex('vehicle_photos')
+    const photo = await this.tenantDb.table('vehicle_photos')
       .where({ id: photoId, vehicle_id: vehicleId, tenant_id: tenantId })
       .first();
     if (!photo) throw new NotFoundException('Photo not found');
 
     await this.storageService.delete(photo.storage_key);
-    await knex('vehicle_photos').where({ id: photoId, tenant_id: tenantId }).del();
+    await this.tenantDb.table('vehicle_photos').where({ id: photoId, tenant_id: tenantId }).del();
 
     return { deleted: true };
   }
 
   async getPhotos(tenantId: string, vehicleId: string) {
-    const knex = await this.tenantDb.getConnection();
-    return knex('vehicle_photos')
+    return this.tenantDb.table('vehicle_photos')
       .where({ vehicle_id: vehicleId, tenant_id: tenantId })
       .orderBy('created_at', 'desc');
   }
 
   async update(tenantId: string, id: string, dto: UpdateVehicleDto) {
-    const knex = await this.tenantDb.getConnection();
-    const [record] = await knex('vehicles')
+    const [record] = await this.tenantDb.table('vehicles')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .update({ ...dto, updated_at: new Date() })
       .returning('*');
@@ -196,8 +186,7 @@ export class VehiclesService {
   }
 
   async remove(tenantId: string, id: string) {
-    const knex = await this.tenantDb.getConnection();
-    const updated = await knex('vehicles')
+    const updated = await this.tenantDb.table('vehicles')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .update({ deleted_at: new Date() });
     if (!updated) throw new NotFoundException('Vehicle not found');

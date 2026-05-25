@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { AccountingService } from './accounting.service';
 import { TenantDatabaseService } from '../../config/tenant-database.service';
@@ -36,13 +36,13 @@ describe('AccountingService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AccountingService,
-        { provide: TenantDatabaseService, useValue: { getConnection: jest.fn().mockResolvedValue(knex) } },
+        { provide: TenantDatabaseService, useValue: { getConnection: jest.fn().mockResolvedValue(knex), table: jest.fn().mockReturnValue(knex._chain), getPublicConnection: jest.fn().mockReturnValue(knex), tenantSchema: 'test_schema' } },
       ],
     }).compile();
     service = module.get<AccountingService>(AccountingService);
   });
 
-  // ── findAll ──────────────────────────────────────────────────
+  // â”€â”€ findAll â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('findAll', () => {
     it('should return paginated accounts', async () => {
@@ -95,7 +95,7 @@ describe('AccountingService', () => {
     });
   });
 
-  // ── findOne ──────────────────────────────────────────────────
+  // â”€â”€ findOne â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('findOne', () => {
     it('should return account when found', async () => {
@@ -114,7 +114,7 @@ describe('AccountingService', () => {
     });
   });
 
-  // ── create ───────────────────────────────────────────────────
+  // â”€â”€ create â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('create', () => {
     it('should create and return account', async () => {
@@ -184,7 +184,7 @@ describe('AccountingService', () => {
     });
   });
 
-  // ── update ───────────────────────────────────────────────────
+  // â”€â”€ update â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('update', () => {
     it('should update and return account', async () => {
@@ -232,7 +232,7 @@ describe('AccountingService', () => {
     });
   });
 
-  // ── remove ───────────────────────────────────────────────────
+  // â”€â”€ remove â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('remove', () => {
     it('should soft delete account', async () => {
@@ -267,7 +267,7 @@ describe('AccountingService', () => {
     });
   });
 
-  // ── getTree ──────────────────────────────────────────────────
+  // â”€â”€ getTree â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('getTree', () => {
     it('should return hierarchical tree', async () => {

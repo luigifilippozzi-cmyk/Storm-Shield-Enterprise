@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { ForbiddenException } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { TenantDatabaseService } from '../../config/tenant-database.service';
@@ -53,14 +53,14 @@ describe('NotificationsService', () => {
         NotificationsService,
         {
           provide: TenantDatabaseService,
-          useValue: { getConnection: jest.fn().mockResolvedValue(knex) },
+          useValue: { getConnection: jest.fn().mockResolvedValue(knex), table: jest.fn().mockReturnValue(knex._chain), getPublicConnection: jest.fn().mockReturnValue(knex), tenantSchema: 'test_schema' },
         },
       ],
     }).compile();
     service = module.get<NotificationsService>(NotificationsService);
   });
 
-  // ── findAll ──
+  // â”€â”€ findAll â”€â”€
 
   describe('findAll', () => {
     it('returns paginated notifications', async () => {
@@ -117,7 +117,7 @@ describe('NotificationsService', () => {
     });
   });
 
-  // ── countUnread ──
+  // â”€â”€ countUnread â”€â”€
 
   describe('countUnread', () => {
     it('returns unread count', async () => {
@@ -133,7 +133,7 @@ describe('NotificationsService', () => {
     });
   });
 
-  // ── create ──
+  // â”€â”€ create â”€â”€
 
   describe('create', () => {
     it('creates a notification with defaults', async () => {
@@ -195,7 +195,7 @@ describe('NotificationsService', () => {
     });
   });
 
-  // ── markRead ──
+  // â”€â”€ markRead â”€â”€
 
   describe('markRead', () => {
     it('marks notification as read', async () => {
@@ -218,7 +218,7 @@ describe('NotificationsService', () => {
     });
   });
 
-  // ── markAllRead ──
+  // â”€â”€ markAllRead â”€â”€
 
   describe('markAllRead', () => {
     it('returns count of updated rows', async () => {
@@ -232,7 +232,7 @@ describe('NotificationsService', () => {
     });
   });
 
-  // ── remove ──
+  // â”€â”€ remove â”€â”€
 
   describe('remove', () => {
     it('deletes a notification', async () => {

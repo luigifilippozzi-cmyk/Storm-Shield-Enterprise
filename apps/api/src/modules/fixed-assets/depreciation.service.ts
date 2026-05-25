@@ -78,10 +78,8 @@ export class DepreciationService {
     entryDate: string,
     notes?: string,
   ) {
-    const knex = await this.tenantDb.getConnection();
-
     // Load asset
-    const asset = await knex('fixed_assets')
+    const asset = await this.tenantDb.table('fixed_assets')
       .where({ id: fixedAssetId, tenant_id: tenantId, deleted_at: null })
       .first();
     if (!asset) throw new NotFoundException('Fixed asset not found');
@@ -91,7 +89,7 @@ export class DepreciationService {
     }
 
     // Check for duplicate depreciation in this period
-    const existingEntry = await knex('depreciation_entries')
+    const existingEntry = await this.tenantDb.table('depreciation_entries')
       .where({
         tenant_id: tenantId,
         fixed_asset_id: fixedAssetId,
@@ -104,7 +102,7 @@ export class DepreciationService {
     }
 
     // Load category for GL accounts
-    const category = await knex('asset_categories')
+    const category = await this.tenantDb.table('asset_categories')
       .where({ id: asset.category_id, tenant_id: tenantId })
       .first();
     if (!category) throw new BadRequestException('Asset category not found');
@@ -159,7 +157,7 @@ export class DepreciationService {
     const newNBV = acquisitionCost - newAccDep;
     const newStatus = newNBV <= salvageValue ? 'fully_depreciated' : 'active';
 
-    await knex('fixed_assets')
+    await this.tenantDb.table('fixed_assets')
       .where({ id: fixedAssetId, tenant_id: tenantId })
       .update({
         accumulated_depreciation: newAccDep,
@@ -170,7 +168,7 @@ export class DepreciationService {
       });
 
     // Create depreciation entry record
-    const [depEntry] = await knex('depreciation_entries')
+    const [depEntry] = await this.tenantDb.table('depreciation_entries')
       .insert({
         id: generateId(),
         tenant_id: tenantId,
@@ -199,9 +197,7 @@ export class DepreciationService {
     fiscalPeriodId: string,
     entryDate: string,
   ) {
-    const knex = await this.tenantDb.getConnection();
-
-    const activeAssets = await knex('fixed_assets')
+    const activeAssets = await this.tenantDb.table('fixed_assets')
       .where({ tenant_id: tenantId, status: 'active', deleted_at: null });
 
     const results: Array<{ asset_id: string; asset_tag: string; amount: number; error?: string }> = [];

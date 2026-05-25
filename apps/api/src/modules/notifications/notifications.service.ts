@@ -9,10 +9,9 @@ export class NotificationsService {
   constructor(private readonly tenantDb: TenantDatabaseService) {}
 
   async findAll(tenantId: string, userId: string, query: QueryNotificationDto) {
-    const knex = await this.tenantDb.getConnection();
     const { type, channel, unread, page = 1, limit = 20 } = query;
 
-    const base = knex('notifications').where({ tenant_id: tenantId, user_id: userId });
+    const base = this.tenantDb.table('notifications').where({ tenant_id: tenantId, user_id: userId });
     if (type) base.where('type', type);
     if (channel) base.where('channel', channel);
     if (unread === true) base.whereNull('read_at');
@@ -31,8 +30,7 @@ export class NotificationsService {
   }
 
   async countUnread(tenantId: string, userId: string) {
-    const knex = await this.tenantDb.getConnection();
-    const [{ count }] = await knex('notifications')
+    const [{ count }] = await this.tenantDb.table('notifications')
       .where({ tenant_id: tenantId, user_id: userId })
       .whereNull('read_at')
       .count('id as count');
@@ -40,14 +38,12 @@ export class NotificationsService {
   }
 
   async create(tenantId: string, dto: CreateNotificationDto) {
-    const knex = await this.tenantDb.getConnection();
-
-    const user = await knex('users').where({ id: dto.user_id, tenant_id: tenantId }).first();
+    const user = await this.tenantDb.table('users').where({ id: dto.user_id, tenant_id: tenantId }).first();
     if (!user) throw new ForbiddenException('User does not belong to this tenant');
 
     const id = generateId();
 
-    const [record] = await knex('notifications')
+    const [record] = await this.tenantDb.table('notifications')
       .insert({
         id,
         tenant_id: tenantId,
@@ -64,11 +60,11 @@ export class NotificationsService {
   }
 
   async markRead(tenantId: string, userId: string, id: string) {
-    const knex = await this.tenantDb.getConnection();
-    const record = await knex('notifications').where({ id, tenant_id: tenantId }).first();
+    const knex = this.tenantDb.getPublicConnection();
+    const record = await this.tenantDb.table('notifications').where({ id, tenant_id: tenantId }).first();
     if (!record || record.user_id !== userId) throw new ForbiddenException('Access denied');
 
-    const [updated] = await knex('notifications')
+    const [updated] = await this.tenantDb.table('notifications')
       .where({ id, tenant_id: tenantId })
       .update({ read_at: knex.fn.now() })
       .returning('*');
@@ -77,8 +73,8 @@ export class NotificationsService {
   }
 
   async markAllRead(tenantId: string, userId: string) {
-    const knex = await this.tenantDb.getConnection();
-    const updated = await knex('notifications')
+    const knex = this.tenantDb.getPublicConnection();
+    const updated = await this.tenantDb.table('notifications')
       .where({ tenant_id: tenantId, user_id: userId })
       .whereNull('read_at')
       .update({ read_at: knex.fn.now() });
@@ -87,11 +83,10 @@ export class NotificationsService {
   }
 
   async remove(tenantId: string, userId: string, id: string) {
-    const knex = await this.tenantDb.getConnection();
-    const record = await knex('notifications').where({ id, tenant_id: tenantId }).first();
+    const record = await this.tenantDb.table('notifications').where({ id, tenant_id: tenantId }).first();
     if (!record || record.user_id !== userId) throw new ForbiddenException('Access denied');
 
-    await knex('notifications').where({ id, tenant_id: tenantId }).del();
+    await this.tenantDb.table('notifications').where({ id, tenant_id: tenantId }).del();
     return { deleted: id };
   }
 }

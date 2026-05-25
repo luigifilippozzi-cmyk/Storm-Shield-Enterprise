@@ -24,10 +24,9 @@ export class CustomersService {
   ) {}
 
   async findAll(tenantId: string, query: QueryCustomerDto): Promise<PaginatedResult<any>> {
-    const knex = await this.tenantDb.getConnection();
     const { search, type, source, page = 1, limit = 20, sort_by = 'created_at', sort_order = 'desc' } = query;
 
-    const baseQuery = knex('customers').where({ tenant_id: tenantId, deleted_at: null });
+    const baseQuery = this.tenantDb.table('customers').where({ tenant_id: tenantId, deleted_at: null });
 
     if (search) {
       baseQuery.where(function () {
@@ -74,9 +73,8 @@ export class CustomersService {
   }
 
   async create(tenantId: string, dto: CreateCustomerDto) {
-    const knex = await this.tenantDb.getConnection();
-    const isFirst = !(await knex('customers').where({ tenant_id: tenantId, deleted_at: null }).first());
-    const [record] = await knex('customers')
+    const isFirst = !(await this.tenantDb.table('customers').where({ tenant_id: tenantId, deleted_at: null }).first());
+    const [record] = await this.tenantDb.table('customers')
       .insert({
         id: generateId(),
         tenant_id: tenantId,
@@ -88,8 +86,7 @@ export class CustomersService {
   }
 
   async findOne(tenantId: string, id: string) {
-    const knex = await this.tenantDb.getConnection();
-    const record = await knex('customers')
+    const record = await this.tenantDb.table('customers')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .first();
     if (!record) throw new NotFoundException('Customer not found');
@@ -97,8 +94,7 @@ export class CustomersService {
   }
 
   async update(tenantId: string, id: string, dto: UpdateCustomerDto) {
-    const knex = await this.tenantDb.getConnection();
-    const [record] = await knex('customers')
+    const [record] = await this.tenantDb.table('customers')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .update({ ...dto, updated_at: new Date() })
       .returning('*');
@@ -107,8 +103,7 @@ export class CustomersService {
   }
 
   async remove(tenantId: string, id: string) {
-    const knex = await this.tenantDb.getConnection();
-    const updated = await knex('customers')
+    const updated = await this.tenantDb.table('customers')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .update({ deleted_at: new Date() });
     if (!updated) throw new NotFoundException('Customer not found');
@@ -117,35 +112,34 @@ export class CustomersService {
 
   async getSummary(tenantId: string, id: string) {
     await this.findOne(tenantId, id);
-    const knex = await this.tenantDb.getConnection();
 
     const [openEstimates, openSOs, balance, ytdRevenue, lastEstimate, lastSO] = await Promise.all([
-      knex('estimates')
+      this.tenantDb.table('estimates')
         .where({ customer_id: id, tenant_id: tenantId, deleted_at: null })
         .whereNotIn('status', ['converted', 'rejected'])
         .count('id as count')
         .first(),
-      knex('service_orders')
+      this.tenantDb.table('service_orders')
         .where({ customer_id: id, tenant_id: tenantId, deleted_at: null })
         .whereNotIn('status', ['completed', 'delivered', 'cancelled'])
         .count('id as count')
         .first(),
-      knex('financial_transactions')
+      this.tenantDb.table('financial_transactions')
         .where({ customer_id: id, tenant_id: tenantId, deleted_at: null })
         .where('transaction_type', 'income')
         .sum('amount as total')
         .first(),
-      knex('financial_transactions')
+      this.tenantDb.table('financial_transactions')
         .where({ customer_id: id, tenant_id: tenantId, deleted_at: null })
         .where('transaction_type', 'income')
         .whereRaw('EXTRACT(YEAR FROM transaction_date) = EXTRACT(YEAR FROM NOW())')
         .sum('amount as total')
         .first(),
-      knex('estimates')
+      this.tenantDb.table('estimates')
         .where({ customer_id: id, tenant_id: tenantId, deleted_at: null })
         .max('updated_at as ts')
         .first(),
-      knex('service_orders')
+      this.tenantDb.table('service_orders')
         .where({ customer_id: id, tenant_id: tenantId, deleted_at: null })
         .max('updated_at as ts')
         .first(),
@@ -174,16 +168,18 @@ export class CustomersService {
   async getActivityTimeline(tenantId: string, id: string, limit = 50) {
     const safeLimit = Number.isNaN(limit) ? 50 : Math.max(1, Math.min(limit, 200));
     await this.findOne(tenantId, id);
-    const knex = await this.tenantDb.getConnection();
+    const schema = this.tenantDb.tenantSchema;
+    const t = (name: string) => (schema ? `${schema}.${name}` : name);
+    const knex = this.tenantDb.getPublicConnection();
 
     const [interactions, soStatusChanges, finTx, estimates] = await Promise.all([
-      knex('customer_interactions')
+      this.tenantDb.table('customer_interactions')
         .where({ customer_id: id, tenant_id: tenantId })
         .select('id', 'type as event_subtype', 'subject as description', 'notes', 'interaction_date as occurred_at')
         .orderBy('interaction_date', 'desc')
         .limit(safeLimit),
-      knex('so_status_history as ssh')
-        .join('service_orders as so', 'so.id', 'ssh.service_order_id')
+      knex({ ssh: t('so_status_history') })
+        .join({ so: t('service_orders') }, 'so.id', 'ssh.service_order_id')
         .where({ 'so.customer_id': id, 'so.tenant_id': tenantId, 'ssh.tenant_id': tenantId })
         .select(
           'ssh.id',
@@ -195,12 +191,12 @@ export class CustomersService {
         )
         .orderBy('ssh.created_at', 'desc')
         .limit(safeLimit),
-      knex('financial_transactions')
+      this.tenantDb.table('financial_transactions')
         .where({ customer_id: id, tenant_id: tenantId, deleted_at: null })
         .select('id', 'transaction_type as event_subtype', 'amount', 'description', 'created_at as occurred_at')
         .orderBy('created_at', 'desc')
         .limit(safeLimit),
-      knex('estimates')
+      this.tenantDb.table('estimates')
         .where({ customer_id: id, tenant_id: tenantId, deleted_at: null })
         .select('id', 'status as event_subtype', 'estimate_number as description', 'created_at as occurred_at')
         .orderBy('created_at', 'desc')

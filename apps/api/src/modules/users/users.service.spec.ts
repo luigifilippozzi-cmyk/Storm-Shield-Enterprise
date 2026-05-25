@@ -35,7 +35,7 @@ describe('UsersService', () => {
 
   beforeEach(async () => {
     knex = mockKnex();
-    const mockTenantDb = { getConnection: jest.fn().mockResolvedValue(knex) };
+    const mockTenantDb = { getConnection: jest.fn().mockResolvedValue(knex), table: jest.fn().mockReturnValue(knex._chain), getPublicConnection: jest.fn().mockReturnValue(knex), tenantSchema: 'test_schema' };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [

@@ -62,14 +62,16 @@ export class EstimatesService {
     query: QueryEstimateDto,
     user?: { id?: string; roles?: string[] },
   ): Promise<PaginatedResult<any>> {
-    const knex = await this.tenantDb.getConnection();
     const {
       search, status, statuses, insurance_company_id, scope,
       customer_id, vehicle_id, date_from, date_to,
       page = 1, limit = 20, sort_by = 'created_at', sort_order = 'desc',
     } = query;
+    const schema = this.tenantDb.tenantSchema;
+    const t = (name: string) => (schema ? `${schema}.${name}` : name);
+    const knex = this.tenantDb.getPublicConnection();
 
-    const baseQuery = knex('estimates')
+    const baseQuery = this.tenantDb.table('estimates')
       .where({ 'estimates.tenant_id': tenantId, 'estimates.deleted_at': null });
 
     // Ownership enforcement (RN5): estimator role always scoped to own estimates.
@@ -129,7 +131,7 @@ export class EstimatesService {
       baseQuery.where('estimates.created_at', '<=', date_to);
     }
 
-    baseQuery.leftJoin('customers', 'estimates.customer_id', 'customers.id');
+    baseQuery.leftJoin(t('customers'), 'estimates.customer_id', 'customers.id');
 
     const [{ count }] = await baseQuery.clone().count('estimates.id as count');
     const total = Number(count);
@@ -143,8 +145,8 @@ export class EstimatesService {
         'estimates.*',
         knex.raw("customers.first_name || ' ' || customers.last_name as customer_name"),
       )
-      .leftJoin('vehicles', 'estimates.vehicle_id', 'vehicles.id')
-      .leftJoin('insurance_companies', 'estimates.insurance_company_id', 'insurance_companies.id')
+      .leftJoin(t('vehicles'), 'estimates.vehicle_id', 'vehicles.id')
+      .leftJoin(t('insurance_companies'), 'estimates.insurance_company_id', 'insurance_companies.id')
       .select(
         knex.raw("vehicles.year || ' ' || vehicles.make || ' ' || vehicles.model as vehicle_description"),
         'insurance_companies.name as insurance_company_name',
@@ -165,9 +167,12 @@ export class EstimatesService {
   }
 
   async create(tenantId: string, dto: CreateEstimateDto) {
-    const knex = await this.tenantDb.getConnection();
+    const schema = this.tenantDb.tenantSchema;
+    const t = (name: string) => (schema ? `${schema}.${name}` : name);
+    const knex = this.tenantDb.getPublicConnection();
     const { lines, ...estimateData } = dto;
-    const isFirst = !(await knex('estimates').where({ tenant_id: tenantId, deleted_at: null }).first());
+
+    const isFirst = !(await this.tenantDb.table('estimates').where({ tenant_id: tenantId, deleted_at: null }).first());
 
     return knex.transaction(async (trx) => {
       let subtotal = 0;
@@ -177,7 +182,7 @@ export class EstimatesService {
       const taxAmount = 0;
       const total = subtotal + taxAmount;
 
-      const [estimate] = await trx('estimates')
+      const [estimate] = await trx(t('estimates'))
         .insert({
           id: generateId(),
           tenant_id: tenantId,
@@ -197,7 +202,7 @@ export class EstimatesService {
           ...line,
           total: line.quantity * line.unit_price,
         }));
-        await trx('estimate_lines').insert(lineRecords);
+        await trx(t('estimate_lines')).insert(lineRecords);
       }
 
       if (isFirst) await this.activationEvents.record(tenantId, 'first_estimate_created');
@@ -206,8 +211,7 @@ export class EstimatesService {
   }
 
   async findOne(tenantId: string, id: string, user?: { id: string; roles?: string[] }) {
-    const knex = await this.tenantDb.getConnection();
-    const estimate = await knex('estimates')
+    const estimate = await this.tenantDb.table('estimates')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .first();
     if (!estimate) throw new NotFoundException('Estimate not found');
@@ -220,15 +224,15 @@ export class EstimatesService {
       }
     }
 
-    const lines = await knex('estimate_lines')
+    const lines = await this.tenantDb.table('estimate_lines')
       .where({ estimate_id: id, tenant_id: tenantId })
       .orderBy('sort_order', 'asc');
 
-    const supplements = await knex('estimate_supplements')
+    const supplements = await this.tenantDb.table('estimate_supplements')
       .where({ estimate_id: id, tenant_id: tenantId })
       .orderBy('supplement_number', 'asc');
 
-    const documents = await knex('estimate_documents')
+    const documents = await this.tenantDb.table('estimate_documents')
       .where({ estimate_id: id, tenant_id: tenantId })
       .orderBy('created_at', 'desc');
 
@@ -236,9 +240,11 @@ export class EstimatesService {
   }
 
   async update(tenantId: string, id: string, dto: UpdateEstimateDto) {
-    const knex = await this.tenantDb.getConnection();
+    const schema = this.tenantDb.tenantSchema;
+    const t = (name: string) => (schema ? `${schema}.${name}` : name);
+    const knex = this.tenantDb.getPublicConnection();
 
-    const existing = await knex('estimates')
+    const existing = await this.tenantDb.table('estimates')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .first();
     if (!existing) throw new NotFoundException('Estimate not found');
@@ -258,7 +264,7 @@ export class EstimatesService {
         updateFields.tax_amount = 0;
         updateFields.total = subtotal;
 
-        await trx('estimate_lines').where({ estimate_id: id, tenant_id: tenantId }).del();
+        await trx(t('estimate_lines')).where({ estimate_id: id, tenant_id: tenantId }).del();
         const lineRecords = lines.map((line: CreateEstimateLineDto) => ({
           id: generateId(),
           tenant_id: tenantId,
@@ -266,10 +272,10 @@ export class EstimatesService {
           ...line,
           total: line.quantity * line.unit_price,
         }));
-        await trx('estimate_lines').insert(lineRecords);
+        await trx(t('estimate_lines')).insert(lineRecords);
       }
 
-      const [record] = await trx('estimates')
+      const [record] = await trx(t('estimates'))
         .where({ id, tenant_id: tenantId })
         .update(updateFields)
         .returning('*');
@@ -286,8 +292,7 @@ export class EstimatesService {
   ) {
     // Estimators may only change status of their own estimates.
     if (user?.roles?.includes('estimator')) {
-      const knex = await this.tenantDb.getConnection();
-      const estimate = await knex('estimates')
+      const estimate = await this.tenantDb.table('estimates')
         .where({ id, tenant_id: tenantId, deleted_at: null })
         .select('estimated_by')
         .first();
@@ -309,8 +314,7 @@ export class EstimatesService {
 
     // Keep approved_at stamp for backward compat with financial reporting.
     if (dto.status === 'approved') {
-      const knex = await this.tenantDb.getConnection();
-      const [updated] = await knex('estimates')
+      const [updated] = await this.tenantDb.table('estimates')
         .where({ id, tenant_id: tenantId })
         .update({ approved_at: new Date() })
         .returning('*');
@@ -321,8 +325,7 @@ export class EstimatesService {
   }
 
   async remove(tenantId: string, id: string) {
-    const knex = await this.tenantDb.getConnection();
-    const estimate = await knex('estimates')
+    const estimate = await this.tenantDb.table('estimates')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .first();
     if (!estimate) throw new NotFoundException('Estimate not found');
@@ -331,7 +334,7 @@ export class EstimatesService {
       throw new BadRequestException('Only draft estimates can be deleted');
     }
 
-    await knex('estimates')
+    await this.tenantDb.table('estimates')
       .where({ id, tenant_id: tenantId })
       .update({ deleted_at: new Date() });
     return { deleted: true };
@@ -355,9 +358,7 @@ export class EstimatesService {
       throw new BadRequestException('File size exceeds 25MB limit');
     }
 
-    const knex = await this.tenantDb.getConnection();
-
-    const estimate = await knex('estimates')
+    const estimate = await this.tenantDb.table('estimates')
       .where({ id: estimateId, tenant_id: tenantId, deleted_at: null })
       .first();
     if (!estimate) throw new NotFoundException('Estimate not found');
@@ -365,7 +366,7 @@ export class EstimatesService {
     const key = this.storageService.generateKey(tenantId, 'estimates', file.originalname);
     await this.storageService.upload(key, file.buffer, file.mimetype);
 
-    const [doc] = await knex('estimate_documents')
+    const [doc] = await this.tenantDb.table('estimate_documents')
       .insert({
         id: generateId(),
         tenant_id: tenantId,
@@ -381,22 +382,19 @@ export class EstimatesService {
   }
 
   async deleteDocument(tenantId: string, estimateId: string, documentId: string) {
-    const knex = await this.tenantDb.getConnection();
-
-    const doc = await knex('estimate_documents')
+    const doc = await this.tenantDb.table('estimate_documents')
       .where({ id: documentId, estimate_id: estimateId, tenant_id: tenantId })
       .first();
     if (!doc) throw new NotFoundException('Document not found');
 
     await this.storageService.delete(doc.storage_key);
-    await knex('estimate_documents').where({ id: documentId, tenant_id: tenantId }).del();
+    await this.tenantDb.table('estimate_documents').where({ id: documentId, tenant_id: tenantId }).del();
 
     return { deleted: true };
   }
 
   async getDocuments(tenantId: string, estimateId: string) {
-    const knex = await this.tenantDb.getConnection();
-    return knex('estimate_documents')
+    return this.tenantDb.table('estimate_documents')
       .where({ estimate_id: estimateId, tenant_id: tenantId })
       .orderBy('created_at', 'desc');
   }
@@ -404,27 +402,23 @@ export class EstimatesService {
   // ── Supplements ──
 
   async getSupplements(tenantId: string, estimateId: string) {
-    const knex = await this.tenantDb.getConnection();
-    return knex('estimate_supplements')
+    return this.tenantDb.table('estimate_supplements')
       .where({ estimate_id: estimateId, tenant_id: tenantId })
       .orderBy('supplement_number', 'asc');
   }
 
   async createSupplement(tenantId: string, estimateId: string, userId: string, dto: CreateSupplementDto) {
-    const knex = await this.tenantDb.getConnection();
-
-    const estimate = await knex('estimates')
+    const estimate = await this.tenantDb.table('estimates')
       .where({ id: estimateId, tenant_id: tenantId, deleted_at: null })
       .first();
     if (!estimate) throw new NotFoundException('Estimate not found');
 
-    // Get next supplement number
-    const [{ count }] = await knex('estimate_supplements')
+    const [{ count }] = await this.tenantDb.table('estimate_supplements')
       .where({ estimate_id: estimateId, tenant_id: tenantId })
       .count('id as count');
     const supplementNumber = Number(count) + 1;
 
-    const [record] = await knex('estimate_supplements')
+    const [record] = await this.tenantDb.table('estimate_supplements')
       .insert({
         id: generateId(),
         tenant_id: tenantId,
@@ -443,9 +437,7 @@ export class EstimatesService {
   // ── RF-006: Dispute workflow ──
 
   async openDispute(tenantId: string, estimateId: string, dto: OpenDisputeDto, userId: string) {
-    const knex = await this.tenantDb.getConnection();
-
-    const estimate = await knex('estimates')
+    const estimate = await this.tenantDb.table('estimates')
       .where({ id: estimateId, tenant_id: tenantId, deleted_at: null })
       .first();
     if (!estimate) throw new NotFoundException('Estimate not found');
@@ -458,7 +450,7 @@ export class EstimatesService {
     await this.stateMachine.transition(tenantId, estimateId, 'disputed', userId, dto.dispute_notes);
 
     const now = new Date();
-    const [updated] = await knex('estimates')
+    const [updated] = await this.tenantDb.table('estimates')
       .where({ id: estimateId, tenant_id: tenantId })
       .update({
         dispute_reason: dto.dispute_reason,
@@ -470,13 +462,13 @@ export class EstimatesService {
       .returning('*');
 
     // Pause all active service orders linked to this estimate
-    await knex('service_orders')
+    await this.tenantDb.table('service_orders')
       .where({ estimate_id: estimateId, tenant_id: tenantId, deleted_at: null })
       .whereNotIn('status', ['completed', 'delivered', 'cancelled'])
       .update({ is_paused_by_dispute: true, updated_at: now });
 
     // Notify all owner-role users for this tenant
-    await this.notifyOwners(tenantId, knex, {
+    await this.notifyOwners(tenantId, {
       type: 'warning',
       title: `Estimate ${estimate.estimate_number} Disputed`,
       message: `Estimate ${estimate.estimate_number} has been moved to disputed status. Reason: ${dto.dispute_reason.replace(/_/g, ' ')}. Linked service orders are paused.`,
@@ -487,9 +479,7 @@ export class EstimatesService {
   }
 
   async resolveDispute(tenantId: string, estimateId: string, dto: ResolveDisputeDto, userId: string) {
-    const knex = await this.tenantDb.getConnection();
-
-    const estimate = await knex('estimates')
+    const estimate = await this.tenantDb.table('estimates')
       .where({ id: estimateId, tenant_id: tenantId, deleted_at: null })
       .first();
     if (!estimate) throw new NotFoundException('Estimate not found');
@@ -502,13 +492,13 @@ export class EstimatesService {
     await this.stateMachine.transition(tenantId, estimateId, dto.resolution_status, userId, dto.notes);
 
     const now = new Date();
-    const [updated] = await knex('estimates')
+    const [updated] = await this.tenantDb.table('estimates')
       .where({ id: estimateId, tenant_id: tenantId })
       .update({ dispute_resolved_at: now, updated_at: now })
       .returning('*');
 
     // Unpause all service orders linked to this estimate
-    await knex('service_orders')
+    await this.tenantDb.table('service_orders')
       .where({ estimate_id: estimateId, tenant_id: tenantId, is_paused_by_dispute: true })
       .update({ is_paused_by_dispute: false, updated_at: now });
 
@@ -517,13 +507,16 @@ export class EstimatesService {
 
   private async notifyOwners(
     tenantId: string,
-    knex: any,
     payload: { type: string; title: string; message: string; data: Record<string, unknown> },
   ) {
-    const ownerUsers = await knex('user_role_assignments')
-      .join('roles', 'user_role_assignments.role_id', 'roles.id')
-      .where({ 'user_role_assignments.tenant_id': tenantId, 'roles.name': 'owner' })
-      .select('user_role_assignments.user_id');
+    const schema = this.tenantDb.tenantSchema;
+    const t = (name: string) => (schema ? `${schema}.${name}` : name);
+    const knex = this.tenantDb.getPublicConnection();
+
+    const ownerUsers = await knex({ ura: t('user_role_assignments') })
+      .join({ r: t('roles') }, 'ura.role_id', 'r.id')
+      .where({ 'ura.tenant_id': tenantId, 'r.name': 'owner' })
+      .select('ura.user_id');
 
     if (!ownerUsers.length) return;
 
@@ -538,6 +531,6 @@ export class EstimatesService {
       data: JSON.stringify(payload.data),
     }));
 
-    await knex('notifications').insert(notifications);
+    await this.tenantDb.table('notifications').insert(notifications);
   }
 }

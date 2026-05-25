@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { InsuranceService } from './insurance.service';
 import { TenantDatabaseService } from '../../config/tenant-database.service';
@@ -36,7 +36,7 @@ describe('InsuranceService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InsuranceService,
-        { provide: TenantDatabaseService, useValue: { getConnection: jest.fn().mockResolvedValue(knex) } },
+        { provide: TenantDatabaseService, useValue: { getConnection: jest.fn().mockResolvedValue(knex), table: jest.fn().mockReturnValue(knex._chain), getPublicConnection: jest.fn().mockReturnValue(knex), tenantSchema: 'test_schema' } },
       ],
     }).compile();
     service = module.get<InsuranceService>(InsuranceService);

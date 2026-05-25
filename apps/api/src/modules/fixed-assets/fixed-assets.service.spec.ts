@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { FixedAssetsService } from './fixed-assets.service';
 import { TenantDatabaseService } from '../../config/tenant-database.service';
@@ -37,13 +37,13 @@ describe('FixedAssetsService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         FixedAssetsService,
-        { provide: TenantDatabaseService, useValue: { getConnection: jest.fn().mockResolvedValue(knex) } },
+        { provide: TenantDatabaseService, useValue: { getConnection: jest.fn().mockResolvedValue(knex), table: jest.fn().mockReturnValue(knex._chain), getPublicConnection: jest.fn().mockReturnValue(knex), tenantSchema: 'test_schema' } },
       ],
     }).compile();
     service = module.get<FixedAssetsService>(FixedAssetsService);
   });
 
-  // ── findAll ──────────────────────────────────────────────────
+  // â”€â”€ findAll â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('findAll', () => {
     it('should return paginated assets', async () => {
@@ -95,7 +95,7 @@ describe('FixedAssetsService', () => {
     });
   });
 
-  // ── findOne ──────────────────────────────────────────────────
+  // â”€â”€ findOne â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('findOne', () => {
     it('should return asset when found', async () => {
@@ -114,7 +114,7 @@ describe('FixedAssetsService', () => {
     });
   });
 
-  // ── create ───────────────────────────────────────────────────
+  // â”€â”€ create â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('create', () => {
     const createDto = {
@@ -191,7 +191,7 @@ describe('FixedAssetsService', () => {
     });
   });
 
-  // ── update ───────────────────────────────────────────────────
+  // â”€â”€ update â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('update', () => {
     it('should update and return asset', async () => {
@@ -221,7 +221,7 @@ describe('FixedAssetsService', () => {
     });
   });
 
-  // ── remove ───────────────────────────────────────────────────
+  // â”€â”€ remove â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('remove', () => {
     it('should soft delete asset with no depreciation', async () => {
@@ -250,7 +250,7 @@ describe('FixedAssetsService', () => {
     });
   });
 
-  // ── getDepreciationHistory ──────────────────────────────────
+  // â”€â”€ getDepreciationHistory â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('getDepreciationHistory', () => {
     it('should return depreciation entries', async () => {
@@ -272,7 +272,7 @@ describe('FixedAssetsService', () => {
     });
   });
 
-  // ── getSchedule ─────────────────────────────────────────────
+  // â”€â”€ getSchedule â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('getSchedule', () => {
     it('should return depreciation schedule', async () => {

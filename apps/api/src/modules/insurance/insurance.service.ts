@@ -18,10 +18,9 @@ export class InsuranceService {
   constructor(private readonly tenantDb: TenantDatabaseService) {}
 
   async findAll(tenantId: string, query: QueryInsuranceCompanyDto): Promise<PaginatedResult<any>> {
-    const knex = await this.tenantDb.getConnection();
     const { search, is_drp, page = 1, limit = 20, sort_by = 'created_at', sort_order = 'desc' } = query;
 
-    const baseQuery = knex('insurance_companies').where({ tenant_id: tenantId, deleted_at: null });
+    const baseQuery = this.tenantDb.table('insurance_companies').where({ tenant_id: tenantId, deleted_at: null });
 
     if (search) {
       baseQuery.where(function () {
@@ -59,8 +58,7 @@ export class InsuranceService {
   }
 
   async create(tenantId: string, dto: CreateInsuranceCompanyDto) {
-    const knex = await this.tenantDb.getConnection();
-    const [record] = await knex('insurance_companies')
+    const [record] = await this.tenantDb.table('insurance_companies')
       .insert({
         id: generateId(),
         tenant_id: tenantId,
@@ -71,8 +69,7 @@ export class InsuranceService {
   }
 
   async findOne(tenantId: string, id: string) {
-    const knex = await this.tenantDb.getConnection();
-    const record = await knex('insurance_companies')
+    const record = await this.tenantDb.table('insurance_companies')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .first();
     if (!record) throw new NotFoundException('Insurance company not found');
@@ -80,8 +77,7 @@ export class InsuranceService {
   }
 
   async update(tenantId: string, id: string, dto: UpdateInsuranceCompanyDto) {
-    const knex = await this.tenantDb.getConnection();
-    const [record] = await knex('insurance_companies')
+    const [record] = await this.tenantDb.table('insurance_companies')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .update({ ...dto, updated_at: new Date() })
       .returning('*');
@@ -90,8 +86,7 @@ export class InsuranceService {
   }
 
   async remove(tenantId: string, id: string) {
-    const knex = await this.tenantDb.getConnection();
-    const updated = await knex('insurance_companies')
+    const updated = await this.tenantDb.table('insurance_companies')
       .where({ id, tenant_id: tenantId, deleted_at: null })
       .update({ deleted_at: new Date() });
     if (!updated) throw new NotFoundException('Insurance company not found');

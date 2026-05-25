@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { FinancialService } from './financial.service';
 import { TenantDatabaseService } from '../../config/tenant-database.service';
@@ -38,7 +38,7 @@ describe('FinancialService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         FinancialService,
-        { provide: TenantDatabaseService, useValue: { getConnection: jest.fn().mockResolvedValue(knex) } },
+        { provide: TenantDatabaseService, useValue: { getConnection: jest.fn().mockResolvedValue(knex), table: jest.fn().mockReturnValue(knex._chain), getPublicConnection: jest.fn().mockReturnValue(knex), tenantSchema: 'test_schema' } },
         { provide: ActivationEventsService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
       ],
     }).compile();
@@ -121,7 +121,7 @@ describe('FinancialService', () => {
   describe('create', () => {
     it('should create and return transaction', async () => {
       const mockTx = { id: TX_ID, description: 'New payment', amount: 250 };
-      // isFirst check: existing transactions present → first() returns a record
+      // isFirst check: existing transactions present â†’ first() returns a record
       knex._chain.first.mockReturnValueOnce({ id: 'existing' });
       knex._chain.returning.mockReturnValueOnce([mockTx]);
 
@@ -141,7 +141,7 @@ describe('FinancialService', () => {
 
     it('should fire activation event when creating the first transaction', async () => {
       const mockTx = { id: TX_ID, description: 'First tx', amount: 100 };
-      // isFirst check: no existing transactions → first() returns null
+      // isFirst check: no existing transactions â†’ first() returns null
       knex._chain.first.mockReturnValueOnce(null);
       knex._chain.returning.mockReturnValueOnce([mockTx]);
 

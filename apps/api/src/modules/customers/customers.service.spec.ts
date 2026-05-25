@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+﻿import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { CustomersService } from './customers.service';
 import { TenantDatabaseService } from '../../config/tenant-database.service';
@@ -38,7 +38,7 @@ describe('CustomersService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CustomersService,
-        { provide: TenantDatabaseService, useValue: { getConnection: jest.fn().mockResolvedValue(knex) } },
+        { provide: TenantDatabaseService, useValue: { getConnection: jest.fn().mockResolvedValue(knex), table: jest.fn().mockReturnValue(knex._chain), getPublicConnection: jest.fn().mockReturnValue(knex), tenantSchema: 'test_schema' } },
         { provide: ActivationEventsService, useValue: { record: jest.fn().mockResolvedValue(undefined) } },
       ],
     }).compile();
@@ -107,7 +107,7 @@ describe('CustomersService', () => {
   describe('create', () => {
     it('should create and return customer', async () => {
       const mockCustomer = { id: CUSTOMER_ID, first_name: 'Jane', last_name: 'Doe' };
-      // isFirst check: existing customers present → first() returns a record
+      // isFirst check: existing customers present â†’ first() returns a record
       knex._chain.first.mockReturnValueOnce({ id: 'existing' });
       knex._chain.returning.mockReturnValueOnce([mockCustomer]);
 
@@ -125,7 +125,7 @@ describe('CustomersService', () => {
 
     it('should fire activation event when creating the first customer', async () => {
       const mockCustomer = { id: CUSTOMER_ID, first_name: 'First' };
-      // isFirst check: no existing customers → first() returns null
+      // isFirst check: no existing customers â†’ first() returns null
       knex._chain.first.mockReturnValueOnce(null);
       knex._chain.returning.mockReturnValueOnce([mockCustomer]);
 
@@ -318,7 +318,7 @@ describe('CustomersService', () => {
 
       await service.getActivityTimeline(TENANT_ID, CUSTOMER_ID, 999);
 
-      // getActivityTimeline was called without throwing — safeLimit clamped to 200
+      // getActivityTimeline was called without throwing â€” safeLimit clamped to 200
       expect(knex._chain.limit).toHaveBeenCalled();
     });
 
