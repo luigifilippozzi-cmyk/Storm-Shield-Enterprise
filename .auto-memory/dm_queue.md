@@ -11,6 +11,54 @@ type: project
 
 ---
 
+## [2026-05-25] BUG-C — P1 — Dados ausentes em staging: hooks/SSR retornam vazio com seed e org ativa
+
+**Origin:** PO Cowork (UAT 2026-05-25)
+**Priority:** P1
+**Status:** PENDING
+**Branch:** fix/SSE-bugc-staging-data-empty
+**Subagentes PR:** security-reviewer + test-runner
+
+### Comportamento atual
+Todas as páginas retornam vazio (customers, estimates, dashboard KPIs = `—`) mesmo com:
+- Clerk session ativa com `orgId` correto (`org_3EC9cu4VckyAhRCb1TXhSLWAgmg`)
+- Seed data confirmado no DB pelo `run-seeds.ps1` ("Demo data already present — estimates found")
+- BUG-A corrigido (login funciona, sem 404)
+
+### Comportamento esperado
+Dados do tenant Acme Body Shop aparecem no dashboard e nas listagens de customers, estimates, service orders, financial.
+
+### Como reproduzir
+1. Login como `owner@acme-sse-demo.com` (DemoPass!2026) em `sse-web-staging.vercel.app`
+2. Navegar para `/customers`, `/estimates`, `/dashboard`
+3. Todos retornam vazio/`—`
+
+### Evidências coletadas (UAT 2026-05-25)
+- `window.Clerk.organization.id` = `org_3EC9cu4VckyAhRCb1TXhSLWAgmg` ✓
+- `run-seeds.ps1`: "Demo data already present (estimates found)" ✓
+- Network monitor: **zero chamadas** para `fly.dev` ou `/api/` capturadas no browser
+- Chamada direta `fetch('fly.dev/customers', headers)` → `Failed to fetch` (CORS — esperado)
+- `/customers` renderiza SSR imediato (sem spinner), retorna "No customers found"
+- `/estimates` mostra spinner (hook client-side dispara) mas resolve "No estimates found"
+- Zero erros no console
+
+### Hipóteses para investigar (em ordem de probabilidade)
+1. **SSR path não envia `X-Clerk-Org-Id`** — Next.js Server Components chamam Fly.io sem o header → `TenantMiddleware` não resolve tenant → retorna vazio silenciosamente
+2. **Hooks client-side com `enabled: false`** — React Query desabilitado ou `orgId` undefined no momento do mount → hook não dispara fetch algum
+3. **Fly.io container pré-PR#83 (deploy 2026-05-02)** — versão antiga sem fix IPv6 (`family:4`) pode estar falhando silenciosamente no pool de conexão ao Neon
+
+### Escopo negativo
+- NAO refazer seed — dados ja estao no DB (estimates confirmados)
+- NAO investigar T-20260412-1 (CI deploy Fly.io) nesta tarefa — issue separada
+- NAO reescrever arquitetura SSR vs CSR — apenas identificar e corrigir o path com problema
+
+### Done quando
+`/customers` exibe lista de clientes Acme, `/estimates` exibe estimates, dashboard KPIs com valores numericos reais (nao `—`).
+
+**Protocolo:** `docs/process/HANDOFF_PROTOCOL.md` §4 (template canonico) + §7 (ciclo de vida)
+
+---
+
 ## T-20260524-1 — Fix rota `/login/tasks` (404 Clerk choose-org) + diagnóstico dados dashboard
 
 **Origin:** PO

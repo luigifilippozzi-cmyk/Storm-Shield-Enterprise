@@ -24,7 +24,8 @@ type: project
 **Handoffs DM:** 0 (RF-009 e RF-010 já em dm_queue.md como PENDING)
 **Alinhamento Bússola:** N/A (sessão de housekeeping)
 **Bloqueios:** T-20260412-1 (Fly.io CI) persiste — não crítico
-**Próxima sessão:** (1) verificação manual staging com conta Acme — KPIs com dados reais; (2) planejamento Fase 2 — RF-008 convites + IA + Plaid + n8n
+**UAT executado:** BUG-A ✅ CONFIRMADO CORRIGIDO (sem 404 em /login/tasks). BUG-B ⚠️ FIX INCOMPLETO — dados ausentes em staging mesmo com seed confirmado e org ativa. Novo bug registrado: BUG-C (P1) — hooks/SSR retornam vazio, zero chamadas de rede capturadas.
+**Próxima sessão:** (1) aguardar BUG-C COMPLETED pelo DM; (2) planejamento Fase 2 — RF-008 convites + IA + Plaid + n8n
 
 > Log mantido pelo PO Assistant (modo Cowork). Complementar ao `project_sse_status.md` (mantido pelo PM Agent).
 
