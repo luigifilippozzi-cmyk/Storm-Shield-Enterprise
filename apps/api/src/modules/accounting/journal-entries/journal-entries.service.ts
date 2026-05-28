@@ -37,7 +37,7 @@ export class JournalEntriesService {
     if (date_from) baseQuery.where('entry_date', '>=', date_from);
     if (date_to) baseQuery.where('entry_date', '<=', date_to);
 
-    const [{ count }] = await baseQuery.clone().count('id as count');
+    const [{ count }] = await baseQuery.clone().count<{ count: string | number }[]>('id as count');
     const total = Number(count);
 
     const allowedSorts = ['entry_number', 'entry_date', 'status', 'total_debit', 'created_at'];
@@ -286,7 +286,7 @@ export class JournalEntriesService {
     const [result] = await this.tenantDb.table('journal_entries')
       .where({ tenant_id: tenantId })
       .whereRaw("entry_number LIKE ?", [`JE-${year}-%`])
-      .count('id as count');
+      .count<{ count: string | number }[]>('id as count');
     const seq = Number(result.count) + 1;
     return `JE-${year}-${String(seq).padStart(4, '0')}`;
   }

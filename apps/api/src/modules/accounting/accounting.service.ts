@@ -54,7 +54,7 @@ export class AccountingService {
       baseQuery.where('is_active', is_active);
     }
 
-    const [{ count }] = await baseQuery.clone().count('id as count');
+    const [{ count }] = await baseQuery.clone().count<{ count: string | number }[]>('id as count');
     const total = Number(count);
 
     const allowedSorts = ['account_number', 'name', 'account_type', 'created_at', 'updated_at'];

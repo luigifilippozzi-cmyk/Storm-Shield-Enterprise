@@ -56,7 +56,7 @@ export class FinancialService {
       baseQuery.where('transaction_date', '<=', date_to);
     }
 
-    const [{ count }] = await baseQuery.clone().count('id as count');
+    const [{ count }] = await baseQuery.clone().count<{ count: string | number }[]>('id as count');
     const total = Number(count);
 
     const allowedSorts = ['transaction_type', 'category', 'amount', 'transaction_date', 'created_at', 'updated_at'];
@@ -144,14 +144,14 @@ export class FinancialService {
     const incomeByCategory = await this.tenantDb.table('financial_transactions')
       .where({ tenant_id: tenantId, deleted_at: null, transaction_type: 'income' })
       .select('category')
-      .sum('amount as total')
+      .sum<{ total: string | number | null }[]>('amount as total')
       .groupBy('category')
       .orderBy('total', 'desc');
 
     const expenseByCategory = await this.tenantDb.table('financial_transactions')
       .where({ tenant_id: tenantId, deleted_at: null, transaction_type: 'expense' })
       .select('category')
-      .sum('amount as total')
+      .sum<{ total: string | number | null }[]>('amount as total')
       .groupBy('category')
       .orderBy('total', 'desc');
 

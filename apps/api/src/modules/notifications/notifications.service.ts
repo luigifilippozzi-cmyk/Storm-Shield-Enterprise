@@ -17,7 +17,7 @@ export class NotificationsService {
     if (unread === true) base.whereNull('read_at');
     if (unread === false) base.whereNotNull('read_at');
 
-    const [{ count }] = await base.clone().count('id as count');
+    const [{ count }] = await base.clone().count<{ count: string | number }[]>('id as count');
     const total = Number(count);
     const offset = (page - 1) * limit;
 
@@ -33,7 +33,7 @@ export class NotificationsService {
     const [{ count }] = await this.tenantDb.table('notifications')
       .where({ tenant_id: tenantId, user_id: userId })
       .whereNull('read_at')
-      .count('id as count');
+      .count<{ count: string | number }[]>('id as count');
     return { unread: Number(count) };
   }
 
