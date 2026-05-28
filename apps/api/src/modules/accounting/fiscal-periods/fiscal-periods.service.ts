@@ -22,7 +22,7 @@ export class FiscalPeriodsService {
       baseQuery.where('status', status);
     }
 
-    const [{ count }] = await baseQuery.clone().count('id as count');
+    const [{ count }] = await baseQuery.clone().count<{ count: string | number }[]>('id as count');
     const total = Number(count);
 
     const allowedSorts = ['name', 'start_date', 'end_date', 'status', 'created_at'];

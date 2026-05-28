@@ -47,7 +47,7 @@ export class CustomersService {
     }
 
     // Count total
-    const [{ count }] = await baseQuery.clone().count('id as count');
+    const [{ count }] = await baseQuery.clone().count<{ count: string | number }[]>('id as count');
     const total = Number(count);
 
     // Validate sort column
@@ -117,23 +117,23 @@ export class CustomersService {
       this.tenantDb.table('estimates')
         .where({ customer_id: id, tenant_id: tenantId, deleted_at: null })
         .whereNotIn('status', ['converted', 'rejected'])
-        .count('id as count')
+        .count<{ count: string | number }[]>('id as count')
         .first(),
       this.tenantDb.table('service_orders')
         .where({ customer_id: id, tenant_id: tenantId, deleted_at: null })
         .whereNotIn('status', ['completed', 'delivered', 'cancelled'])
-        .count('id as count')
+        .count<{ count: string | number }[]>('id as count')
         .first(),
       this.tenantDb.table('financial_transactions')
         .where({ customer_id: id, tenant_id: tenantId, deleted_at: null })
         .where('transaction_type', 'income')
-        .sum('amount as total')
+        .sum<{ total: string | number | null }[]>('amount as total')
         .first(),
       this.tenantDb.table('financial_transactions')
         .where({ customer_id: id, tenant_id: tenantId, deleted_at: null })
         .where('transaction_type', 'income')
         .whereRaw('EXTRACT(YEAR FROM transaction_date) = EXTRACT(YEAR FROM NOW())')
-        .sum('amount as total')
+        .sum<{ total: string | number | null }[]>('amount as total')
         .first(),
       this.tenantDb.table('estimates')
         .where({ customer_id: id, tenant_id: tenantId, deleted_at: null })

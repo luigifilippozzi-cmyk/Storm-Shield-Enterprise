@@ -34,7 +34,7 @@ export class InsuranceService {
       baseQuery.where('is_drp', is_drp);
     }
 
-    const [{ count }] = await baseQuery.clone().count('id as count');
+    const [{ count }] = await baseQuery.clone().count<{ count: string | number }[]>('id as count');
     const total = Number(count);
 
     const allowedSorts = ['name', 'code', 'payment_terms_days', 'created_at', 'updated_at'];

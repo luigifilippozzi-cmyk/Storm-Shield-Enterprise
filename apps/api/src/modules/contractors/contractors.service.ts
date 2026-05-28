@@ -44,7 +44,7 @@ export class ContractorsService {
       baseQuery.whereILike('specialty', `%${specialty}%`);
     }
 
-    const [{ count }] = await baseQuery.clone().count('id as count');
+    const [{ count }] = await baseQuery.clone().count<{ count: string | number }[]>('id as count');
     const total = Number(count);
 
     const allowedSorts = ['first_name', 'last_name', 'company_name', 'specialty', 'hourly_rate', 'created_at', 'updated_at'];
@@ -91,7 +91,7 @@ export class ContractorsService {
 
     const [{ total_paid }] = await this.tenantDb.table('contractor_payments')
       .where({ contractor_id: id, tenant_id: tenantId })
-      .sum('amount as total_paid');
+      .sum<{ total_paid: string | number | null }[]>('amount as total_paid');
 
     return { ...record, payments, total_paid: Number(total_paid) || 0 };
   }
@@ -154,7 +154,7 @@ export class ContractorsService {
     const [{ total }] = await this.tenantDb.table('contractor_payments')
       .where({ contractor_id: contractorId, tenant_id: tenantId })
       .whereRaw('EXTRACT(YEAR FROM payment_date) = ?', [targetYear])
-      .sum('amount as total');
+      .sum<{ total: string | number | null }[]>('amount as total');
 
     return {
       contractor_id: contractorId,

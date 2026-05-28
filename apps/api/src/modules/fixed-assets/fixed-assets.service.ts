@@ -40,7 +40,7 @@ export class FixedAssetsService {
     if (category_id) baseQuery.where('category_id', category_id);
     if (depreciation_method) baseQuery.where('depreciation_method', depreciation_method);
 
-    const [{ count }] = await baseQuery.clone().count('id as count');
+    const [{ count }] = await baseQuery.clone().count<{ count: string | number }[]>('id as count');
     const total = Number(count);
 
     const allowedSorts = ['asset_tag', 'asset_name', 'acquisition_date', 'acquisition_cost', 'net_book_value', 'status', 'created_at'];

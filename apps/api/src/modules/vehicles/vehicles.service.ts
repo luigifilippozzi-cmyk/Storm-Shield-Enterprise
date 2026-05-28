@@ -64,7 +64,7 @@ export class VehiclesService {
 
     baseQuery.leftJoin(t('customers'), 'vehicles.customer_id', 'customers.id');
 
-    const [{ count }] = await baseQuery.clone().count('vehicles.id as count');
+    const [{ count }] = await baseQuery.clone().count<{ count: string | number }[]>('vehicles.id as count');
     const total = Number(count);
 
     const allowedSorts = ['year', 'make', 'model', 'created_at', 'updated_at', 'mileage'];

@@ -33,7 +33,7 @@ export class CasesService {
     if (customer_id) baseQuery.where('customer_id', customer_id);
     if (assigned_to_user_id) baseQuery.where('assigned_to_user_id', assigned_to_user_id);
 
-    const [{ count }] = await baseQuery.clone().count('id as count');
+    const [{ count }] = await baseQuery.clone().count<{ count: string | number }[]>('id as count');
     const total = Number(count);
     const offset = (page - 1) * limit;
 

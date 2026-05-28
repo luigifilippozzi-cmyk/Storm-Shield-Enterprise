@@ -70,7 +70,7 @@ export class ServiceOrdersService {
       baseQuery.where('service_orders.assigned_to', assigned_to);
     }
 
-    const [{ count }] = await baseQuery.clone().count('service_orders.id as count');
+    const [{ count }] = await baseQuery.clone().count<{ count: string | number }[]>('service_orders.id as count');
     const total = Number(count);
 
     const allowedSorts = ['order_number', 'status', 'total_amount', 'created_at', 'updated_at'];

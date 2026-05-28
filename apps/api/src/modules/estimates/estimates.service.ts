@@ -133,7 +133,7 @@ export class EstimatesService {
 
     baseQuery.leftJoin(t('customers'), 'estimates.customer_id', 'customers.id');
 
-    const [{ count }] = await baseQuery.clone().count('estimates.id as count');
+    const [{ count }] = await baseQuery.clone().count<{ count: string | number }[]>('estimates.id as count');
     const total = Number(count);
 
     const allowedSorts = ['estimate_number', 'total', 'status', 'created_at', 'updated_at'];
@@ -415,7 +415,7 @@ export class EstimatesService {
 
     const [{ count }] = await this.tenantDb.table('estimate_supplements')
       .where({ estimate_id: estimateId, tenant_id: tenantId })
-      .count('id as count');
+      .count<{ count: string | number }[]>('id as count');
     const supplementNumber = Number(count) + 1;
 
     const [record] = await this.tenantDb.table('estimate_supplements')
