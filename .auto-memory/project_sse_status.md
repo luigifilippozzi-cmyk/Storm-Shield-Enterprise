@@ -3,6 +3,55 @@ name: SSE Project Status
 description: Current state of Storm Shield Enterprise project — metrics, health, priorities for Dev Manager
 type: project
 ---
+# SSE Project Status — 2026-05-28 (Dev Manager — Sessão Autônoma CI Fix)
+
+## Revisão DM — 2026-05-28 (PR #87)
+
+**Saúde: 🟢 VERDE** — CI SUCCESS (2026-05-28). Deploy Staging in_progress (triggered by PR #87). Deploy API Fly.io: container 2026-05-02 ainda LIVE (T-20260412-1 pré-existente — Luigi deve fazer flyctl deploy manual). 0 PRs abertos. 87 total merged.
+
+**Módulos: 15/15** | Testes: **599** | Endpoints: **128** | Migrations: **19** | ADRs: **17** | Controllers: **19** | Pages: **44** | Specs: **29**
+
+### Novidades desta sessão (2026-05-28)
+
+| PR | Tipo | Descrição | Status |
+|---|---|---|---|
+| #85 | fix(api) | BUG-C: pool-safe queries via TenantDatabaseService.table() — fix PgBouncer SET search_path reset | MERGED 2026-05-25 |
+| #87 | fix(api) | CI BLOQUEANTE: 18 erros TS2339 — Knex DeferredKeySelection em `.count()` / `.sum()` em 13 services | MERGED 2026-05-28 |
+
+### Tarefas concluídas
+
+- **CI BLOQUEANTE RESOLVIDO (PR #87)** — Root cause: PR #85 migrou 20 services para `TenantDatabaseService.table()`. Knex 3.x `.count()` sem generic retorna `DeferredKeySelection` → TypeScript 5.7 strict mode não conseguia inferir propriedade `count` para destructuring. Fix: `count<{ count: string | number }[]>('id as count')` e `sum<{ field: string | number | null }[]>()` em 13 services (accounting, fiscal-periods, journal-entries, cases, contractors, customers, estimates, financial, fixed-assets, insurance, notifications, service-orders, vehicles). 599/599 testes. CI verde em 2m7s.
+- **Sessão BUG-C PR #85 confirmada MERGED** — PR #85 foi merged antes desta sessão (status anterior era OPEN incorreto).
+- Dashboard e memória atualizados.
+
+### Verificação Regras CLAUDE.md §10 (regras 1-14)
+- KNEX_CONNECTION direto em services: **OK** (sem mudança)
+- FLOAT/REAL em migrations: **OK** (sem mudança)
+- CASCADE em tabelas financeiras/contábeis: **OK** (sem mudança)
+- Secrets hardcoded: **OK** — sem credenciais commitadas
+
+### Verificação Regras 15-18 (alinhamento Bússola)
+- PR #87: fix(api) — fix de CI/infraestrutura de tipos. Sem tela nova. Regras 15-18 N/A ✓
+
+### Bloqueios atuais
+1. **T-20260412-1 BLOCKED (infra)** — deploy-api-staging.yml (Fly.io) falha no CI de deploy, mas container 2026-05-02 ainda UP. Luigi deve fazer `flyctl deploy` manual para aplicar PR #85+#87 em staging.
+2. **T-20260509-2 BLOCKED (seeds)** — Seeds Acme prontos mas requerem credenciais manuais. Luigi/PO deve rodar `run-seeds.ps1`.
+
+### Inconsistências
+1. **Admin module sem service** — `apps/api/src/modules/admin/` sem `admin.service.ts` (pré-existente).
+2. **PV4 violation** — `STATUS_COLORS` em `platform-admin/page.tsx` usa Tailwind direto — P2 pendente (pré-existente).
+3. **Tenants module coverage** — 61.4% (abaixo da meta 80%) — P1 próxima sessão DM.
+
+### Prioridades P1/P2 para próxima sessão
+1. **P1 (Luigi)**: `flyctl deploy` manual → verificar BUG-C resolvido em staging (dados não vazios).
+2. **P1 (Luigi)**: Rodar seeds Acme staging (T-20260509-2).
+3. **P1 (DM)**: tenants.service.ts coverage (61.4% → 80%+).
+4. **P2 (DM)**: PV4 violation em platform-admin/page.tsx.
+
+### Última sessão: 2026-05-28 (DM Agent — CI BLOQUEANTE: 18 Knex TS errors → PR #87) 🟢 VERDE
+
+---
+
 # SSE Project Status — 2026-05-25 (Dev Manager — Sessão Autônoma BUG-C)
 
 ## Revisão DM — 2026-05-25 (PR #85)

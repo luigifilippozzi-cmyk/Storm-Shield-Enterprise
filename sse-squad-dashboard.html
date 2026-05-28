@@ -289,10 +289,10 @@
 <script>
 // <!--METRICS_START-->
 const D = {
-  lastUpdated: "2026-05-25 (Dev Manager — Sessão Autônoma)",
+  lastUpdated: "2026-05-28 (Dev Manager — Sessão Autônoma)",
   updatedBy: "Dev Manager",
   health: "green",
-  healthText: "VERDE. CI SUCCESS (2026-05-25 — PR #84 merged). Deploy Web Vercel SUCCESS. Deploy API Fly.io CI FAILURE (pré-existente T-20260412-1 — container 2026-05-02 LIVE, /health=200 confirmado). 0 PRs abertos. 84 total merged. PR #84: BUG-A fix (Clerk routing=path + /login/tasks redirect shim), BUG-B fix (X-Clerk-Org-Id adicionado em 12 hooks — dashboard KPIs restaurados), security fix (AuthGuard cross-tenant spoofing via X-Clerk-Org-Id). T-20260524-1 COMPLETED.",
+  healthText: "VERDE. CI SUCCESS (2026-05-28 — PR #87 merged). Deploy Web Vercel SUCCESS (2026-05-25). Deploy API Fly.io CI FAILURE (pré-existente T-20260412-1 — container LIVE). 0 PRs abertos. 87 total merged. PR #87: CI BLOQUEANTE corrigido — 18 erros TypeScript Knex count/sum generics explícitos em 13 services (efeito colateral de PR #85). Build pnpm local exit 0. 599/599 testes.",
   activeFase: "2",
   kpis: {
     backendModules: 15,
@@ -308,13 +308,16 @@ const D = {
   },
   agents: [
     { name: "PM Agent", role: "Status Diario + Metricas", color: "var(--blue)", bg: "var(--blue-bg)", icon: "clipboard", status: "active", statusText: "Revisão diária 2026-05-11 — Saúde VERDE. 79 PRs merged. 15/15 módulos, 599 testes, 128 endpoints, 19 migrations, 17 ADRs, 43 pages, 29 specs, 19 controllers. CI+Deploy Staging+Deploy Web todos VERDE (2026-05-11T01:40Z). Regras 1-14 OK. Regras 15-18 OK (sem violações). dm_queue: T-20260509-2 BLOCKED (seeds Acme — PO manual), T-20260509-1 PENDING (Tenants CRUD P2). Uncommitted local: run.ts dotenv fix + 3 scripts helper seed.", stats: [["Frequencia","Diario"],["Escopo","Read-only"],["Output","Relatorio + Dashboard"]] },
-    { name: "Dev Manager", role: "Implementacao + Orquestracao", color: "var(--accent2)", bg: "var(--teal-bg)", icon: "gear", status: "active", statusText: "Sessao autonoma 2026-05-25 — PR #84 (BUG-A: login/tasks 404 fix via routing=path + redirect shim; BUG-B: X-Clerk-Org-Id em 12 hooks — KPIs dashboard restaurados; security: AuthGuard cross-tenant spoofing bloqueado). T-20260524-1 COMPLETED. 599/599 testes. Fly.io container LIVE confirmado (/health=200). 0 PRs abertos.", stats: [["Autoridade","Execucao tecnica"],["Subagentes","test[PASS 599] security[2 HIGH fixed] frontend[HIGH fixed]"],["PRs","#84 merged"]] },
+    { name: "Dev Manager", role: "Implementacao + Orquestracao", color: "var(--accent2)", bg: "var(--teal-bg)", icon: "gear", status: "active", statusText: "Sessao autonoma 2026-05-28 — PR #87 merged: CI BLOQUEANTE corrigido. Root cause: Knex 3.x + TS 5.7 DeferredKeySelection não permite destructuring sem generic explícito. 18 call sites em 13 services corrigidos com count<{count:string|number}[]>(). Build pnpm exit 0. 599/599 testes. CI SUCCESS. Deploy API: T-20260412-1 pre-existente BLOCKED (container ainda LIVE).", stats: [["Autoridade","Execucao tecnica"],["Subagentes","N/A — fix puramente tipagem TS"],["PRs","#87 merged"]] },
     { name: "test-runner", role: "Jest + Coverage", color: "var(--green)", bg: "var(--green-bg)", icon: "check", status: "active", statusText: "599 testes, 29 suites — GREEN (2026-05-02). SuperUserService x12 + SuperUserGuard x6 adicionados. Branch coverage todos servicos ≥80%. PR #74 PASS.", stats: [["Framework","Jest + ts-jest"],["Specs","29 test suites"],["Trigger","Sempre pre-PR"]] },
     { name: "security-reviewer", role: "RLS + XSS + Auth", color: "var(--red)", bg: "var(--red-bg)", icon: "shield", status: "active", statusText: "PR #74 — Critical (GET /tenants/:id schema_name leak) FIXED via TenantGuard+findOneSafe. HIGH (migration scope) FIXED via DO block. MEDIUM (schema injection) FIXED via regex guard. Todos findings resolvidos.", stats: [["Foco","tenant_id, RLS, AES"],["Checks","OWASP Top 10 + regras 15-18"],["Trigger","auth/db changes"]] },
     { name: "db-reviewer", role: "Migrations + Schema", color: "var(--purple)", bg: "var(--purple-bg)", icon: "database", status: "active", statusText: "Baseline: 000-018 (19 SQL files). Migration 018: cross-tenant DO block — is_super_user_action + target_tenant_id em audit_logs. SET LOCAL search_path em transaction. Schema regex validation. Todos PASS.", stats: [["Foco","RLS, indexes, FK"],["Migrations","19 SQL files"],["Trigger","Schema changes"]] },
     { name: "frontend-reviewer", role: "Next.js + shadcn/ui", color: "var(--cyan)", bg: "rgba(6,182,212,.12)", icon: "layout", status: "active", statusText: "Checklist expandido: 20 itens (8 base + 6 PV + 6 PUX via ADR-013). PR #44 FAIL→PASS. Regra 19 vigente.", stats: [["Framework","Next.js 15 + React 19"],["Checklist","20 itens (ADR-013)"],["Trigger","UI/component changes — Regra 19"]] }
   ],
   activity: [
+    { time: "Mai 28", color: "var(--accent2)", msg: "<strong>PR #87 merged</strong> fix(api): CI BLOQUEANTE — 18 erros TS Knex count/sum generics explícitos em 13 services. Knex 3.x + TS 5.7: DeferredKeySelection não resolve propriedade em destructuring sem tipo explícito. count/sum calls atualizados para count&lt;{count:string|number}[]&gt;() e sum&lt;{total:string|number|null}[]&gt;(). Build pnpm exit 0. 599/599 testes. CI SUCCESS.", tag: "merge" },
+    { time: "Mai 28", color: "var(--green)", msg: "<strong>Dev Manager</strong> sessão autônoma 2026-05-28 — CI BLOQUEANTE identificado e corrigido. Root cause: PR #85 migração para TenantDatabaseService.table() introduziu Knex DeferredKeySelection incompatível com destructuring TS 5.7. Fix: explicit generics em 18 call sites / 13 services. Build local verifica exit 0. 599/599 testes. PR #87 merged. CI SUCCESS (Lint, Test & Build PASS em 2m7s).", tag: "dm" },
+    { time: "Mai 25", color: "var(--accent2)", msg: "<strong>PR #85 merged</strong> fix(api): BUG-C — pool-safe queries via TenantDatabaseService.table() com schema qualification explícito. 20 services migrados. 599/599 testes.", tag: "merge" },
     { time: "Mai 25", color: "var(--accent2)", msg: "<strong>PR #84 merged</strong> fix(web,api): BUG-A+BUG-B+security — T-20260524-1 COMPLETED. BUG-A: Clerk routing=path + path='/login' em login/page.tsx + /login/tasks/page.tsx redirect shim (eliminado 404 choose-organization). BUG-B: useApiHeaders() com X-Clerk-Org-Id adicionado em 12 hooks (use-customers, use-vehicles, use-estimates, use-financial, use-service-orders, use-insurance, use-cases, use-chart-of-accounts, use-accounting-reports, use-journal-entries, use-wizard, api.ts) — dashboard KPIs restaurados. Security: AuthGuard ForbiddenException quando X-Clerk-Org-Id ≠ JWT org_id (cross-tenant spoofing bloqueado). 599/599 testes. 44 páginas.", tag: "merge" },
     { time: "Mai 25", color: "var(--green)", msg: "<strong>Dev Manager</strong> sessão autônoma 2026-05-25 — T-20260524-1 COMPLETED. BUG-A (login/tasks 404) + BUG-B (dashboard KPIs — X-Clerk-Org-Id ausente em todas as hooks) identificados e corrigidos. Security vulnerability cross-tenant spoofing descoberta e patcheada no mesmo PR. Fly.io container LIVE confirmado (/health=200, /financial/summary=401 com auth). Subagentes: test[PASS 599/599], security[2 HIGH findings — ambos fixados in-PR], frontend[1 HIGH — path mismatch fixado com redirect()]. PR #84 merged. 44 pages, 599 tests.", tag: "dm" },
     { time: "Mai 15", color: "var(--accent2)", msg: "<strong>PR #83 merged</strong> fix(db): BUG-05 — force IPv4 (family:4) para conexões Neon em database.module.ts, seeds/run.ts, run-migrations.ts. Root cause: pg dual-stack DNS cria conexões IPv6 com credenciais stale no pool → 28P01. Fix cirúrgico: family:4 força IPv4-only. Bonus: dotenv path fix em tenant-provisioning.ts. 599/599 testes. Unblocks T-20260509-2 (seed Acme staging).", tag: "merge" },
@@ -417,11 +420,11 @@ const D = {
     { name: "notifications", files: 5, spec: true, controller: true, endpoints: 5 }
   ],
   pipeline: [
-    { label: "CI", desc: "Lint + Test + Build (GitHub Actions) — SUCCESS main (2026-05-25 — PR #84). 599/599 testes. 29 suites. Branch coverage ≥80% todos os services.", status: "green", date: "2026-05-25" },
-    { label: "Deploy Staging", desc: "Docker build + GHCR push — SUCCESS (2026-05-25 — PR #84). Workflow: deploy-staging.yml pós-merge em main.", status: "green", date: "2026-05-25" },
+    { label: "CI", desc: "Lint + Test + Build (GitHub Actions) — SUCCESS main (2026-05-28 — PR #87). 599/599 testes. 29 suites. Fix: 18 Knex TS type errors resolvidos.", status: "green", date: "2026-05-28" },
+    { label: "Deploy Staging", desc: "Docker build + GHCR push — in_progress (2026-05-28 — triggered by PR #87 merge). Workflow: deploy-staging.yml.", status: "yellow", date: "2026-05-28" },
     { label: "Deploy API", desc: "Fly.io (deploy-api-staging.yml) — CI FAILURE (pré-existente T-20260412-1). Porém container de 2026-05-02 ainda LIVE e respondendo (/health=200 confirmado 2026-05-25). Não bloqueia desenvolvimento.", status: "red", date: "2026-05-25" },
     { label: "Deploy Web", desc: "Vercel (deploy-web-staging.yml) — SUCCESS (2026-05-25 — PR #84). BUG-A+BUG-B fixes. CA5 smoke test testa Fly.io direto (liveness + readiness + auth).", status: "green", date: "2026-05-25" },
-    { label: "PRs Abertos", desc: "0 PRs abertos. 84 total merged. Últimos: #84 (fix BUG-A+BUG-B+security), #83 (fix BUG-05 IPv4 Neon), #82 (feat Create Tenant UI), #81 (chore seeds+ADR-015).", status: "green", date: "2026-05-25" }
+    { label: "PRs Abertos", desc: "0 PRs abertos. 87 total merged. Últimos: #87 (fix CI — 18 Knex TS type errors), #85 (fix BUG-C PgBouncer schema), #84 (fix BUG-A+BUG-B+security).", status: "green", date: "2026-05-28" }
   ],
   alertas: {
     bloqueantes: [],
@@ -431,10 +434,10 @@ const D = {
       { titulo: "T-20260509-2 BLOCKED — Seeds Acme em staging (PO ação manual)", desc: "Seeds existem desde PR #68+#69. DATABASE_URL_UNPOOLED e CLERK_SECRET_KEY necessários. Helper scripts run-seeds.ps1 disponíveis na raiz do projeto. Ver playbook: .auto-memory/HANDOFF_DM_T20260509_2.md." }
     ],
     proximos7: [
-      { titulo: "Teste manual staging — BUG-A+BUG-B (PO/Luigi — P1)", desc: "PR #84 merged com fixes Clerk routing=path e X-Clerk-Org-Id. Luigi deve acessar staging: (1) login → verifica choose-organization não gera 404; (2) dashboard → verifica KPIs não mostram '—'. Confirma BUG-A+BUG-B resolvidos end-to-end." },
+      { titulo: "flyctl deploy manual — BUG-C fix (Luigi — P1)", desc: "PR #85 (BUG-C PgBouncer schema fix) + PR #87 (18 Knex TS errors) já merged e CI verde. Porém Fly.io container ainda é de 2026-05-02 (T-20260412-1 bloqueia deploy automático). Luigi deve rodar: flyctl deploy --app sse-api-staging → valida /health=200 + dados staging não vazios." },
       { titulo: "Seeds staging — PO ação manual (P1)", desc: "Seeds prontos (PR #68+#69 merged). PO deve rodar: pnpm --filter api seed:run --tenant=acme --type=personas → --type=demo-data. Desbloqueia UAT tour completo com 7 personas Acme + demo data (15 customers, 18 vehicles, 12 estimates, 5 SOs, 30 transactions)." },
+      { titulo: "Cobertura tenants.service.ts (DM — P1)", desc: "tenants.service.ts em 61.4% de cobertura — abaixo da meta ≥80%. DM deve adicionar testes unitários para cobrir provisionamento, findOne, update, remove e plano enforcement. Meta: ≥80% branches." },
       { titulo: "Iniciar planejamento Fase 2 (PO — P1)", desc: "Fase 1 100% concluída. GoNoGo v2 GO. Fase 2 = IA + integrações bancárias (Plaid) + automações n8n + RF-008 (Sistema de Convites). PO deve definir escopo e RFs em RF_BACKLOG.md. RF-008 já definido (P1, Fase 2)." },
-      { titulo: "RF-008: Sistema de Convites (DM — P1, Fase 2)", desc: "RF-008 definido em 2026-05-01. Owner/admin convida usuários por email com role selection. Link assinado 72h single-use, token SHA-256, integração Clerk, plan gate (free=3, starter=10, pro=50). Aguarda PO confirmar start." },
       { titulo: "T-20260421-1: NS dashboard (standing — P2)", desc: "Aguarda gatilho explícito (RF status change, Bússola ajuste, nova anti-rec). Nenhum gatilho ativo. Última execução: PR #58 (2026-04-23, Trigger #1 RF-007 DONE)." }
     ],
     alinhamentoBussola: []
@@ -451,9 +454,9 @@ const D = {
     { tipo: "/ready 503 — RESOLVIDO", desc: "Confirmado 2026-04-24: /ready retorna 200. Fly secrets configurados por Luigi." }
   ],
   recomendacoes: [
-    { prioridade: "P1 (PO/Luigi)", texto: "Testar login no staging após PR #84: (1) fazer login com conta Acme → confirmar que choose-organization não gera 404 em /login/tasks; (2) verificar dashboard → KPIs devem mostrar valores reais (não '—'). Ambos os bugs foram corrigidos mas requerem confirmação end-to-end manual." },
+    { prioridade: "P1 (Luigi)", texto: "flyctl deploy manual: PR #85+#87 merged e CI verde mas container Fly.io é de 2026-05-02. Rodar: flyctl deploy --app sse-api-staging. Valida BUG-C (dados staging vazios) end-to-end. T-20260412-1 impede deploy automático — somente deploy manual resolve." },
     { prioridade: "P1 — BLOQUEADO (PO/Luigi)", texto: "T-20260509-2: Rodar seeds Acme em staging MANUALMENTE — credenciais não disponíveis em sessão automatizada. Helper scripts disponíveis: run-seeds.ps1 na raiz do projeto. Ver playbook: .auto-memory/HANDOFF_DM_T20260509_2.md. Desbloqueia UAT manual com roteiros v1.1 (7 personas Acme + demo data)." },
-    { prioridade: "P1 (PO)", texto: "Iniciar planejamento Fase 2 (IA + integrações bancárias Plaid + automações n8n + RF-008 convites). Fase 1 100% concluída — GoNoGo v2 GO. Definir RFs em RF_BACKLOG.md." }
+    { prioridade: "P1 (DM — próxima sessão)", texto: "Cobertura tenants.service.ts: 61.4% → meta ≥80%. Adicionar testes para provisionamento, findOne, update, remove, plano enforcement. Único service abaixo da meta após sessão 2026-05-28." }
   ],
   backlog: [
     { id: "RF-004", task: "Customer 360 View (7 abas)", fase: "2", prio: "P1", status: "Concluido", nota: "PR #44 merged 2026-04-22. 368 testes. 2 endpoints novos (/summary + /activity-timeline). 7 abas + ARIA + Suspense. Critical+High+3 Medium corrigidos via subagentes." },

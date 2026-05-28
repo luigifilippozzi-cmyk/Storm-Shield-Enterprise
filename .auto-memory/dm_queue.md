@@ -11,13 +11,50 @@ type: project
 
 ---
 
+## [2026-05-28] CI-FIX — P0 — 18 erros TS2339 Knex DeferredKeySelection bloqueando build
+
+**Origin:** DM Agent — detectado pós-merge PR #85
+**Priority:** P0 (BLOQUEANTE CI)
+**Status:** COMPLETED — 2026-05-28 → PR #87 MERGED → CI verde
+**Branch:** fix/SSE-ci-knex-ts-count-types
+**PR:** #87 MERGED
+
+### Causa raiz
+PR #85 migrou 20 services para `TenantDatabaseService.table()`. Knex 3.x `.count()` sem generic retorna `DeferredKeySelection<...>` — TypeScript 5.7 strict mode não consegue inferir propriedade `count` para array destructuring. ts-jest usa transpile-only (não detecta), mas `tsc --build` falha com 18 TS2339.
+
+### Fix aplicado
+`count<{ count: string | number }[]>('id as count')` e `sum<{ field: type | null }[]>()` em 13 services: accounting, fiscal-periods, journal-entries, cases, contractors, customers, estimates, financial, fixed-assets, insurance, notifications, service-orders, vehicles.
+
+### Done quando
+CI Lint+Test+Build SUCCESS em `main`. **DONE** — 2m7s, 599/599 tests.
+
+---
+
+## [2026-05-28] T-20260528-1 — P1 — tenants.service.ts coverage abaixo de 80%
+
+**Origin:** DM Agent — detectado 2026-05-28
+**Priority:** P1
+**Status:** PENDING
+**Assigned:** DM Agent (próxima sessão)
+
+### Objetivo
+Elevar cobertura de `tenants.service.ts` de 61.4% para ≥80% (meta CLAUDE.md §10 regra 6).
+
+### Escopo
+Adicionar testes unitários para: provisionamento de tenant, `findOne`, `update`, `remove`, plano enforcement, tenant suspension. Não reescrever service.
+
+### Done quando
+`pnpm --filter @sse/api test:cov` mostra `tenants.service.ts` ≥ 80% branches.
+
+---
+
 ## [2026-05-25] BUG-C — P1 — Dados ausentes em staging: hooks/SSR retornam vazio com seed e org ativa
 
 **Origin:** PO Cowork (UAT 2026-05-25)
 **Priority:** P1
-**Status:** COMPLETED — 2026-05-25 → PR #85 → aguardando merge + deploy manual
+**Status:** COMPLETED — PR #85 MERGED 2026-05-25. Deploy manual pendente (Luigi: flyctl deploy).
 **Branch:** fix/SSE-bugc-staging-data-empty
-**PR:** #85 OPEN
+**PR:** #85 MERGED
 **Subagentes PR:** security-reviewer + test-runner
 
 ### Comportamento atual
@@ -3065,5 +3102,109 @@ Campo `platform_notes` NUNCA deve aparecer em endpoints ou DTOs tenant-side. CA5
 Criterios de aceite CA1-CA9 satisfeitos (ver RF-010 no backlog). Especialmente: CA5 (platform_notes nunca vazado) e CA3 (fila completa com filtros para Platform Operator).
 
 Protocolo: `docs/process/HANDOFF_PROTOCOL.md` §4 (template canonico) + §7 (ciclo de vida)
+
+---
+
+## [2026-05-28] BUG-D destravar deploy staging Fly.io (multi-RC, T-20260412-1)
+## Tarefa DM ? BUG-D: Destravar deploy staging Fly.io (root-cause multi-bug) ? Prioridade P0
+
+Contexto:
+Sessao PO 2026-05-28 tentou executar smoke UAT do BUG-C (PR #85 ja merged em main, c3c7af1).
+Deploy Fly.io e pre-requisito do UAT e esta bloqueado por multiplas falhas concorrentes
+documentadas como T-20260412-1 (BLOCKED desde 2026-04-12).
+
+Esta tarefa autoriza investigacao ampla. DM deve atacar TODAS as causas raizes,
+nao patch isolado. UAT Fase 1 esta completamente bloqueado ate deploy verde.
+
+EVIDENCIAS:
+
+E1 ? CI em main FAILING (3 workflows pos-merge BUG-C, SHA c3c7af1)
+  - Run 26423752522 Deploy API (Staging) ? failure (28P01)
+  - Run 26423752508 Deploy Staging ? failure
+  - Run 26423752506 CI ? failure
+
+E2 ? migration:run falha com Postgres 28P01 (invalid_password)
+  - mesma raiz que T-20260509-2 e BUG-05, nao resolvido por BUG-C
+  - bugs independentes que estavam sobrepostos
+
+E3 ? flyctl da raiz: dockerfile path absoluto Windows
+  - apps/api/fly.toml usa path relativo ../../
+  - flyctl resolve com prefixo C:\ errado
+
+E4 ? flyctl de apps/api: archive/tar unknown file mode
+  - bug conhecido flyctl Windows ao tarball build context
+
+E5 ? Workflow Deploy Staging NAO deploya
+  - so faz build+push para ghcr.io
+  - deploy-api-staging.yml e separado
+
+E6 ? Maquina Fly.io rodando imagem PRE-BUG-C
+  - deployment-01KQNDTZ... criado antes de 2026-05-25 23:24Z
+  - healthchecks verdes mas codigo antigo
+
+E7 ? Secrets Fly.io OK
+  - DATABASE_URL_UNPOOLED, DATABASE_URL, REDIS_URL, CLERK_SECRET_KEY presentes
+
+CAUSAS RAIZES (atacar TODAS):
+
+RC-1: migration:run com Neon falha (28P01) no GH Actions
+  Hipoteses: pooled vs unpooled mismatch / credencial expirada / SSL config
+  Acao: instrumentar run-migrations.ts com logging mascarado
+        possivelmente migrar para DATABASE_URL_UNPOOLED no step de migration
+
+RC-2: Deploy nao dispara automaticamente
+  Workflows sem step flyctl deploy. Auto-deploy desabilitado em T-20260412-1.
+  Acao: criar step flyctl deploy OU re-habilitar integracao GitHub-Fly
+        justificar via ADR-011
+
+RC-3: Deploy manual Windows tem 2 modos de falha
+  Acao: documentar runbook docs/runbooks/staging-deploy.md
+        adicionar .dockerignore robusto (node_modules, .git, dist, .turbo, .next)
+        considerar mover fly.toml para raiz
+
+RC-4: Workflow naming confuso
+  Deploy Staging != Deploy API (Staging)
+  Acao: renomear ou consolidar
+
+RC-5: T-20260412-1 sem ADR
+  46+ dias sem decisao registrada
+  Acao: redigir ADR-011 release cadence quando RC-1 a RC-4 fecharem
+
+CRITERIO DE ACEITE (TODOS):
+[ ] RC-1 fechado: migration:run sem 28P01
+[ ] RC-2 fechado: deploy automatico OU runbook manual reproducible
+[ ] RC-3 fechado: deploy Windows funciona OU alternativa documentada
+[ ] RC-4 fechado: workflows renomeados ou consolidados
+[ ] RC-5 fechado: ADR-011 redigido
+[ ] flyctl status com hash novo contendo c3c7af1 ou superior
+[ ] /ready 200 com db:up
+[ ] Smoke UAT 5/5 verde (Login Acme, /customers, /estimates, dashboard, /financial)
+[ ] PR(s) aprovado(s) pelo PO
+[ ] CI em main 100% verde
+[ ] MEMORY.md desativa T-20260509-2, BUG-04, BUG-05, T-20260412-1
+
+ESCOPO NEGATIVO:
+- NAO migrar provider de Neon
+- NAO refatorar TenantDatabaseService alem do necessario
+- NAO redesenhar fluxo de release nesta tarefa
+- NAO mexer em modulos Fase 1 ausentes
+- NAO alterar Bussola
+- NAO criar tenant novo (usar Acme)
+- NAO commitar segredos (Regra 9)
+- NAO mexer em pricing/plans
+- NAO tocar gaps P2 Fase 1
+
+Branch: fix/SSE-BUG-D-deploy-staging-multi-rc (ou serie por RC)
+Subagentes: test-runner + db-reviewer + security-reviewer
+Done quando: criterios acima 100% verdes + PR aprovado pelo PO + UAT 5/5 verde
+
+Protocolo: docs/process/HANDOFF_PROTOCOL.md secao 4 + secao 7
+Prioridade P0: bloqueia UAT Fase 1 (95% completa). T-20260412-1 sai de BLOCKED ao fechar.
+
+Memoria correlacionada (LER ANTES DE COMECAR):
+- project_sse_t20260509_2_blocked_neon_auth.md
+- BUG-05_credential_caching.md
+- feedback_deploy_debugging.md
+- project_sse_release_cadence_pending.md
 
 ---
