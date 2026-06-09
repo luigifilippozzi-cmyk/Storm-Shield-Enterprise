@@ -39,8 +39,9 @@ export class AuthGuard implements CanActivate {
     // Look up the internal user by Clerk external_auth_id
     // The tenant context should already be set by TenantMiddleware
     const tenantId = request.tenantId;
-    if (tenantId) {
-      const user = await this.knex('users')
+    const tenantSchema = request.tenantSchema;
+    if (tenantId && tenantSchema) {
+      const user = await this.knex.withSchema(tenantSchema).table('users')
         .select('id', 'tenant_id', 'email', 'first_name', 'last_name', 'status')
         .where({ external_auth_id: decoded.clerkUserId, tenant_id: tenantId, deleted_at: null })
         .first();
@@ -49,15 +50,15 @@ export class AuthGuard implements CanActivate {
         // Load user roles and permissions — always scope by tenant_id to prevent
         // cross-tenant data leakage when using the admin connection (no RLS).
         const [permissions, roleAssignments] = await Promise.all([
-          this.knex('role_permissions')
+          this.knex.withSchema(tenantSchema).table('role_permissions')
             .select('role_permissions.module', 'role_permissions.action', 'role_permissions.resource')
-            .join('roles', 'roles.id', 'role_permissions.role_id')
-            .join('user_role_assignments', 'user_role_assignments.role_id', 'role_permissions.role_id')
+            .join(`${tenantSchema}.roles`, 'roles.id', 'role_permissions.role_id')
+            .join(`${tenantSchema}.user_role_assignments`, 'user_role_assignments.role_id', 'role_permissions.role_id')
             .where('user_role_assignments.user_id', user.id)
             .andWhere('roles.tenant_id', tenantId),
-          this.knex('roles')
+          this.knex.withSchema(tenantSchema).table('roles')
             .select('roles.name')
-            .join('user_role_assignments', 'user_role_assignments.role_id', 'roles.id')
+            .join(`${tenantSchema}.user_role_assignments`, 'user_role_assignments.role_id', 'roles.id')
             .where('user_role_assignments.user_id', user.id)
             .andWhere('roles.tenant_id', tenantId),
         ]);
