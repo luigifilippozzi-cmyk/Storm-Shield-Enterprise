@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@clerk/nextjs';
+import { useApiHeaders } from './use-api-headers';
 import { api } from '@/lib/api';
 import type { InsuranceCompany } from '@sse/shared-types';
 
@@ -39,17 +39,6 @@ export interface CreateInsuranceCompanyInput {
 
 export type UpdateInsuranceCompanyInput = Partial<CreateInsuranceCompanyInput>;
 
-// ── Helper to build auth headers ──
-
-function useApiHeaders() {
-  const { getToken, orgId } = useAuth();
-  return async () => {
-    const token = (await getToken()) || undefined;
-    const headers: Record<string, string> = {};
-    if (orgId) headers['X-Clerk-Org-Id'] = orgId;
-    return { token, headers };
-  };
-}
 
 // ── Hooks ──
 
