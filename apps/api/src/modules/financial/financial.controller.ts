@@ -36,6 +36,14 @@ export class FinancialController {
     return this.financialService.getDashboard(tenantId);
   }
 
+  @Get()
+  @ApiOperation({ summary: 'List transactions (alias for /transactions)' })
+  @ApiResponse({ status: 200, description: 'Paginated transaction list' })
+  @RequirePermissions('financial:read:list')
+  findAllRoot(@CurrentTenant() tenantId: string, @Query() query: QueryTransactionDto) {
+    return this.financialService.findAll(tenantId, query);
+  }
+
   @Get('transactions')
   @ApiOperation({ summary: 'List transactions with pagination and filters' })
   @ApiResponse({ status: 200, description: 'Paginated transaction list' })
