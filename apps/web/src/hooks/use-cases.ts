@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@clerk/nextjs';
+import { useApiHeaders } from './use-api-headers';
 import { api } from '@/lib/api';
 
 // ── Types ──
@@ -65,17 +65,6 @@ export interface UpdateCaseInput {
   assigned_to_user_id?: string;
 }
 
-// ── Helper ──
-
-function useApiHeaders() {
-  const { getToken, orgId } = useAuth();
-  return async () => {
-    const token = (await getToken()) || undefined;
-    const headers: Record<string, string> = {};
-    if (orgId) headers['X-Clerk-Org-Id'] = orgId;
-    return { token, headers };
-  };
-}
 
 // ── Hooks ──
 

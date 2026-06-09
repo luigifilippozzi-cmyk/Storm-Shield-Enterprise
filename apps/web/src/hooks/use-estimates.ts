@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@clerk/nextjs';
+import { useApiHeaders } from './use-api-headers';
 import { api, apiUpload } from '@/lib/api';
 import type { Estimate } from '@sse/shared-types';
 
@@ -48,15 +48,6 @@ export interface CreateEstimateInput {
 
 export type UpdateEstimateInput = Partial<CreateEstimateInput>;
 
-function useApiHeaders() {
-  const { getToken, orgId } = useAuth();
-  return async () => {
-    const token = (await getToken()) || undefined;
-    const headers: Record<string, string> = {};
-    if (orgId) headers['X-Clerk-Org-Id'] = orgId;
-    return { token, headers };
-  };
-}
 
 export function useEstimates(filters: EstimateFilters = {}) {
   const getHeaders = useApiHeaders();

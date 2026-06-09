@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@clerk/nextjs';
+import { useApiHeaders } from './use-api-headers';
 import { api, apiUpload } from '@/lib/api';
 import type { Vehicle } from '@sse/shared-types';
 
@@ -46,17 +46,6 @@ export interface CreateVehicleInput {
 
 export type UpdateVehicleInput = Partial<CreateVehicleInput>;
 
-// ── Helper to build auth headers ──
-
-function useApiHeaders() {
-  const { getToken, orgId } = useAuth();
-  return async () => {
-    const token = (await getToken()) || undefined;
-    const headers: Record<string, string> = {};
-    if (orgId) headers['X-Clerk-Org-Id'] = orgId;
-    return { token, headers };
-  };
-}
 
 // ── Hooks ──
 

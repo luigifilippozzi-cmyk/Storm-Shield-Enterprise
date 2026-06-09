@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@clerk/nextjs';
+import { useApiHeaders } from './use-api-headers';
 import { api } from '@/lib/api';
 
 export interface TrialBalanceRow {
@@ -56,15 +56,6 @@ export interface BalanceSheetReport {
   total_liabilities_and_equity: number;
 }
 
-function useApiHeaders() {
-  const { getToken, orgId } = useAuth();
-  return async () => {
-    const token = (await getToken()) || undefined;
-    const headers: Record<string, string> = {};
-    if (orgId) headers['X-Clerk-Org-Id'] = orgId;
-    return { token, headers };
-  };
-}
 
 export function useTrialBalance(opts: { as_of_date?: string; fiscal_period_id?: string } = {}) {
   const getHeaders = useApiHeaders();

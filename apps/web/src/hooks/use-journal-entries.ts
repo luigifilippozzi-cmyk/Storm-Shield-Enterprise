@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@clerk/nextjs';
+import { useApiHeaders } from './use-api-headers';
 import { api } from '@/lib/api';
 
 export type JournalEntryStatus = 'draft' | 'posted' | 'reversed';
@@ -48,15 +48,6 @@ export interface PaginatedJournalEntries {
   meta: { total: number; page: number; limit: number; totalPages: number };
 }
 
-function useApiHeaders() {
-  const { getToken, orgId } = useAuth();
-  return async () => {
-    const token = (await getToken()) || undefined;
-    const headers: Record<string, string> = {};
-    if (orgId) headers['X-Clerk-Org-Id'] = orgId;
-    return { token, headers };
-  };
-}
 
 export function useJournalEntries(filters: JournalEntryFilters = {}) {
   const getHeaders = useApiHeaders();
