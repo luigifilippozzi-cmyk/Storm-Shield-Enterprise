@@ -21,8 +21,15 @@ export class RbacGuard implements CanActivate {
       throw new ForbiddenException('Insufficient permissions');
     }
 
-    const hasPermission = requiredPermissions.every((perm) =>
-      user.permissions.includes(perm),
+    const hasPermission = requiredPermissions.every((requiredPerm) =>
+      user.permissions.some((grantedPerm: string) => {
+        if (grantedPerm === requiredPerm) return true;
+        const [gm, ga, gr] = grantedPerm.split(':');
+        const [rm, ra, rr] = requiredPerm.split(':');
+        return (gm === rm || gm === '*') &&
+               (ga === ra || ga === '*') &&
+               (gr === rr || gr === '*');
+      }),
     );
 
     if (!hasPermission) {
