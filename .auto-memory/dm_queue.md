@@ -1,4 +1,66 @@
 ﻿
+## [2026-06-14] BUG-F — Tenant context required (UAT blocker) — Prioridade P0
+**Status:** COMPLETED — 2026-06-14 → PR #91 MERGED → Deploy API + Web em andamento
+**Branch:** fix/SSE-bug-f-tenant-context-bootstrap
+**Subagentes:** test-runner PASS 602/602 | security N/A | db N/A | frontend N/A
+
+### Contexto
+Deploy API staging verde (PRs #88/#89/#90). Login funciona. Mas GET /customers retorna
+"Tenant context required" — o TenantMiddleware nao recebe X-Tenant-Id nem X-Clerk-Org-Id.
+
+### Causa raiz confirmada
+O hook `use-api-headers.ts` depende de:
+1. `orgId` do Clerk (so populado se usuario tem org ativa na sessao — nao acontece automaticamente)
+2. `sessionClaims.publicMetadata.tenantId` (so existe se JWT Template inclui publicMetadata)
+
+Nenhum dos dois esta disponivel no JWT default do Clerk Development mode.
+
+Tentativas ja feitas:
+- luigi adicionado a Clerk Org org_3EC9cu4VckyAhRCb1TXhSLWAgmg como org:admin (feito)
+- clerk_org_id gravado em tenants.settings (feito, confirmado no DB)
+- PATCH /v1/instance com claims publicMetadata (204 OK, mas nao verificavel via API)
+- tmp-fix-owner.ts swap: owner@acme-sse-demo.com -> external_auth_id = luigi (feito)
+
+### Fix proposto (BUG-F)
+Implementar bootstrap de tenant ID no frontend sem depender do JWT:
+
+**Opcao A (recomendada):** Novo endpoint GET /auth/tenant-context no backend
+- Sem TenantGuard (nao tem tenant ainda)
+- Autentica via AuthGuard (Bearer token Clerk)
+- Busca tenant pelo clerkUserId via JOIN users -> tenants
+- Retorna { tenantId, tenantName }
+- Frontend chama esse endpoint na inicializacao (useEffect no layout principal)
+- Salva tenantId em memoria (Zustand store ou React context)
+- use-api-headers.ts usa esse tenantId como X-Tenant-Id
+
+**Opcao B (mais simples):** Configurar JWT Template no Clerk Dashboard manualmente
+- Acessar https://dashboard.clerk.com -> Sessions -> Customize session token
+- Adicionar no editor JSON: { "publicMetadata": "{{user.public_metadata}}" }
+- Salvar — proximo login ja tem publicMetadata.tenantId no JWT
+- Nenhuma mudanca de codigo necessaria
+
+### Escopo negativo
+NAO alterar TenantMiddleware, NAO alterar AuthGuard, NAO mudar schema do banco.
+
+### Criterio de aceite
+GET /customers retorna 200 com lista (vazia ou com dados) sem erro "Tenant context required".
+
+### Subagentes
+- frontend-reviewer obrigatorio se implementar Opcao A (altera layout principal)
+- test-runner para verificar que testes existentes nao quebram
+
+### Estado atual do repo
+- Branch: main (tudo mergeado)
+- tmp-fix-owner.ts swap REVERTIDO em 2026-06-14 (owner restaurado para user_3F0cLEuSfRLaKbsZG8UAkq04RzC)
+- Arquivos temporarios a remover: fix-tenant-context.mjs, fix-tenant-context.ps1,
+  fix-clerk-jwt.mjs, apps/api/src/database/seeds/tmp-query.ts, tmp-query.mjs
+
+Done quando: UAT 5/5 concluido (Customers, Vehicles, Estimates, Service Orders, Financial carregam)
+
+Protocolo: docs/process/HANDOFF_PROTOCOL.md §4 + §7
+
+---
+
 ---
 name: Dev Manager Queue (unified)
 description: Fila única de tarefas para o Dev Manager — consolidada do PO e PM conforme HANDOFF_PROTOCOL.md §3
@@ -8,6 +70,84 @@ type: project
 # Dev Manager Queue — SSE
 
 > **Nota:** "NS" = ERP de referência externo. Nome substituído por precaução (ADR-014).
+
+---
+
+## [2026-06-09] BUG-E — P0 — UAT bloqueado: wildcard RBAC + rota /financial ausente + seed demo-data
+
+**Origin:** PO Agent — UAT 2026-06-09 (sessão pós-T-20260412-1 desbloqueado)
+**Priority:** P0 (bloqueia fechamento Fase 1 / UAT)
+**Status:** PENDING
+**Branch:** fix/SSE-bug-e-rbac-wildcard-financial-route
+
+### Contexto
+Após /ready 200 (db:up + redis:up) confirmado, UAT falhou em P2/P3/P4/P5. Investigação via Chrome DevTools + análise de código revelou 3 causas raiz independentes.
+
+### F1 — CRÍTICO: wildcard RBAC não expande (causa do 403 em todos os módulos)
+
+**Arquivo:** `apps/api/src/common/guards/rbac.guard.ts`
+
+**Problema:** seed gera permissões com resource `*` (ex: `financial:read:*`, `vehicles:read:*`). O guard faz `user.permissions.includes(requiredPerm)` — string literal. `financial:read:*` não satisfaz `financial:read:list` via `includes()`. Wildcard nunca expande → 403 em qualquer endpoint com resource específico.
+
+**Fix:** no `rbac.guard.ts`, substituir `includes(perm)` por lógica que expande wildcard:
+```ts
+// Antes
+user.permissions.includes(perm)
+
+// Depois
+user.permissions.some(p => {
+  if (p === perm) return true;
+  const [m, a, r] = p.split(':');
+  const [rm, ra, rr] = perm.split(':');
+  return (m === rm || m === '*') &&
+         (a === ra || a === '*') &&
+         (r === rr || r === '*');
+})
+```
+
+**Impacto:** afeta TODOS os módulos — vehicles, estimates, financial, contractors, accounting, etc. É a causa raiz do "Insufficient permissions" em toda a aplicação.
+
+**Escopo negativo:** NÃO alterar o seed. NÃO alterar as permissões no banco. NÃO reescrever AuthGuard. Apenas o guard RBAC.
+
+### F2: rota GET /financial ausente (causa do 404)
+
+**Arquivo:** `apps/api/src/modules/financial/financial.controller.ts`
+
+**Problema:** `use-financial.ts` linha 96 chama `GET /api/v1/financial` (sem sufixo). Controller só tem `GET /financial/transactions`. Rota raiz não existe → 404.
+
+**Fix:** adicionar endpoint no controller:
+```ts
+@Get()
+@RequirePermissions('financial:read:list')
+async getTransactionsList(...) { return this.getTransactions(...) }
+```
+Ou redirecionar `GET /financial` para `GET /financial/transactions` internamente.
+
+**Escopo negativo:** NÃO alterar `use-financial.ts`. NÃO alterar outras rotas do controller. Apenas adicionar o `@Get()` faltante.
+
+### F3: seed demo-data não rodou para tenant Acme
+
+**Problema:** dashboard sem dados — customers/estimates/transactions vazios. Seed `--type=demo-data` nunca executado (ou falhou silenciosamente) para o tenant Acme.
+
+**Fix:**
+1. Rodar seed: `npx ts-node apps/api/src/database/seeds/run.ts --tenant=acme --type=demo-data`
+2. Verificar que `acme-demo-data.seed.ts` insere dados suficientes para KPIs (mínimo: 3 customers, 3 estimates, 5 transactions)
+3. Adicionar execução do demo-data seed ao runbook `docs/runbooks/tenant-provisioning.md`
+
+**Escopo negativo:** NÃO recriar o tenant Acme. NÃO rodar `--type=roles` ou `--type=personas` de novo (estão OK). Apenas demo-data.
+
+### Ordem de execução obrigatória
+1. F1 (rbac.guard.ts) — sem isso F2 e F3 não são verificáveis
+2. F2 (rota GET /financial)
+3. F3 (seed demo-data)
+4. Re-rodar UAT 5/5 completo
+
+### Subagentes
+- `test-runner` — obrigatório (testes unitários para rbac.guard expandido + rota nova)
+- `security-reviewer` — obrigatório (qualquer mudança em guard de autenticação/autorização)
+
+### Done quando
+UAT 5/5 verde: P1 login ✓ | P2 customers POST 201 ✓ | P3 estimates POST 201 ✓ | P4 dashboard KPIs reais ✓ | P5 /financial trend chart ✓
 
 ---
 
@@ -3208,3 +3348,77 @@ Memoria correlacionada (LER ANTES DE COMECAR):
 - project_sse_release_cadence_pending.md
 
 ---
+
+## [2026-05-28] BUG-D ATUALIZACAO — PR #87 fechou CI/TS mas Deploy API (Staging) ainda falha
+## Tarefa DM ? BUG-D atualizacao (status apos PR #87) ? Prioridade P0
+
+PO verificou estado real apos relatorio DM de "saude VERDE". Realidade:
+
+CI workflow: VERDE (PR #87 resolveu 18 TS errors) ? OK, agradecido
+Deploy Staging (build+push): VERDE ? OK
+Deploy API (Staging) workflow: AINDA FAILURE em main (run 26596067407)
+
+PR #87 fixou problema DIFERENTE do que o handoff BUG-D pedia.
+PR #87 nao fechou nenhum dos 5 RCs do BUG-D. Resolveu um bug paralelo que
+estava bloqueando CI mas nao estava nas 7 evidencias do handoff original.
+
+PROGRESSO REAL no BUG-D:
+[OK] RC parcial: descoberto que step Apply SQL migrations JA usa DATABASE_URL_UNPOOLED
+     (elimina hipotese RC-1a pooled/unpooled mismatch)
+[ ] RC-1 NAO fechado: migration:run ainda falha (precisa logs completos para
+    isolar entre RC-1b credencial expirada vs RC-1c SSL/connection config)
+[ ] RC-2 NAO fechado
+[ ] RC-3 NAO fechado
+[ ] RC-4 NAO fechado
+[ ] RC-5 NAO fechado
+
+ACAO IMEDIATA SOLICITADA:
+1. Comentar issue #86 com PR #87 referenciado + status real (4 RCs ainda abertos)
+2. Atacar RC-1: pegar log COMPLETO do run 26596067407 step Apply SQL migrations
+   - identificar mensagem exata do erro (28P01? timeout? SSL?)
+   - se 28P01: hipotese RC-1b credencial Neon expirada (atualizar secret)
+   - se SSL/connection: hipotese RC-1c (instrumentar run-migrations.ts)
+3. Sequencia recomendada: RC-1 -> RC-2 -> RC-4 -> RC-3 -> RC-5
+   (RC-3 deploy Windows pode ser substituido por RC-2 auto-deploy se preferir)
+
+NAO MARCAR BUG-D COMO RESOLVIDO ate todos os 5 RCs fecharem + smoke UAT 5/5 verde.
+NAO REPORTAR "saude VERDE" enquanto Deploy API (Staging) falhar em main.
+
+Contexto adicional descoberto nesta verificacao:
+- main HEAD agora: f032fa1 (Merge PR #87) sobre c3c7af1 (Merge PR #85)
+- Issue #86 BUG-D tem 0 comments ? DM nao interagiu com o handoff publico
+- dm_queue.md entrada 2026-05-28 BUG-D continua valida sem alteracao
+
+Done quando: criterios originais do BUG-D atendidos integralmente.
+
+---
+## RC-1 FECHADO em sessao PO 2026-06-08
+
+Executado pelo PO via Cowork (Caminho D aprovado): reset credencial Neon nos 3 lugares.
+
+Resultado:
+- Workflow Deploy API (Staging) run 27159265227 success
+- Image hash novo: deployment-01KTM8RCMWAGKS4X3NK72611JT
+- /ready 200 com db:up + redis:up
+- 46 dias de T-20260412-1 destravados
+
+Status atualizado dos 5 RCs:
+[X] RC-1 FECHADO
+[~] RC-2 PARCIAL (workflow_dispatch funciona)
+[ ] RC-3 OPEN (deploy Windows — agora baixa prioridade)
+[ ] RC-4 OPEN (workflow naming)
+[ ] RC-5 OPEN (ADR-011)
+
+Acoes DM proximas (P1):
+1. Confirmar smoke UAT 5/5 verde em proxima sessao
+2. Avaliar fechamento de BUG-D apos UAT — RC-3/4/5 viram issues separadas P2/P3
+3. Redigir ADR-011 com decisao: workflow_dispatch como mecanismo manual oficial
+   ate RC-2 ser completado com auto-deploy por push em paths
+
+Acoes DM NAO fazer:
+- NAO mexer em RC-3 (deploy Windows) — workflow_dispatch substitui na pratica
+- NAO redesenhar naming agora (RC-4) — aguardar UAT verde
+- NAO commitar credenciais no repo (Regra 9 CLAUDE.md)
+
+---
+

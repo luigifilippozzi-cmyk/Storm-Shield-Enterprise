@@ -3,6 +3,53 @@ name: SSE Project Status
 description: Current state of Storm Shield Enterprise project — metrics, health, priorities for Dev Manager
 type: project
 ---
+# SSE Project Status — 2026-06-14 (Dev Manager — Sessão Autônoma BUG-F)
+
+## Revisão DM — 2026-06-14 (PR #91)
+
+**Saúde: 🟡 AMARELO** — PR #91 MERGED (BUG-F). Deploy API + Web in_progress. UAT 5/5 pendente validação (Luigi deve testar após deploy completar).
+
+**Módulos: 15/15** | Testes: **602** | Endpoints: **129** | Migrations: **19** | ADRs: **17** | Controllers: **19** | Pages: **44** | Specs: **29**
+
+### Novidades desta sessão (2026-06-14)
+
+| PR | Tipo | Descrição | Status |
+|---|---|---|---|
+| #91 | fix(auth) | BUG-F: GET /auth/tenant-context + useTenantBootstrap — resolve tenant sem orgId nem JWT template | MERGED 2026-06-14 |
+
+### Tarefas concluídas
+
+- **BUG-F COMPLETED (PR #91)** — Root cause: `use-api-headers.ts` dependia de `orgId` (Clerk Org ativa) ou `publicMetadata.tenantId` (JWT template custom). Nenhum dos dois disponível no JWT default Clerk Development mode. Fix: `GET /auth/tenant-context` (AuthGuard only, sem TenantGuard) escaneia schemas ativos e retorna `{tenantId, tenantName, tenantPlan}`. Frontend: `useTenantBootstrap` hook + `TenantBootstrap` null-component no dashboard layout + Zustand store como priority-3 fallback em `useApiHeaders`. 602/602 testes.
+- **Cleanup** — 6 arquivos temporários removidos (fix-clerk-jwt.mjs, fix-tenant-context.mjs/ps1, tmp-query.mjs, seeds/tmp-*.ts).
+
+### Verificação Regras CLAUDE.md §10 (regras 1-14)
+- KNEX_CONNECTION direto em services: **OK** (sem mudança)
+- FLOAT/REAL em migrations: **OK** (sem mudança)
+- CASCADE em tabelas financeiras/contábeis: **OK** (sem mudança)
+- Secrets hardcoded: **OK** — sem credenciais commitadas
+
+### Verificação Regras 15-18 (alinhamento Bússola)
+- PR #91: fix(auth) — fix de infra/auth. Sem tela nova. Regras 15-18 N/A ✓
+
+### Bloqueios atuais
+1. **UAT 5/5 pendente** — Luigi deve testar após deploy de PR #91 completar (login → /customers → /estimates → dashboard → /financial).
+2. **T-20260412-1 (infra)** — Deploy API Fly.io último sucesso 2026-06-09; verificar pós-PR #91.
+
+### Inconsistências
+1. **Admin module sem service** — `apps/api/src/modules/admin/` sem `admin.service.ts` (pré-existente).
+2. **PV4 violation** — `STATUS_COLORS` em `platform-admin/page.tsx` usa Tailwind direto — P2 pendente (pré-existente).
+3. **T-20260528-1 PENDING** — tenants.service.ts coverage 61.4% (meta 80%) — P1 próxima sessão DM.
+
+### Prioridades P1/P2 para próxima sessão
+1. **P1 (Luigi)**: Validar UAT 5/5 após deploy PR #91 — login → /customers → /estimates → dashboard → /financial.
+2. **P1 (DM)**: T-20260528-1 — elevar tenants.service.ts coverage 61.4% → 80%+.
+3. **P2 (DM)**: PV4 violation em platform-admin/page.tsx (STATUS_COLORS Tailwind direto).
+4. **P2 (Luigi/PO)**: Configurar JWT Template no Clerk Dashboard (BUG-F Option B) — elimina 1 API call extra por sessão sem login fresh.
+
+### Última sessão: 2026-06-14 (DM Agent — BUG-F PR #91) 🟡 DEPLOY EM ANDAMENTO
+
+---
+
 # SSE Project Status — 2026-05-28 (Dev Manager — Sessão Autônoma CI Fix)
 
 ## Revisão DM — 2026-05-28 (PR #87)

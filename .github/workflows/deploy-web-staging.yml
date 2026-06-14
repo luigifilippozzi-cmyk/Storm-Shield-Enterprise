@@ -90,8 +90,8 @@ jobs:
           BACKEND=https://sse-api-staging.fly.dev
           FAILED=0
 
-          # Step 1: backend health (liveness)
-          BACKEND_HEALTH=$(curl --silent --max-time 20 --output /dev/null --write-out "%{http_code}" "$BACKEND/health")
+          # Step 1: backend health (liveness) — allow 45s for Fly.io cold start
+          BACKEND_HEALTH=$(curl --silent --max-time 45 --output /dev/null --write-out "%{http_code}" "$BACKEND/health")
           if [ "$BACKEND_HEALTH" != "200" ]; then
             echo "::error::Backend unreachable: GET $BACKEND/health → $BACKEND_HEALTH. Check Fly.io (T-20260412-1)."
             exit 1
@@ -99,7 +99,7 @@ jobs:
           echo "PASS: GET $BACKEND/health → $BACKEND_HEALTH ✓"
 
           # Step 2: backend readiness (db + redis up)
-          BACKEND_READY=$(curl --silent --max-time 20 --output /dev/null --write-out "%{http_code}" "$BACKEND/ready")
+          BACKEND_READY=$(curl --silent --max-time 30 --output /dev/null --write-out "%{http_code}" "$BACKEND/ready")
           if [ "$BACKEND_READY" != "200" ]; then
             echo "::warning::Backend readiness: GET $BACKEND/ready → $BACKEND_READY (db/redis may be slow)"
           else
@@ -108,7 +108,7 @@ jobs:
 
           # Step 3: auth is enforced on backend API routes (must return 401, not 404/502/503)
           for path in "api/v1/tenants/me/wizard/status" "api/v1/customers"; do
-            STATUS=$(curl --silent --max-time 15 --output /dev/null --write-out "%{http_code}" "$BACKEND/$path")
+            STATUS=$(curl --silent --max-time 20 --output /dev/null --write-out "%{http_code}" "$BACKEND/$path")
             if [ "$STATUS" = "401" ] || [ "$STATUS" = "403" ]; then
               echo "PASS: GET $BACKEND/$path → $STATUS (auth enforced) ✓"
             else
