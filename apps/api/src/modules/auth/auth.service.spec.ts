@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { KNEX_ADMIN_CONNECTION } from '../../config/database.module';
 import { AuthService } from './auth.service';
 
 const mockVerifyToken = jest.fn();
@@ -10,6 +11,21 @@ jest.mock('@clerk/backend', () => ({
   verifyToken: (...args: any[]) => mockVerifyToken(...args),
   createClerkClient: (...args: any[]) => mockCreateClerkClient(...args),
 }));
+
+// Minimal Knex query-chain mock
+function buildKnexMock(overrides: Record<string, any> = {}) {
+  const chain: any = {
+    select: jest.fn().mockReturnThis(),
+    where: jest.fn().mockReturnThis(),
+    withSchema: jest.fn().mockReturnThis(),
+    table: jest.fn().mockReturnThis(),
+    first: jest.fn().mockResolvedValue(null),
+    ...overrides,
+  };
+  const knexFn = jest.fn().mockReturnValue(chain) as any;
+  knexFn.withSchema = chain.withSchema;
+  return { knexFn, chain };
+}
 
 describe('AuthService', () => {
   const CLERK_SECRET = 'sk_test_secret_key';
@@ -28,6 +44,8 @@ describe('AuthService', () => {
       };
       mockCreateClerkClient.mockReturnValue(mockClerk);
 
+      const { knexFn } = buildKnexMock();
+
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           AuthService,
@@ -41,6 +59,7 @@ describe('AuthService', () => {
               }),
             },
           },
+          { provide: KNEX_ADMIN_CONNECTION, useValue: knexFn },
         ],
       }).compile();
       service = module.get<AuthService>(AuthService);
@@ -114,12 +133,127 @@ describe('AuthService', () => {
     });
   });
 
+  describe('getTenantContext', () => {
+    const CLERK_USER_ID = 'user_tenant_lookup_123';
+
+    it('should return tenant context when user found in first matching tenant', async () => {
+      const tenants = [
+        { id: 'tenant-uuid-1', name: 'Acme Body Shop', subscription_plan: 'starter', schema_name: 'tenant_acme' },
+        { id: 'tenant-uuid-2', name: 'Beta Auto', subscription_plan: 'free', schema_name: 'tenant_beta' },
+      ];
+
+      const schemaChain: any = {
+        select: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        first: jest.fn().mockResolvedValue({ id: 'user-row-uuid' }),
+      };
+      const tableChain: any = {
+        table: jest.fn().mockReturnValue(schemaChain),
+        withSchema: jest.fn().mockReturnThis(),
+      };
+      const tenantsChain: any = {
+        select: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue(tenants),
+      };
+
+      const knexFn = jest.fn().mockReturnValue(tenantsChain) as any;
+      knexFn.withSchema = jest.fn().mockReturnValue(tableChain);
+      tableChain.withSchema = knexFn.withSchema;
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          AuthService,
+          {
+            provide: ConfigService,
+            useValue: { get: jest.fn((_k: string, d?: string) => d || '') },
+          },
+          { provide: KNEX_ADMIN_CONNECTION, useValue: knexFn },
+        ],
+      }).compile();
+
+      const service = module.get<AuthService>(AuthService);
+      const result = await service.getTenantContext(CLERK_USER_ID);
+
+      expect(result).toEqual({
+        tenantId: 'tenant-uuid-1',
+        tenantName: 'Acme Body Shop',
+        tenantPlan: 'starter',
+      });
+    });
+
+    it('should return null when user not found in any tenant', async () => {
+      const tenants = [
+        { id: 'tenant-uuid-1', name: 'Acme Body Shop', subscription_plan: 'starter', schema_name: 'tenant_acme' },
+      ];
+
+      const schemaChain: any = {
+        select: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        first: jest.fn().mockResolvedValue(null),
+      };
+      const tableChain: any = {
+        table: jest.fn().mockReturnValue(schemaChain),
+      };
+      const tenantsChain: any = {
+        select: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue(tenants),
+      };
+
+      const knexFn = jest.fn().mockReturnValue(tenantsChain) as any;
+      knexFn.withSchema = jest.fn().mockReturnValue(tableChain);
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          AuthService,
+          {
+            provide: ConfigService,
+            useValue: { get: jest.fn((_k: string, d?: string) => d || '') },
+          },
+          { provide: KNEX_ADMIN_CONNECTION, useValue: knexFn },
+        ],
+      }).compile();
+
+      const service = module.get<AuthService>(AuthService);
+      const result = await service.getTenantContext(CLERK_USER_ID);
+
+      expect(result).toBeNull();
+    });
+
+    it('should return null when there are no active tenants', async () => {
+      const tenantsChain: any = {
+        select: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue([]),
+      };
+
+      const knexFn = jest.fn().mockReturnValue(tenantsChain) as any;
+      knexFn.withSchema = jest.fn();
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          AuthService,
+          {
+            provide: ConfigService,
+            useValue: { get: jest.fn((_k: string, d?: string) => d || '') },
+          },
+          { provide: KNEX_ADMIN_CONNECTION, useValue: knexFn },
+        ],
+      }).compile();
+
+      const service = module.get<AuthService>(AuthService);
+      const result = await service.getTenantContext(CLERK_USER_ID);
+
+      expect(result).toBeNull();
+    });
+  });
+
   describe('without configured secret key', () => {
     let service: AuthService;
 
     beforeEach(async () => {
       mockVerifyToken.mockReset();
       mockCreateClerkClient.mockReset();
+
+      const { knexFn } = buildKnexMock();
 
       const module: TestingModule = await Test.createTestingModule({
         providers: [
@@ -130,6 +264,7 @@ describe('AuthService', () => {
               get: jest.fn((_key: string, defaultVal?: string) => defaultVal || ''),
             },
           },
+          { provide: KNEX_ADMIN_CONNECTION, useValue: knexFn },
         ],
       }).compile();
       service = module.get<AuthService>(AuthService);
@@ -156,6 +291,8 @@ describe('AuthService', () => {
       mockCreateClerkClient.mockReset();
       mockCreateClerkClient.mockReturnValue({ users: { getUser: jest.fn() } });
 
+      const { knexFn } = buildKnexMock();
+
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           AuthService,
@@ -168,6 +305,7 @@ describe('AuthService', () => {
               }),
             },
           },
+          { provide: KNEX_ADMIN_CONNECTION, useValue: knexFn },
         ],
       }).compile();
       service = module.get<AuthService>(AuthService);
